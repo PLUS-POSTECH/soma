@@ -7,7 +7,11 @@ edition = "2018"
 
 [dependencies]
 clap = "2.32.0"
+futures = "0.1.25"
+http = "0.1"
+lazy_static = "1.2.0"
 shiplift = { version = "0.4.0", default-features = false }
+tokio = "0.1"
 
 [lib]
 name = "soma"
@@ -16,7 +20,3 @@ path = "src/lib.rs"
 [[bin]]
 name = "soma"
 path = "src/main.rs"
-
-[features]
-default = []
-unix-socket = ["shiplift/unix-socket"]
