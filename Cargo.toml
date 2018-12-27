@@ -4,4 +4,19 @@ version = "0.1.0"
 authors = ["Yechan Bae <qwazpia@gmail.com>", "Kangsu Kim <pica744@gmail.com>"]
 edition = "2018"
 
+
 [dependencies]
+clap = "2.32.0"
+shiplift = { version = "0.4.0", default-features = false }
+
+[lib]
+name = "soma"
+path = "src/lib.rs"
+
+[[bin]]
+name = "soma"
+path = "src/main.rs"
+
+[features]
+default = []
+unix-socket = ["shiplift/unix-socket"]
