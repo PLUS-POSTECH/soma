@@ -1,5 +1,5 @@
-use bollard::Docker;
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
+use bollard::Docker;
 use bollard::image::{CreateImageOptions, ListImagesOptions};
 use bollard::image::APIImages;
 use failure::Error;
@@ -17,16 +17,16 @@ pub trait Printer: Send + Sync {
     fn write_line(&mut self, message: &str);
 }
 
-pub struct Environment<C> {
+pub struct Soma<C> {
     docker: Docker<C>,
     runtime: Runtime,
 }
 
-impl<C> Environment<C>
+impl<C> Soma<C>
     where C: 'static + Connect
 {
-    pub fn new(docker: Docker<C>, runtime: Runtime) -> Environment<C> {
-        Environment {
+    pub fn new(docker: Docker<C>, runtime: Runtime) -> Soma<C> {
+        Soma {
             docker,
             runtime,
         }
@@ -40,7 +40,7 @@ impl<C> Environment<C>
             })))
     }
 
-    pub fn pull(&mut self, printer: &mut impl Printer, image_name: &str) {
+    pub fn pull(&mut self, _printer: &mut impl Printer, image_name: &str) {
         self.runtime.block_on(
             self.docker.create_image(Some(CreateImageOptions {
                 from_image: image_name,

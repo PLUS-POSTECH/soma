@@ -1,49 +1,16 @@
 use bollard::Docker;
-use clap::{App, Arg, crate_version, SubCommand};
-use crossterm::{cursor, terminal, Terminal, TerminalCursor};
-use crossterm::terminal::ClearType;
+use clap::{App, AppSettings, crate_version};
+use failure::Error;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
-use failure::Error;
 
-use soma::Environment;
 use soma::Printer;
+use soma::Soma;
 
-struct TerminalPrinter {
-    cursor: TerminalCursor<'static>,
-    terminal: Terminal<'static>,
-}
+use crate::cli::commands::{add::AddCommand, list::ListCommand, SomaCommand};
+use crate::cli::terminal_printer::TerminalPrinter;
 
-impl TerminalPrinter {
-    fn new() -> TerminalPrinter {
-        TerminalPrinter {
-            cursor: cursor(),
-            terminal: terminal(),
-        }
-    }
-}
-
-impl Printer for TerminalPrinter {
-    type Handle = (u16, u16);
-
-    fn get_current_handle(&self) -> Self::Handle {
-        let handle = self.cursor.pos();
-        println!();
-        handle
-    }
-
-    fn write_line_at(&mut self, handle: &Self::Handle, message: &str) {
-        self.cursor.save_position();
-        self.cursor.goto(handle.0, handle.1);
-        self.terminal.clear(ClearType::CurrentLine);
-        println!("{}", message);
-        self.cursor.reset_position();
-    }
-
-    fn write_line(&mut self, message: &str) {
-        println!("{}", message);
-    }
-}
+mod cli;
 
 #[cfg(windows)]
 fn connect_default() -> Result<Docker<impl Connect>, Error> {
@@ -55,54 +22,33 @@ fn connect_default() -> Result<Docker<impl Connect>, Error> {
     Docker::connect_with_unix_defaults()
 }
 
-fn default_setup() -> (Environment<impl Connect>, TerminalPrinter) {
+fn default_setup() -> (Soma<impl Connect>, impl Printer) {
     (
-        Environment::new(
+        Soma::new(
             connect_default().expect("failed to connect to docker"),
-            Runtime::new().expect("failed to create runtime"),
+            Runtime::new().expect("failed to create tokio runtime"),
         ),
         TerminalPrinter::new(),
     )
 }
 
-
 fn main() {
+    let add_command: AddCommand = AddCommand::new();
+    let list_command: ListCommand = ListCommand::new();
+
     let matches = App::new("soma")
         .version(crate_version!())
         .about("Your one-stop CTF problem management tool")
-        .subcommand(SubCommand::with_name("list")
-            .about("shows the list of containers"))
-        .subcommand(SubCommand::with_name("run-hello")
-            .about("runs docker hello-world container"))
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(add_command.app())
+        .subcommand(list_command.app())
         .get_matches();
 
-    match matches.subcommand() {
-        ("list", _) => {
-            let (mut env, mut printer) = default_setup();
-            match env.list() {
-                Ok(images) => {
-                    let message = images.iter().map(|container| {
-                        format!("{:?}", container)
-                    }).collect::<Vec<_>>().join("\n");
-                    printer.write_line(&message);
-                }
-                Err(e) => {
-                    eprintln!("{:?}", e);
-                }
-            }
-        }
-        ("run-hello", _) => {
-            let (mut env, mut printer) = default_setup();
-            env.pull(&mut printer, "hello-world");
+    let (soma, printer) = default_setup();
 
-            let create_result = env.create("hello-world");
-            println!("Created a container: {:?}", create_result);
-            if let Ok(container_name) = create_result {
-                println!("Started a container: {:?}", env.start(&container_name));
-            }
-        }
-        _ => {
-            println!("I don't understand...");
-        }
+    match matches.subcommand() {
+        (AddCommand::NAME, Some(matches)) => add_command.handle_match(matches, soma, printer),
+        (ListCommand::NAME, Some(matches)) => list_command.handle_match(matches, soma, printer),
+        _ => unreachable!(),
     }
 }
