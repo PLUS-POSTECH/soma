@@ -36,4 +36,6 @@ jobs:
     vmImage: 'vs2017-win2016'
   steps:
   - template: ci/rust-install.yml
+    parameters:
+      os: Windows
   - template: ci/rust-build.yml
