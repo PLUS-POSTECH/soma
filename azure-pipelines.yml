@@ -19,6 +19,8 @@ jobs:
     vmImage: 'ubuntu-16.04'
   container: rust
   steps:
+  - script: rustup component add rustfmt
+    displayName: 'Install rustfmt'
   - script: cargo fmt --all -- --check
     displayName: 'Check code style'
 
