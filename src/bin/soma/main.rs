@@ -3,6 +3,7 @@ use clap::{crate_version, App, AppSettings};
 use failure::Error;
 use hyper::client::connect::Connect;
 
+use soma::data_dir::initialize;
 use soma::Config;
 use soma::Printer;
 
@@ -40,6 +41,10 @@ fn main() {
         .subcommand(add_command.app())
         .subcommand(list_command.app())
         .get_matches();
+
+    if !initialize() {
+        std::process::exit(1);
+    }
 
     let config = default_setup();
 

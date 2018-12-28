@@ -3,6 +3,7 @@ use std::cell::{RefCell, RefMut};
 use bollard::Docker;
 use hyper::client::connect::Connect;
 
+pub mod data_dir;
 pub mod docker;
 pub mod error;
 pub mod repo;
