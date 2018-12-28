@@ -1,0 +1,5 @@
+steps:
+- script: cargo build
+  displayName: 'Build'
+- script: cargo test
+  displayName: 'Test'
