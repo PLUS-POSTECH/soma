@@ -3,9 +3,6 @@
 # Enforces code style using rustfmt
 
 # Pipeline triggers on all code changes and PRs by default.
-trigger:
-  # Only queue build of latest change when other builds are not running.
-  batch: true
 
 resources:
   containers:
@@ -19,6 +16,8 @@ jobs:
     vmImage: 'ubuntu-16.04'
   container: rust
   steps:
+  - script: rustup component add rustfmt
+    displayName: 'Install rustfmt'
   - script: cargo fmt --all -- --check
     displayName: 'Check code style'
 
