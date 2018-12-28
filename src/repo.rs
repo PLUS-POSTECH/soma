@@ -1,9 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
+use failure::Error;
 use serde_derive::Deserialize;
-
-use crate::error::Error;
 
 #[derive(Deserialize)]
 pub struct Config {
