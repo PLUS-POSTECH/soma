@@ -7,7 +7,7 @@ Your one-stop CTF problem management tool
 
 ## Testing, Building, and Running
 
-Owl is written with Rust, and utilizes Cargo as a building and testing system.
+soma is written with Rust, and utilizes Cargo as a building and testing system.
 
 You can test, build, run using the following command:
 
