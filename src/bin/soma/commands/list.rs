@@ -6,7 +6,7 @@ use hyper::client::connect::Connect;
 use soma::Printer;
 use soma::Soma;
 
-use crate::cli::commands::SomaCommand;
+use crate::commands::SomaCommand;
 
 pub struct ListCommand;
 
