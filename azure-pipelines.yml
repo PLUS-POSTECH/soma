@@ -13,7 +13,8 @@ resources:
     image: rust:latest
 
 jobs:
-- job: Code Style Check
+- job: style_check
+  displayName: Code Style Check
   pool:
     vmImage: 'ubuntu-16.04'
   container: rust
@@ -21,14 +22,16 @@ jobs:
   - script: cargo fmt --all -- --check
     displayName: 'Check code style'
 
-- job: Linux Build
+- job: linux_build
+  displayName: Linux Build
   pool:
     vmImage: 'ubuntu-16.04'
   container: rust
   steps:
   - template: ci/rust-build.yml
 
-- job: Windows Build
+- job: windows_build
+  displayName: Windows Build
   pool:
     vmImage: 'vs2017-win2016'
   steps:
