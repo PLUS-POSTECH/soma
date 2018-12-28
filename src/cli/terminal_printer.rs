@@ -1,5 +1,5 @@
-use crossterm::{cursor, terminal, Terminal, TerminalCursor};
 use crossterm::terminal::ClearType;
+use crossterm::{cursor, terminal, Terminal, TerminalCursor};
 
 use soma::Printer;
 

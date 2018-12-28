@@ -1,7 +1,7 @@
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
-use bollard::Docker;
-use bollard::image::{CreateImageOptions, ListImagesOptions};
 use bollard::image::APIImages;
+use bollard::image::{CreateImageOptions, ListImagesOptions};
+use bollard::Docker;
 use failure::Error;
 use futures::stream::Stream;
 use hyper::client::connect::Connect;
@@ -23,18 +23,16 @@ pub struct Soma<C> {
 }
 
 impl<C> Soma<C>
-    where C: 'static + Connect
+where
+    C: 'static + Connect,
 {
     pub fn new(docker: Docker<C>, runtime: Runtime) -> Soma<C> {
-        Soma {
-            docker,
-            runtime,
-        }
+        Soma { docker, runtime }
     }
 
     pub fn list(&mut self) -> DockerResult<Vec<APIImages>> {
-        self.runtime.block_on(
-            self.docker.list_images(Some(ListImagesOptions::<String> {
+        self.runtime
+            .block_on(self.docker.list_images(Some(ListImagesOptions::<String> {
                 all: true,
                 ..Default::default()
             })))
@@ -42,29 +40,36 @@ impl<C> Soma<C>
 
     pub fn pull(&mut self, _printer: &mut impl Printer, image_name: &str) {
         self.runtime.block_on(
-            self.docker.create_image(Some(CreateImageOptions {
-                from_image: image_name,
-                tag: "latest",
-                ..Default::default()
-            })).then(|result| {
-                println!("{:?}", result);
-                result
-            }).collect()
+            self.docker
+                .create_image(Some(CreateImageOptions {
+                    from_image: image_name,
+                    tag: "latest",
+                    ..Default::default()
+                }))
+                .then(|result| {
+                    println!("{:?}", result);
+                    result
+                })
+                .collect(),
         );
     }
 
     pub fn create(&mut self, image_name: &str) -> DockerResult<String> {
-        self.runtime.block_on(
-            self.docker.create_container(None::<CreateContainerOptions<String>>, Config {
-                image: Some(image_name),
-                ..Default::default()
-            })
-        ).map(|container_results| container_results.id)
+        self.runtime
+            .block_on(self.docker.create_container(
+                None::<CreateContainerOptions<String>>,
+                Config {
+                    image: Some(image_name),
+                    ..Default::default()
+                },
+            ))
+            .map(|container_results| container_results.id)
     }
 
     pub fn start(&mut self, container_id: &str) -> DockerResult<()> {
         self.runtime.block_on(
-            self.docker.start_container(container_id, None::<StartContainerOptions<String>>)
+            self.docker
+                .start_container(container_id, None::<StartContainerOptions<String>>),
         )
     }
 }

@@ -20,12 +20,12 @@ impl SomaCommand for ListCommand {
     const NAME: &'static str = "list";
 
     fn app(&self) -> App<'static, 'static> {
-        SubCommand::with_name(Self::NAME)
-            .about("lists docker images")
+        SubCommand::with_name(Self::NAME).about("lists docker images")
     }
 
     fn handle_match<C>(&self, _matches: &ArgMatches, mut soma: Soma<C>, mut printer: impl Printer)
-        where C: 'static + Connect
+    where
+        C: 'static + Connect,
     {
         printer.write_line(&format!("{:?}", soma.list()));
     }

@@ -13,5 +13,6 @@ pub trait SomaCommand {
 
     fn app(&self) -> App<'static, 'static>;
     fn handle_match<C>(&self, matches: &ArgMatches, soma: Soma<C>, printer: impl Printer)
-        where C: 'static + Connect;
+    where
+        C: 'static + Connect;
 }

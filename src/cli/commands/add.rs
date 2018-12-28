@@ -20,12 +20,12 @@ impl SomaCommand for AddCommand {
     const NAME: &'static str = "add";
 
     fn app(&self) -> App<'static, 'static> {
-        SubCommand::with_name(Self::NAME)
-            .about("registers a soma repository")
+        SubCommand::with_name(Self::NAME).about("registers a soma repository")
     }
 
     fn handle_match<C>(&self, _matches: &ArgMatches, mut _soma: Soma<C>, mut _printer: impl Printer)
-        where C: 'static + Connect
+    where
+        C: 'static + Connect,
     {
         unimplemented!()
     }

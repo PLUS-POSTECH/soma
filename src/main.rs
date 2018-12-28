@@ -1,5 +1,5 @@
 use bollard::Docker;
-use clap::{App, AppSettings, crate_version};
+use clap::{crate_version, App, AppSettings};
 use failure::Error;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
