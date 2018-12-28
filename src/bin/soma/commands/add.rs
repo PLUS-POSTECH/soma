@@ -1,4 +1,3 @@
-use clap::App;
 use clap::ArgMatches;
 use clap::SubCommand;
 use hyper::client::connect::Connect;
