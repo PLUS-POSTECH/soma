@@ -7,10 +7,11 @@ use tokio::runtime::current_thread::Runtime;
 use soma::Printer;
 use soma::Soma;
 
-use crate::cli::commands::{add::AddCommand, list::ListCommand, SomaCommand};
-use crate::cli::terminal_printer::TerminalPrinter;
+use crate::commands::{add::AddCommand, list::ListCommand, SomaCommand};
+use crate::terminal_printer::TerminalPrinter;
 
-mod cli;
+mod commands;
+mod terminal_printer;
 
 #[cfg(windows)]
 fn connect_default() -> Result<Docker<impl Connect>, Error> {

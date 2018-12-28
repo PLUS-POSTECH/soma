@@ -20,5 +20,5 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "soma"
-path = "src/main.rs"
+test = false
 doc = false
