@@ -1,7 +1,9 @@
 use bollard::Docker;
+use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
+use bollard::image::{CreateImageOptions, ListImagesOptions};
 use bollard::image::APIImages;
-use bollard::image::ListImagesOptions;
 use failure::Error;
+use futures::stream::Stream;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
 
@@ -21,7 +23,7 @@ pub struct Environment<C> {
 }
 
 impl<C> Environment<C>
-    where C: 'static + Connect + Sync
+    where C: 'static + Connect
 {
     pub fn new(docker: Docker<C>, runtime: Runtime) -> Environment<C> {
         Environment {
@@ -38,19 +40,31 @@ impl<C> Environment<C>
             })))
     }
 
-    pub fn pull(&mut self, printer: &mut impl Printer, image_name: &str) {}
-}
+    pub fn pull(&mut self, printer: &mut impl Printer, image_name: &str) {
+        self.runtime.block_on(
+            self.docker.create_image(Some(CreateImageOptions {
+                from_image: image_name,
+                tag: "latest",
+                ..Default::default()
+            })).then(|result| {
+                println!("{:?}", result);
+                result
+            }).collect()
+        );
+    }
 
-/*
-pub fn create_hello() -> impl Future<Item=Vec<(serde_json::value::Value, ContainerCreateInfo)>, Error=shiplift::Error> {
-    let image_name = "hello-world";
-    let container_options = ContainerOptions::builder(image_name).build();
+    pub fn create(&mut self, image_name: &str) -> DockerResult<String> {
+        self.runtime.block_on(
+            self.docker.create_container(None::<CreateContainerOptions<String>>, Config {
+                image: Some(image_name),
+                ..Default::default()
+            })
+        ).map(|container_results| container_results.id)
+    }
 
-    DOCKER.images().pull(&PullOptions::builder().image(image_name).tag("latest").build())
-        .and_then(move |pull_result| {
-            DOCKER.containers().create(&container_options).map(
-                |create_result| (pull_result, create_result)
-            )
-        }).collect()
+    pub fn start(&mut self, container_id: &str) -> DockerResult<()> {
+        self.runtime.block_on(
+            self.docker.start_container(container_id, None::<StartContainerOptions<String>>)
+        )
+    }
 }
-*/

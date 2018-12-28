@@ -72,8 +72,8 @@ fn main() {
         .about("Your one-stop CTF problem management tool")
         .subcommand(SubCommand::with_name("list")
             .about("shows the list of containers"))
-        .subcommand(SubCommand::with_name("create-hello")
-            .about("creates docker hello-world container"))
+        .subcommand(SubCommand::with_name("run-hello")
+            .about("runs docker hello-world container"))
         .get_matches();
 
     match matches.subcommand() {
@@ -91,14 +91,18 @@ fn main() {
                 }
             }
         }
-        ("create-hello", _) => {
+        ("run-hello", _) => {
             let (mut env, mut printer) = default_setup();
             env.pull(&mut printer, "hello-world");
+
+            let create_result = env.create("hello-world");
+            println!("Created a container: {:?}", create_result);
+            if let Ok(container_name) = create_result {
+                println!("Started a container: {:?}", env.start(&container_name));
+            }
         }
         _ => {
             println!("I don't understand...");
         }
     }
-
-    let a = 1;
 }
