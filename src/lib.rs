@@ -1,18 +1,13 @@
-use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
-use bollard::image::APIImages;
-use bollard::image::{CreateImageOptions, ListImagesOptions};
-use bollard::Docker;
-use failure::Error;
-use futures::stream::Stream;
-use hyper::client::connect::Connect;
-use tokio::runtime::current_thread::Runtime;
+use std::cell::{RefCell, RefMut};
 
+use bollard::Docker;
+use hyper::client::connect::Connect;
+
+pub mod docker;
 pub mod error;
 pub mod repo;
 
-type DockerResult<T> = Result<T, Error>;
-
-pub trait Printer: Send + Sync {
+pub trait Printer {
     type Handle;
 
     fn get_current_handle(&self) -> Self::Handle;
@@ -20,59 +15,23 @@ pub trait Printer: Send + Sync {
     fn write_line(&mut self, message: &str);
 }
 
-pub struct Soma<C> {
+pub struct Config<C, P: Printer> {
     docker: Docker<C>,
-    runtime: Runtime,
+    printer: RefCell<P>,
 }
 
-impl<C> Soma<C>
+impl<C, P: Printer> Config<C, P>
 where
     C: 'static + Connect,
 {
-    pub fn new(docker: Docker<C>, runtime: Runtime) -> Soma<C> {
-        Soma { docker, runtime }
+    pub fn new(docker: Docker<C>, printer: P) -> Config<C, P> {
+        Config {
+            docker,
+            printer: RefCell::new(printer),
+        }
     }
 
-    pub fn list(&mut self) -> DockerResult<Vec<APIImages>> {
-        self.runtime
-            .block_on(self.docker.list_images(Some(ListImagesOptions::<String> {
-                all: true,
-                ..Default::default()
-            })))
-    }
-
-    pub fn pull(&mut self, _printer: &mut impl Printer, image_name: &str) {
-        self.runtime.block_on(
-            self.docker
-                .create_image(Some(CreateImageOptions {
-                    from_image: image_name,
-                    tag: "latest",
-                    ..Default::default()
-                }))
-                .then(|result| {
-                    println!("{:?}", result);
-                    result
-                })
-                .collect(),
-        );
-    }
-
-    pub fn create(&mut self, image_name: &str) -> DockerResult<String> {
-        self.runtime
-            .block_on(self.docker.create_container(
-                None::<CreateContainerOptions<String>>,
-                Config {
-                    image: Some(image_name),
-                    ..Default::default()
-                },
-            ))
-            .map(|container_results| container_results.id)
-    }
-
-    pub fn start(&mut self, container_id: &str) -> DockerResult<()> {
-        self.runtime.block_on(
-            self.docker
-                .start_container(container_id, None::<StartContainerOptions<String>>),
-        )
+    pub fn get_printer(&self) -> RefMut<P> {
+        self.printer.borrow_mut()
     }
 }
