@@ -5,15 +5,15 @@ use failure::Error;
 use serde_derive::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Config {
+pub struct Manifest {
     pub name: String,
-    pub executable: Vec<FileConfig>,
-    pub readonly: Vec<FileConfig>,
+    pub executable: Vec<FileEntry>,
+    pub readonly: Vec<FileEntry>,
     pub binary: BinaryConfig,
 }
 
 #[derive(Deserialize)]
-pub struct FileConfig {
+pub struct FileEntry {
     pub path: String,
     pub public: Option<bool>,
 }
@@ -31,6 +31,6 @@ fn read_file_contents(file_name: &str) -> Result<Vec<u8>, Error> {
     Ok(contents)
 }
 
-pub fn load_config(config_file_name: &str) -> Result<Config, Error> {
-    Ok(toml::from_slice(&read_file_contents(config_file_name)?)?)
+pub fn load_manifest(manifest_file_name: &str) -> Result<Manifest, Error> {
+    Ok(toml::from_slice(&read_file_contents(manifest_file_name)?)?)
 }
