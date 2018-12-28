@@ -7,6 +7,9 @@ use futures::stream::Stream;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
 
+pub mod error;
+pub mod repo;
+
 type DockerResult<T> = Result<T, Error>;
 
 pub trait Printer: Send + Sync {
