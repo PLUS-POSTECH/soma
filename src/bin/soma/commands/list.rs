@@ -6,7 +6,7 @@ use hyper::client::connect::Connect;
 use soma::Printer;
 use soma::Soma;
 
-use crate::commands::SomaCommand;
+use crate::commands::{App, SomaCommand};
 
 pub struct ListCommand;
 
@@ -19,7 +19,7 @@ impl ListCommand {
 impl SomaCommand for ListCommand {
     const NAME: &'static str = "list";
 
-    fn app(&self) -> App<'static, 'static> {
+    fn app(&self) -> App {
         SubCommand::with_name(Self::NAME).about("lists docker images")
     }
 

@@ -6,7 +6,7 @@ use hyper::client::connect::Connect;
 use soma::Printer;
 use soma::Soma;
 
-use crate::commands::SomaCommand;
+use crate::commands::{App, SomaCommand};
 
 pub struct AddCommand;
 
@@ -19,7 +19,7 @@ impl AddCommand {
 impl SomaCommand for AddCommand {
     const NAME: &'static str = "add";
 
-    fn app(&self) -> App<'static, 'static> {
+    fn app(&self) -> App {
         SubCommand::with_name(Self::NAME).about("registers a soma repository")
     }
 
