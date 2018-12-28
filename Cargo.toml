@@ -6,11 +6,12 @@ edition = "2018"
 
 
 [dependencies]
+bollard = "0.1"
 clap = "2.32.0"
+crossterm = "0.5.0"
+failure = "0.1.3"
 futures = "0.1.25"
-http = "0.1"
-lazy_static = "1.2.0"
-shiplift = { version = "0.4.0", default-features = false }
+hyper = "0.12"
 tokio = "0.1"
 
 [lib]
@@ -20,3 +21,4 @@ path = "src/lib.rs"
 [[bin]]
 name = "soma"
 path = "src/main.rs"
+doc = false
