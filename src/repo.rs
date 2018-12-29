@@ -6,6 +6,11 @@ use serde_derive::Deserialize;
 use crate::error::Result as SomaResult;
 
 #[derive(Deserialize)]
+pub struct Repository {
+    pub manifest: Manifest,
+}
+
+#[derive(Deserialize)]
 pub struct Manifest {
     pub name: String,
     pub executable: Vec<FileEntry>,

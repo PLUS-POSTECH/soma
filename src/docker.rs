@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
 use failure::Error;
@@ -35,14 +37,19 @@ pub fn pull<'a>(
 }
 
 pub fn create<'a>(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &'a Environment<impl Connect + 'static, impl Printer>,
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
+    let mut labels = HashMap::new();
+    labels.insert("soma.version", env.soma_info().version.as_str());
+    labels.insert("soma.username", env.soma_info().username.as_str());
+    labels.insert("soma.repository", "test");
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,
             Config {
                 image: Some(image_name),
+                labels: Some(labels),
                 ..Default::default()
             },
         )
