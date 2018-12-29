@@ -19,7 +19,7 @@ impl DataDirectory {
             if let Some(dir) = std::env::var_os("SOMA_DATA_DIR") {
                 dir.into()
             } else {
-                let mut home = dirs::home_dir().ok_or(SomaError::DataDirectoryError)?;
+                let mut home = dirs::home_dir().ok_or(SomaError::DataDirectoryAccessError)?;
                 home.push(".soma");
                 home
             }
@@ -32,14 +32,15 @@ impl DataDirectory {
             ))
                 .confirm()
             {
-                Err(SomaError::DataDirectoryError)?;
+                Err(SomaError::DataDirectoryAccessError)?;
             }
             fs::create_dir_all(&path)?;
         }
 
         let lock = File::create(path.join("soma.lock"))?;
         // TODO: use more fine-tuned lock
-        lock.lock_exclusive()?;
+        lock.try_lock_exclusive()
+            .or(Err(SomaError::DataDirectoryLockError))?;
 
         Ok(DataDirectory { path, lock })
     }
