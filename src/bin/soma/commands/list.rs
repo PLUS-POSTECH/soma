@@ -7,7 +7,7 @@ use soma::error::Result as SomaResult;
 use soma::Environment;
 use soma::Printer;
 
-use crate::commands::get_default_runtime;
+use crate::commands::default_runtime;
 use crate::commands::{App, SomaCommand};
 
 pub struct ListCommand;
@@ -30,8 +30,8 @@ impl SomaCommand for ListCommand {
         env: Environment<impl Connect + 'static, impl Printer>,
         _matches: &ArgMatches,
     ) -> SomaResult<()> {
-        let mut runtime = get_default_runtime();
-        env.get_printer()
+        let mut runtime = default_runtime();
+        env.printer()
             .write_line(&format!("{:?}", runtime.block_on(docker::list(&env))?));
 
         Ok(())

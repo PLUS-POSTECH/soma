@@ -35,7 +35,11 @@ where
         }
     }
 
-    pub fn get_printer(&self) -> RefMut<P> {
+    pub fn data_dir(&self) -> &DataDirectory {
+        &self.data_dir
+    }
+
+    pub fn printer(&self) -> RefMut<P> {
         self.printer.borrow_mut()
     }
 }
