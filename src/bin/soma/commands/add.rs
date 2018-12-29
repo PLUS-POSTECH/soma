@@ -2,7 +2,8 @@ use clap::ArgMatches;
 use clap::SubCommand;
 use hyper::client::connect::Connect;
 
-use soma::Config;
+use soma::error::Result as SomaResult;
+use soma::Environment;
 use soma::Printer;
 
 use crate::commands::{App, SomaCommand};
@@ -24,9 +25,9 @@ impl SomaCommand for AddCommand {
 
     fn handle_match(
         &self,
-        _config: Config<impl Connect + 'static, impl Printer>,
+        _env: Environment<impl Connect + 'static, impl Printer>,
         _matches: &ArgMatches,
-    ) {
+    ) -> SomaResult<()> {
         unimplemented!()
     }
 }

@@ -2,7 +2,8 @@ use clap::ArgMatches;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
 
-use soma::Config;
+use soma::error::Result as SomaResult;
+use soma::Environment;
 use soma::Printer;
 
 pub mod add;
@@ -16,9 +17,9 @@ pub trait SomaCommand {
     fn app(&self) -> App;
     fn handle_match(
         &self,
-        config: Config<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
-    );
+    ) -> SomaResult<()>;
 }
 
 fn get_default_runtime() -> Runtime {

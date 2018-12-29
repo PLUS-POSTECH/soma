@@ -2,14 +2,10 @@ use failure::Fail;
 
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "Unknown error")]
-    Unknown,
-    #[fail(display = "error: {}", _0)]
-    Message(String),
+    #[fail(display = "soma failed to access the data directory")]
+    DataDirectoryAccessError,
+    #[fail(display = "another soma instance is using the data directory")]
+    DataDirectoryLockError,
 }
 
-impl From<()> for Error {
-    fn from(_: ()) -> Self {
-        Error::Unknown
-    }
-}
+pub type Result<T> = std::result::Result<T, failure::Error>;
