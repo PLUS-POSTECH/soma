@@ -2,7 +2,7 @@ use std::cell::{RefCell, RefMut};
 
 use bollard::Docker;
 use hyper::client::connect::Connect;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::data_dir::DataDirectory;
 
@@ -19,7 +19,7 @@ pub trait Printer {
     fn write_line(&mut self, message: &str);
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct SomaInfo {
     pub username: String,
     pub version: String,

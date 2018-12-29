@@ -1,25 +1,26 @@
 FROM {{ os }}
 
-LABEL maintainer="soma_{{ username }}"
-LABEL soma.id="{{ soma.id }}"
-LABEL soma.version="{{ soma.version }}"
-LABEL soma.repository="{{ repository }}"
+LABEL maintainer="soma_{{ soma_info.username }}"
+LABEL soma.username="{{ soma_info.username }}"
+LABEL soma.version="{{ soma_info.version }}"
+LABEL soma.repository="{{ repository.name }}"
 
 RUN apt update && apt -y upgrade
 RUN apt install -y socat
 
-ENV PROB "{{ name }}"
+ENV PROB "{{ repository.name }}"
 RUN useradd -m $PROB
 RUN chown -R root:$PROB /home/$PROB
 
 ADD deploy/ /
 
+{{ #with repository.manifest }}
 {{ #each executable }}
-RUN chmod +x "{{ path }}"
+RUN chmod +x "{{ this.path }}"
 {{ /each }}
 
 {{ #each readonly }}
-RUN chmod -w "{{ path }}"
+RUN chmod -w "{{ this.path }}"
 {{ /each }}
 
 COPY ./start.sh /start.sh
@@ -28,7 +29,8 @@ RUN chmod 555 /start.sh
 USER $PROB
 CMD ["/start.sh"]
 
-EXPOSE {{ port }}
+EXPOSE {{ binary_config.port }}
+{{ /with }}
 
 #RUN apt install -y tzdata
 #ENV TZ=Asia/Seoul
