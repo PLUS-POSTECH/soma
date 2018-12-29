@@ -1,5 +1,6 @@
 use std::cell::{RefCell, RefMut};
 
+use crate::data_dir::DataDirectory;
 use bollard::Docker;
 use hyper::client::connect::Connect;
 
@@ -16,17 +17,19 @@ pub trait Printer {
     fn write_line(&mut self, message: &str);
 }
 
-pub struct Config<C, P: Printer> {
+pub struct Environment<C, P: Printer> {
+    data_dir: DataDirectory,
     docker: Docker<C>,
     printer: RefCell<P>,
 }
 
-impl<C, P: Printer> Config<C, P>
+impl<C, P: Printer> Environment<C, P>
 where
     C: 'static + Connect,
 {
-    pub fn new(docker: Docker<C>, printer: P) -> Config<C, P> {
-        Config {
+    pub fn new(data_dir: DataDirectory, docker: Docker<C>, printer: P) -> Environment<C, P> {
+        Environment {
+            data_dir,
             docker,
             printer: RefCell::new(printer),
         }

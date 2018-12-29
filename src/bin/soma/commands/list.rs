@@ -3,7 +3,8 @@ use clap::SubCommand;
 use hyper::client::connect::Connect;
 
 use soma::docker;
-use soma::Config;
+use soma::error::Result as SomaResult;
+use soma::Environment;
 use soma::Printer;
 
 use crate::commands::get_default_runtime;
@@ -26,12 +27,13 @@ impl SomaCommand for ListCommand {
 
     fn handle_match(
         &self,
-        config: Config<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect + 'static, impl Printer>,
         _matches: &ArgMatches,
-    ) {
+    ) -> SomaResult<()> {
         let mut runtime = get_default_runtime();
-        config
-            .get_printer()
-            .write_line(&format!("{:?}", runtime.block_on(docker::list(&config))));
+        env.get_printer()
+            .write_line(&format!("{:?}", runtime.block_on(docker::list(&env))?));
+
+        Ok(())
     }
 }

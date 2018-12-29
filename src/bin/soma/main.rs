@@ -1,10 +1,12 @@
+use std::string::ToString;
+
 use bollard::Docker;
 use clap::{crate_version, App, AppSettings};
-use failure::Error;
 use hyper::client::connect::Connect;
 
-use soma::data_dir::initialize;
-use soma::Config;
+use soma::data_dir::DataDirectory;
+use soma::error::Result as SomaResult;
+use soma::Environment;
 use soma::Printer;
 
 use crate::commands::{add::AddCommand, list::ListCommand, SomaCommand};
@@ -14,23 +16,24 @@ mod commands;
 mod terminal_printer;
 
 #[cfg(windows)]
-fn connect_default() -> Result<Docker<impl Connect>, Error> {
+fn connect_default() -> SomaResult<Docker<impl Connect>> {
     Docker::connect_with_named_pipe_defaults()
 }
 
 #[cfg(unix)]
-fn connect_default() -> Result<Docker<impl Connect>, Error> {
+fn connect_default() -> SomaResult<Docker<impl Connect>> {
     Docker::connect_with_unix_defaults()
 }
 
-fn default_setup() -> Config<impl Connect, impl Printer> {
-    Config::new(
+fn cli_env(data_dir: DataDirectory) -> Environment<impl Connect, impl Printer> {
+    Environment::new(
+        data_dir,
         connect_default().expect("failed to connect to docker"),
         TerminalPrinter::new(),
     )
 }
 
-fn main() {
+fn main_result() -> SomaResult<()> {
     let add_command: AddCommand = AddCommand::new();
     let list_command: ListCommand = ListCommand::new();
 
@@ -42,15 +45,19 @@ fn main() {
         .subcommand(list_command.app())
         .get_matches();
 
-    if !initialize() {
-        std::process::exit(1);
-    }
-
-    let config = default_setup();
+    let data_dir = DataDirectory::new()?;
+    let env = cli_env(data_dir);
 
     match matches.subcommand() {
-        (AddCommand::NAME, Some(matches)) => add_command.handle_match(config, matches),
-        (ListCommand::NAME, Some(matches)) => list_command.handle_match(config, matches),
+        (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
+        (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
         _ => unreachable!(),
+    }
+}
+
+fn main() {
+    if let Err(err) = main_result() {
+        eprintln!("{}", err.to_string());
+        std::process::exit(1);
     }
 }
