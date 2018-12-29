@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::path::Path;
+use std::process::Command;
 
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
@@ -7,6 +9,7 @@ use futures::stream::Stream;
 use futures::Future;
 use hyper::client::connect::Connect;
 
+use crate::error::Result as SomaResult;
 use crate::Environment;
 use crate::Printer;
 
@@ -34,6 +37,21 @@ pub fn pull<'a>(
             result
         })
         .collect()
+}
+
+// Bollard doesn't support image build yet :(
+pub fn build<'a>(image_name: &'a str, build_path: impl AsRef<Path>) -> SomaResult<()> {
+    Command::new("docker")
+        .args(&[
+            "build",
+            "--pull",
+            "--force-rm",
+            "-t",
+            image_name,
+            &build_path.as_ref().to_string_lossy(),
+        ])
+        .status()?;
+    Ok(())
 }
 
 pub fn create<'a>(
