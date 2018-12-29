@@ -2,8 +2,8 @@ use clap::ArgMatches;
 use clap::SubCommand;
 use hyper::client::connect::Connect;
 
+use soma::Config;
 use soma::Printer;
-use soma::Soma;
 
 use crate::commands::{App, SomaCommand};
 
@@ -22,10 +22,11 @@ impl SomaCommand for AddCommand {
         SubCommand::with_name(Self::NAME).about("registers a soma repository")
     }
 
-    fn handle_match<C>(&self, _matches: &ArgMatches, mut _soma: Soma<C>, mut _printer: impl Printer)
-    where
-        C: 'static + Connect,
-    {
+    fn handle_match(
+        &self,
+        _config: Config<impl Connect + 'static, impl Printer>,
+        _matches: &ArgMatches,
+    ) {
         unimplemented!()
     }
 }
