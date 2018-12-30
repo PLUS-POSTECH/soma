@@ -13,7 +13,7 @@ pub struct Repository {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Manifest {
+pub struct Manifest {
     name: String,
     executable: Vec<FileEntry>,
     readonly: Vec<FileEntry>,
