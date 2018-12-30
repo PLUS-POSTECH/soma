@@ -40,7 +40,8 @@ pub fn pull<'a>(
 }
 
 // Bollard doesn't support image build yet :(
-pub fn build<'a>(image_name: &'a str, build_path: impl AsRef<Path>) -> SomaResult<()> {
+// We are building images by executing docker client manually
+pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
     Command::new("docker")
         .args(&[
             "build",
