@@ -8,28 +8,28 @@ use crate::error::Result as SomaResult;
 
 #[derive(Deserialize, Serialize)]
 pub struct Repository {
-    pub name: String,
-    pub manifest: Manifest,
+    name: String,
+    manifest: Manifest,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct Manifest {
-    pub name: String,
-    pub executable: Vec<FileEntry>,
-    pub readonly: Vec<FileEntry>,
-    pub binary: BinaryConfig,
+struct Manifest {
+    name: String,
+    executable: Vec<FileEntry>,
+    readonly: Vec<FileEntry>,
+    binary: BinaryConfig,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct FileEntry {
-    pub path: String,
-    pub public: Option<bool>,
+struct FileEntry {
+    path: String,
+    public: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct BinaryConfig {
-    pub os: String,
-    pub entry: String,
+struct BinaryConfig {
+    os: String,
+    entry: String,
 }
 
 fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
