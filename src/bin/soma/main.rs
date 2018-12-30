@@ -41,7 +41,6 @@ fn main_result() -> SomaResult<()> {
     let add_command: AddCommand = AddCommand::new();
     let list_command: ListCommand = ListCommand::new();
     let clone_command: CloneCommand = CloneCommand::new();
-    let pull_command: PullCommand = PullCommand::new();
 
     let matches = App::new("soma")
         .version(crate_version!())
@@ -50,7 +49,6 @@ fn main_result() -> SomaResult<()> {
         .subcommand(add_command.app())
         .subcommand(list_command.app())
         .subcommand(clone_command.app())
-        .subcommand(pull_command.app())
         .get_matches();
 
     let data_dir = DataDirectory::new()?;
@@ -64,7 +62,6 @@ fn main_result() -> SomaResult<()> {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
         (CloneCommand::NAME, Some(matches)) => clone_command.handle_match(env, matches),
-        (PullCommand::NAME, Some(matches)) => pull_command.handle_match(env, matches),
         _ => unreachable!(),
     }
 }

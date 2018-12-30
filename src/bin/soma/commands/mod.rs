@@ -6,12 +6,11 @@ use soma::error::Result as SomaResult;
 use soma::Environment;
 use soma::Printer;
 
-pub use self::{add::AddCommand, clone::CloneCommand, list::ListCommand, pull::PullCommand};
+pub use self::{add::AddCommand, clone::CloneCommand, list::ListCommand};
 
 pub mod add;
 pub mod clone;
 pub mod list;
-pub mod pull;
 
 type App = clap::App<'static, 'static>;
 

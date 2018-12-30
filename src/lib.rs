@@ -10,6 +10,7 @@ pub mod data_dir;
 pub mod docker;
 pub mod error;
 pub mod repo;
+pub mod template;
 
 pub trait Printer {
     type Handle;
