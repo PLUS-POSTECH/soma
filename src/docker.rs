@@ -15,10 +15,24 @@ use crate::{Environment, Printer, VERSION};
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
 ) -> impl Future<Item = Vec<APIImages>, Error = Error> {
-    env.docker.list_images(Some(ListImagesOptions::<String> {
-        all: true,
-        ..Default::default()
-    }))
+    let username = env.username().clone();
+    env.docker
+        .list_images(Some(ListImagesOptions::<String> {
+            all: true,
+            ..Default::default()
+        }))
+        .map(move |images| -> Vec<APIImages> {
+            images
+                .into_iter()
+                .filter(|image| match &image.labels {
+                    Some(labels) => match labels.get("soma.username") {
+                        Some(image_username) => image_username == &username,
+                        None => false,
+                    },
+                    None => false,
+                })
+                .collect()
+        })
 }
 
 pub fn pull<'a>(
@@ -60,7 +74,7 @@ pub fn create<'a>(
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
     labels.insert("soma.version", VERSION);
-    labels.insert("soma.username", env.username().as_str());
+    labels.insert("soma.username", &env.username());
     labels.insert("soma.repository", "test");
     env.docker
         .create_container(
