@@ -12,7 +12,6 @@ const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
 const SOMA_DATA_DIR_NAME: &str = ".soma";
 const LOCK_FILE_NAME: &str = "soma.lock";
 const CACHE_DIR_NAME: &str = "cache";
-const TEMPLATES_DIR_NAME: &str = "templates";
 
 pub struct DataDirectory {
     path: PathBuf,
@@ -53,10 +52,6 @@ impl DataDirectory {
 
     pub fn root_path(&self) -> PathBuf {
         self.path.clone()
-    }
-
-    pub fn templates_path(&self) -> PathBuf {
-        self.path.join(TEMPLATES_DIR_NAME)
     }
 
     pub fn cache_path(&self) -> PathBuf {
