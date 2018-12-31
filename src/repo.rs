@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -5,6 +6,11 @@ use std::path::Path;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Result as SomaResult;
+use crate::repo::backend::Backend;
+
+pub mod backend;
+
+pub type RepositoryList = HashMap<String, Backend>;
 
 #[derive(Deserialize, Serialize)]
 pub struct Repository {

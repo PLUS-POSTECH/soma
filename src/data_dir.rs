@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
@@ -7,14 +8,18 @@ use fs2::FileExt;
 use question::{Answer, Question};
 
 use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::repo::RepositoryList;
 
 const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
 const SOMA_DATA_DIR_NAME: &str = ".soma";
+
 const LOCK_FILE_NAME: &str = "soma.lock";
+const REPOSITORY_LIST_FILE_NAME: &str = "repositories";
+
 const CACHE_DIR_NAME: &str = "cache";
 
 pub struct DataDirectory {
-    path: PathBuf,
+    root_path: PathBuf,
     lock: File,
 }
 
@@ -47,21 +52,45 @@ impl DataDirectory {
         lock.try_lock_exclusive()
             .or(Err(SomaError::DataDirectoryLockError))?;
 
-        Ok(DataDirectory { path, lock })
+        Ok(DataDirectory {
+            root_path: path,
+            lock,
+        })
     }
 
     pub fn root_path(&self) -> PathBuf {
-        self.path.clone()
+        self.root_path.clone()
     }
 
     pub fn cache_path(&self) -> PathBuf {
-        self.path.join(CACHE_DIR_NAME)
+        self.root_path.join(CACHE_DIR_NAME)
+    }
+
+    pub fn repository_list_path(&self) -> PathBuf {
+        self.root_path.join(REPOSITORY_LIST_FILE_NAME)
     }
 
     pub fn create_cache(&self, dir_name: impl AsRef<Path>) -> SomaResult<PathBuf> {
         let cache_path = self.cache_path().join(dir_name);
         fs::create_dir(&cache_path)?;
         Ok(cache_path)
+    }
+
+    pub fn read_repository_list(&self) -> SomaResult<RepositoryList> {
+        let path = self.repository_list_path();
+        if path.exists() {
+            let file = File::open(path.as_path())?;
+            Ok(serde_cbor::from_reader(file)?)
+        } else {
+            Ok(HashMap::new())
+        }
+    }
+
+    pub fn write_repository_list(&self, repository_list: RepositoryList) -> SomaResult<()> {
+        let path = self.repository_list_path();
+        let mut file = File::create(path)?;
+        serde_cbor::to_writer(&mut file, &repository_list)?;
+        Ok(())
     }
 }
 

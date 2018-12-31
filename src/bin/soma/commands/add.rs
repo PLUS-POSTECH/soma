@@ -1,5 +1,4 @@
-use clap::ArgMatches;
-use clap::SubCommand;
+use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
 use soma::error::Result as SomaResult;
@@ -19,7 +18,13 @@ impl SomaCommand for AddCommand {
     const NAME: &'static str = "add";
 
     fn app(&self) -> App {
-        SubCommand::with_name(Self::NAME).about("registers a soma repository")
+        SubCommand::with_name(Self::NAME)
+            .about("registers a soma repository")
+            .arg(
+                Arg::with_name("repository")
+                    .required(true)
+                    .help("use @user/repo for GitHub repository or ./dir for local repository"),
+            )
     }
 
     fn handle_match(
