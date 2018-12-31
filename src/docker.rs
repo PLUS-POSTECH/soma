@@ -12,6 +12,10 @@ use hyper::client::connect::Connect;
 use crate::error::Result as SomaResult;
 use crate::{Environment, Printer, VERSION};
 
+pub const LABEL_KEY_VERSION: &'static str = "soma.version";
+pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
+pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
+
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
 ) -> impl Future<Item = Vec<APIImages>, Error = Error> {
@@ -25,7 +29,7 @@ pub fn list(
             images
                 .into_iter()
                 .filter(|image| match &image.labels {
-                    Some(labels) => match labels.get("soma.username") {
+                    Some(labels) => match labels.get(LABEL_KEY_USERNAME) {
                         Some(image_username) => image_username == &username,
                         None => false,
                     },
@@ -73,9 +77,9 @@ pub fn create<'a>(
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
-    labels.insert("soma.version", VERSION);
-    labels.insert("soma.username", &env.username());
-    labels.insert("soma.repository", "test");
+    labels.insert(LABEL_KEY_VERSION, VERSION);
+    labels.insert(LABEL_KEY_USERNAME, &env.username());
+    labels.insert(LABEL_KEY_REPOSITORY, "test");
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,
