@@ -29,7 +29,7 @@ RUN chmod 555 /start.sh
 USER $PROB
 CMD ["/start.sh"]
 
-EXPOSE {{ port }}
+EXPOSE 1024
 {{ /with }}
 
 #RUN apt install -y tzdata
