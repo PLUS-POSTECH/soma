@@ -1,13 +1,18 @@
 use std::cell::{RefCell, RefMut};
 
-use crate::data_dir::DataDirectory;
 use bollard::Docker;
+use clap::crate_version;
 use hyper::client::connect::Connect;
+
+use crate::data_dir::DataDirectory;
 
 pub mod data_dir;
 pub mod docker;
 pub mod error;
 pub mod repo;
+pub mod template;
+
+pub const VERSION: &'static str = crate_version!();
 
 pub trait Printer {
     type Handle;
@@ -18,6 +23,7 @@ pub trait Printer {
 }
 
 pub struct Environment<C, P: Printer> {
+    username: String,
     data_dir: DataDirectory,
     docker: Docker<C>,
     printer: RefCell<P>,
@@ -27,12 +33,22 @@ impl<C, P: Printer> Environment<C, P>
 where
     C: 'static + Connect,
 {
-    pub fn new(data_dir: DataDirectory, docker: Docker<C>, printer: P) -> Environment<C, P> {
+    pub fn new(
+        username: String,
+        data_dir: DataDirectory,
+        docker: Docker<C>,
+        printer: P,
+    ) -> Environment<C, P> {
         Environment {
+            username,
             data_dir,
             docker,
             printer: RefCell::new(printer),
         }
+    }
+
+    pub fn username(&self) -> &String {
+        &self.username
     }
 
     pub fn data_dir(&self) -> &DataDirectory {

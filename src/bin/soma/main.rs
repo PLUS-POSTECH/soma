@@ -1,13 +1,13 @@
 use std::string::ToString;
 
 use bollard::Docker;
-use clap::{crate_version, App, AppSettings};
+use clap::{App, AppSettings};
 use hyper::client::connect::Connect;
+use whoami::username;
 
 use soma::data_dir::DataDirectory;
 use soma::error::Result as SomaResult;
-use soma::Environment;
-use soma::Printer;
+use soma::{Environment, Printer, VERSION};
 
 use crate::commands::*;
 use crate::terminal_printer::TerminalPrinter;
@@ -27,6 +27,7 @@ fn connect_default() -> SomaResult<Docker<impl Connect>> {
 
 fn cli_env(data_dir: DataDirectory) -> Environment<impl Connect, impl Printer> {
     Environment::new(
+        username(),
         data_dir,
         connect_default().expect("failed to connect to docker"),
         TerminalPrinter::new(),
@@ -39,7 +40,7 @@ fn main_result() -> SomaResult<()> {
     let clone_command: CloneCommand = CloneCommand::new();
 
     let matches = App::new("soma")
-        .version(crate_version!())
+        .version(VERSION)
         .about("Your one-stop CTF problem management tool")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(add_command.app())

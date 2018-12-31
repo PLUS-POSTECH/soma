@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::path::Path;
+use std::process::Command;
+
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
 use failure::Error;
@@ -5,8 +9,8 @@ use futures::stream::Stream;
 use futures::Future;
 use hyper::client::connect::Connect;
 
-use crate::Environment;
-use crate::Printer;
+use crate::error::Result as SomaResult;
+use crate::{Environment, Printer, VERSION};
 
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
@@ -34,15 +38,36 @@ pub fn pull<'a>(
         .collect()
 }
 
+// Bollard doesn't support image build yet :(
+// We are building images by executing docker client manually
+pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
+    Command::new("docker")
+        .args(&[
+            "build",
+            "--pull",
+            "--force-rm",
+            "-t",
+            image_name,
+            &build_path.as_ref().to_string_lossy(),
+        ])
+        .status()?;
+    Ok(())
+}
+
 pub fn create<'a>(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &'a Environment<impl Connect + 'static, impl Printer>,
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
+    let mut labels = HashMap::new();
+    labels.insert("soma.version", VERSION);
+    labels.insert("soma.username", env.username().as_str());
+    labels.insert("soma.repository", "test");
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,
             Config {
                 image: Some(image_name),
+                labels: Some(labels),
                 ..Default::default()
             },
         )
