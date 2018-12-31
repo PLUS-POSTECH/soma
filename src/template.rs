@@ -12,8 +12,7 @@ use tempfile::tempdir;
 use crate::docker;
 use crate::error::{Error as SomaError, Result as SomaResult};
 use crate::repo::Repository as SomaRepository;
-use crate::SomaInfo;
-use crate::{Environment, Printer};
+use crate::{Environment, Printer, VERSION};
 
 enum Templates {
     BinaryDockerfile,
@@ -31,7 +30,8 @@ impl Templates {
 
 #[derive(Deserialize, Serialize)]
 struct RenderingInput {
-    soma_info: SomaInfo,
+    username: String,
+    version: String,
     repository: SomaRepository,
 }
 
@@ -53,7 +53,8 @@ pub fn build_soma_image(
     let work_dir = temp_dir.path().join(repo_dir_name);
 
     let rendering_input = RenderingInput {
-        soma_info: env.soma_info().clone(),
+        username: env.username().clone(),
+        version: VERSION.to_string(),
         repository,
     };
 

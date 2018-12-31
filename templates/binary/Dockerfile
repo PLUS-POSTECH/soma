@@ -1,8 +1,8 @@
 FROM {{ os }}
 
-LABEL maintainer="soma_{{ soma_info.username }}"
-LABEL soma.username="{{ soma_info.username }}"
-LABEL soma.version="{{ soma_info.version }}"
+LABEL maintainer="soma_{{ username }}"
+LABEL soma.username="{{ username }}"
+LABEL soma.version="{{ version }}"
 LABEL soma.repository="{{ repository.name }}"
 
 RUN apt update && apt -y upgrade
@@ -29,7 +29,7 @@ RUN chmod 555 /start.sh
 USER $PROB
 CMD ["/start.sh"]
 
-EXPOSE {{ binary_config.port }}
+EXPOSE {{ port }}
 {{ /with }}
 
 #RUN apt install -y tzdata

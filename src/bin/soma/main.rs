@@ -7,7 +7,7 @@ use whoami::username;
 
 use soma::data_dir::DataDirectory;
 use soma::error::Result as SomaResult;
-use soma::{Environment, Printer, SomaInfo};
+use soma::{Environment, Printer};
 
 use crate::commands::*;
 use crate::terminal_printer::TerminalPrinter;
@@ -25,12 +25,9 @@ fn connect_default() -> SomaResult<Docker<impl Connect>> {
     Docker::connect_with_unix_defaults()
 }
 
-fn cli_env(
-    soma_info: SomaInfo,
-    data_dir: DataDirectory,
-) -> Environment<impl Connect, impl Printer> {
+fn cli_env(data_dir: DataDirectory) -> Environment<impl Connect, impl Printer> {
     Environment::new(
-        soma_info,
+        username(),
         data_dir,
         connect_default().expect("failed to connect to docker"),
         TerminalPrinter::new(),
@@ -52,11 +49,7 @@ fn main_result() -> SomaResult<()> {
         .get_matches();
 
     let data_dir = DataDirectory::new()?;
-    let soma_info = SomaInfo {
-        username: username(),
-        version: crate_version!().to_string(),
-    };
-    let env = cli_env(soma_info, data_dir);
+    let env = cli_env(data_dir);
 
     match matches.subcommand() {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),

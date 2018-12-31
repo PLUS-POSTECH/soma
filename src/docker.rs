@@ -10,8 +10,7 @@ use futures::Future;
 use hyper::client::connect::Connect;
 
 use crate::error::Result as SomaResult;
-use crate::Environment;
-use crate::Printer;
+use crate::{Environment, Printer, VERSION};
 
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
@@ -60,8 +59,8 @@ pub fn create<'a>(
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
-    labels.insert("soma.version", env.soma_info().version.as_str());
-    labels.insert("soma.username", env.soma_info().username.as_str());
+    labels.insert("soma.version", VERSION);
+    labels.insert("soma.username", env.username().as_str());
     labels.insert("soma.repository", "test");
     env.docker
         .create_container(

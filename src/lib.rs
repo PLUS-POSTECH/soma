@@ -1,8 +1,8 @@
 use std::cell::{RefCell, RefMut};
 
 use bollard::Docker;
+use clap::crate_version;
 use hyper::client::connect::Connect;
-use serde_derive::{Deserialize, Serialize};
 
 use crate::data_dir::DataDirectory;
 
@@ -12,6 +12,8 @@ pub mod error;
 pub mod repo;
 pub mod template;
 
+pub const VERSION: &'static str = crate_version!();
+
 pub trait Printer {
     type Handle;
 
@@ -20,14 +22,8 @@ pub trait Printer {
     fn write_line(&mut self, message: &str);
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct SomaInfo {
-    pub username: String,
-    pub version: String,
-}
-
 pub struct Environment<C, P: Printer> {
-    soma_info: SomaInfo,
+    username: String,
     data_dir: DataDirectory,
     docker: Docker<C>,
     printer: RefCell<P>,
@@ -38,21 +34,21 @@ where
     C: 'static + Connect,
 {
     pub fn new(
-        soma_info: SomaInfo,
+        username: String,
         data_dir: DataDirectory,
         docker: Docker<C>,
         printer: P,
     ) -> Environment<C, P> {
         Environment {
-            soma_info,
+            username,
             data_dir,
             docker,
             printer: RefCell::new(printer),
         }
     }
 
-    pub fn soma_info(&self) -> &SomaInfo {
-        &self.soma_info
+    pub fn username(&self) -> &String {
+        &self.username
     }
 
     pub fn data_dir(&self) -> &DataDirectory {
