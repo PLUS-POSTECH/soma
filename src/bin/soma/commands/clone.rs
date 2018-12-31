@@ -4,8 +4,7 @@ use hyper::client::connect::Connect;
 use tempfile::tempdir;
 
 use soma::error::Result as SomaResult;
-use soma::Environment;
-use soma::Printer;
+use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};
 

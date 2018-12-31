@@ -4,11 +4,9 @@ use hyper::client::connect::Connect;
 
 use soma::docker;
 use soma::error::Result as SomaResult;
-use soma::Environment;
-use soma::Printer;
+use soma::{Environment, Printer};
 
-use crate::commands::default_runtime;
-use crate::commands::{App, SomaCommand};
+use crate::commands::{default_runtime, App, SomaCommand};
 
 pub struct ListCommand;
 
