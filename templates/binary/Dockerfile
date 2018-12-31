@@ -29,6 +29,7 @@ RUN chmod 555 /start.sh
 USER $PROB
 CMD ["/start.sh"]
 
+# TODO: Container internal port settings may be implemented afterwards
 EXPOSE 1024
 {{ /with }}
 

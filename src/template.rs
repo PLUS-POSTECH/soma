@@ -30,9 +30,9 @@ impl Templates {
 }
 
 #[derive(Deserialize, Serialize)]
-struct RenderingInput {
-    username: String,
-    version: String,
+struct RenderingInput<'a> {
+    username: &'a str,
+    version: &'a str,
     repository: SomaRepository,
 }
 
@@ -54,8 +54,8 @@ pub fn build_soma_image(
     let work_dir = temp_dir.path().join(repo_dir_name);
 
     let rendering_input = RenderingInput {
-        username: env.username().clone(),
-        version: VERSION.to_string(),
+        username: env.username(),
+        version: VERSION,
         repository,
     };
 
