@@ -15,15 +15,16 @@ use crate::repo::Repository as SomaRepository;
 use crate::{Environment, Printer, VERSION};
 
 enum Templates {
-    BinaryDockerfile,
-    BinaryEntryFile,
+    Binary,
 }
 
 impl Templates {
-    fn template_string(&self) -> &'static str {
+    fn templates(&self) -> Vec<(&'static str, &'static str)> {
         match *self {
-            Templates::BinaryDockerfile => include_str!("../templates/binary/Dockerfile"),
-            Templates::BinaryEntryFile => include_str!("../templates/binary/start.sh"),
+            Templates::Binary => vec![
+                ("Dockerfile", include_str!("../templates/binary/Dockerfile")),
+                ("start.sh", include_str!("../templates/binary/start.sh")),
+            ],
         }
     }
 }
@@ -58,15 +59,15 @@ pub fn build_soma_image(
         repository,
     };
 
-    render_file_from_template_string(
-        Templates::BinaryDockerfile.template_string(),
-        &rendering_input,
-        work_dir.join("Dockerfile"),
-    )?;
-    render_file_from_template_string(
-        Templates::BinaryEntryFile.template_string(),
-        &rendering_input,
-        work_dir.join("start.sh"),
+    Templates::Binary.templates().into_iter().try_for_each(
+        |(file_name, template_string)| -> SomaResult<()> {
+            render_file_from_template_string(
+                template_string,
+                &rendering_input,
+                work_dir.join(file_name),
+            )?;
+            Ok(())
+        },
     )?;
 
     docker::build(image_name, work_dir)?;
