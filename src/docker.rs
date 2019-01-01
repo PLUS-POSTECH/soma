@@ -58,7 +58,6 @@ pub fn list(
     let username = env.username().clone();
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
-            all: true,
             ..Default::default()
         }))
         .map(move |images| -> Vec<SomaImage> {
