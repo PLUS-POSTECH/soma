@@ -1,4 +1,4 @@
-FROM {{ os }}
+FROM {{ repository.manifest.binary.os }}
 
 LABEL maintainer="soma_{{ username }}"
 LABEL soma.username="{{ username }}"
