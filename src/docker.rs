@@ -16,13 +16,40 @@ pub const LABEL_KEY_VERSION: &'static str = "soma.version";
 pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
 pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
 
-pub type SomaImage = (APIImages, ImageStatus);
-
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum ImageStatus {
     Normal,
     VersionMismatch,
     NoVersionFound,
+}
+
+#[derive(Debug)]
+pub struct SomaImage {
+    repository_name: String,
+    image: APIImages,
+    status: ImageStatus,
+}
+
+impl SomaImage {
+    pub fn new(repository_name: String, image: APIImages, status: ImageStatus) -> SomaImage {
+        SomaImage {
+            repository_name,
+            image,
+            status,
+        }
+    }
+
+    pub fn repository_name(&self) -> &String {
+        &self.repository_name
+    }
+
+    pub fn image(&self) -> &APIImages {
+        &self.image
+    }
+
+    pub fn status(&self) -> ImageStatus {
+        self.status
+    }
 }
 
 pub fn list(
@@ -45,6 +72,11 @@ pub fn list(
                     None => false,
                 })
                 .map(|image| {
+                    let repository_name =
+                        match image.labels.as_ref().unwrap().get(LABEL_KEY_REPOSITORY) {
+                            Some(name) => name.clone(),
+                            None => "**NONAME**".to_string(),
+                        };
                     let status = match image.labels.as_ref().unwrap().get(LABEL_KEY_VERSION) {
                         Some(image_version) => match image_version.as_str() {
                             VERSION => ImageStatus::Normal,
@@ -52,7 +84,7 @@ pub fn list(
                         },
                         None => ImageStatus::NoVersionFound,
                     };
-                    (image, status)
+                    SomaImage::new(repository_name, image, status)
                 })
                 .collect()
         })
