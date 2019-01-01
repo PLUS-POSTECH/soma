@@ -63,27 +63,26 @@ pub fn list(
         .map(move |images| -> Vec<SomaImage> {
             images
                 .into_iter()
-                .filter(|image| match &image.labels {
-                    Some(labels) => match labels.get(LABEL_KEY_USERNAME) {
-                        Some(image_username) => image_username == &username,
-                        None => false,
-                    },
-                    None => false,
-                })
-                .map(|image| {
-                    let repository_name =
-                        match image.labels.as_ref().unwrap().get(LABEL_KEY_REPOSITORY) {
-                            Some(name) => name.clone(),
-                            None => "**NONAME**".to_string(),
-                        };
-                    let status = match image.labels.as_ref().unwrap().get(LABEL_KEY_VERSION) {
-                        Some(image_version) => match image_version.as_str() {
-                            VERSION => ImageStatus::Normal,
-                            _ => ImageStatus::VersionMismatch,
-                        },
-                        None => ImageStatus::NoVersionFound,
-                    };
-                    SomaImage::new(repository_name, image, status)
+                .filter_map(|image| match &image.labels {
+                    Some(labels) => {
+                        if labels.get(LABEL_KEY_USERNAME) == Some(&username) {
+                            let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                                Some(name) => name.clone(),
+                                None => "**NONAME**".to_string(),
+                            };
+                            let status = match labels.get(LABEL_KEY_VERSION) {
+                                Some(image_version) => match image_version.as_str() {
+                                    VERSION => ImageStatus::Normal,
+                                    _ => ImageStatus::VersionMismatch,
+                                },
+                                None => ImageStatus::NoVersionFound,
+                            };
+                            Some(SomaImage::new(repository_name, image, status))
+                        } else {
+                            None
+                        }
+                    }
+                    None => None,
                 })
                 .collect()
         })
