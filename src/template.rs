@@ -5,8 +5,7 @@ use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
-use serde::Serialize;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tempfile::tempdir;
 
 use crate::docker;
