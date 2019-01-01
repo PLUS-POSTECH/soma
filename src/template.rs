@@ -50,7 +50,7 @@ pub fn build_soma_image(
     let repo_dir_name = repo_path
         .as_ref()
         .file_name()
-        .ok_or(SomaError::InvalidRepositoryError)?;
+        .ok_or(SomaError::InvalidRepositoryPathError)?;
     let work_dir = temp_dir.path().join(repo_dir_name);
 
     let rendering_input = RenderingInput {

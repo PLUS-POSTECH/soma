@@ -7,6 +7,7 @@ use fs2::FileExt;
 use question::{Answer, Question};
 
 use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::repo::backend::Backend;
 use crate::repo::RepositoryIndex;
 
 const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
@@ -69,14 +70,14 @@ impl DataDirectory {
         self.repo_path().join(REPOSITORY_INDEX_FILE_NAME)
     }
 
-    pub fn init_repo(&self, repo_name: impl AsRef<Path>) -> SomaResult<PathBuf> {
+    fn init_repo(&self, repo_name: impl AsRef<Path>) -> SomaResult<PathBuf> {
         fs::create_dir_all(self.repo_path())?;
         let new_repo_path = self.repo_path().join(repo_name);
-        fs::create_dir(&new_repo_path)?;
+        fs::create_dir(&new_repo_path).or(Err(SomaError::DuplicateRepositoryError))?;
         Ok(new_repo_path)
     }
 
-    pub fn read_repo_index(&self) -> SomaResult<RepositoryIndex> {
+    fn read_repo_index(&self) -> SomaResult<RepositoryIndex> {
         let path = self.repo_index_path();
         if path.exists() {
             let file = File::open(path.as_path())?;
@@ -86,11 +87,22 @@ impl DataDirectory {
         }
     }
 
-    pub fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
+    fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
         fs::create_dir_all(self.repo_path())?;
         let path = self.repo_index_path();
         let mut file = File::create(path)?;
         serde_cbor::to_writer(&mut file, &repository_list)?;
+        Ok(())
+    }
+
+    pub fn add_repo(&self, repo_name: String, backend: Backend) -> SomaResult<()> {
+        let mut repo_index = self.read_repo_index()?;
+
+        self.init_repo(&repo_name)?;
+        repo_index.insert(repo_name, backend);
+
+        self.write_repo_index(repo_index)?;
+
         Ok(())
     }
 }

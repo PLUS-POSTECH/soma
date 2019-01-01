@@ -33,13 +33,13 @@ impl SomaCommand for AddCommand {
 
     fn handle_match(
         &self,
-        _env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        println!(
-            "{:?}",
-            parse_repo_url(matches.value_of("repository").unwrap())
-        );
+        let (repo_name, backend) = parse_repo_url(matches.value_of("repository").unwrap())?;
+        env.data_dir().add_repo(repo_name.clone(), backend)?;
+        env.printer()
+            .write_line(&format!("successfully added a repository '{}'", &repo_name));
         Ok(())
     }
 }
@@ -52,20 +52,20 @@ fn parse_repo_url(url: &str) -> SomaResult<(String, Backend)> {
             format!(
                 "#{}",
                 path.file_name()
-                    .ok_or(SomaError::InvalidRepositoryError)?
+                    .ok_or(SomaError::InvalidRepositoryPathError)?
                     .to_str()
-                    .ok_or(SomaError::InvalidRepositoryError)?
+                    .ok_or(SomaError::InvalidRepositoryPathError)?
             ),
             Backend::LocalBackend(path.canonicalize()?.to_owned()),
         ))
     } else {
         // git backend
-        let parsed_url = Url::parse(url)?;
+        let parsed_url = Url::parse(url).or(Err(SomaError::InvalidRepositoryPathError))?;
         let last_name = parsed_url
             .path_segments()
-            .ok_or(SomaError::InvalidRepositoryError)?
+            .ok_or(SomaError::InvalidRepositoryPathError)?
             .last()
-            .ok_or(SomaError::InvalidRepositoryError)?;
+            .ok_or(SomaError::InvalidRepositoryPathError)?;
         let repo_name = if last_name.ends_with(".git") {
             &last_name[..last_name.len() - 4]
         } else {
