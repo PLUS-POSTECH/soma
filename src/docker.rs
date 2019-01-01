@@ -12,13 +12,76 @@ use hyper::client::connect::Connect;
 use crate::error::Result as SomaResult;
 use crate::{Environment, Printer, VERSION};
 
+pub const LABEL_KEY_VERSION: &'static str = "soma.version";
+pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
+pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
+
+#[derive(Clone, Copy, Debug)]
+pub enum ImageStatus {
+    Normal,
+    VersionMismatch,
+    NoVersionFound,
+}
+
+#[derive(Debug)]
+pub struct SomaImage {
+    repository_name: String,
+    image: APIImages,
+    status: ImageStatus,
+}
+
+impl SomaImage {
+    pub fn new(repository_name: String, image: APIImages, status: ImageStatus) -> SomaImage {
+        SomaImage {
+            repository_name,
+            image,
+            status,
+        }
+    }
+
+    pub fn repository_name(&self) -> &String {
+        &self.repository_name
+    }
+
+    pub fn image(&self) -> &APIImages {
+        &self.image
+    }
+
+    pub fn status(&self) -> ImageStatus {
+        self.status
+    }
+}
+
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
-) -> impl Future<Item = Vec<APIImages>, Error = Error> {
-    env.docker.list_images(Some(ListImagesOptions::<String> {
-        all: true,
-        ..Default::default()
-    }))
+) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
+    let username = env.username().clone();
+    env.docker
+        .list_images(Some(ListImagesOptions::<String> {
+            ..Default::default()
+        }))
+        .map(move |images| -> Vec<SomaImage> {
+            images
+                .into_iter()
+                .filter_map(|image| match &image.labels {
+                    Some(labels) if labels.get(LABEL_KEY_USERNAME) == Some(&username) => {
+                        let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                            Some(name) => name.clone(),
+                            None => "**NONAME**".to_string(),
+                        };
+                        let status = match labels.get(LABEL_KEY_VERSION) {
+                            Some(image_version) => match image_version.as_str() {
+                                VERSION => ImageStatus::Normal,
+                                _ => ImageStatus::VersionMismatch,
+                            },
+                            None => ImageStatus::NoVersionFound,
+                        };
+                        Some(SomaImage::new(repository_name, image, status))
+                    }
+                    _ => None,
+                })
+                .collect()
+        })
 }
 
 pub fn pull<'a>(
@@ -59,9 +122,9 @@ pub fn create<'a>(
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
-    labels.insert("soma.version", VERSION);
-    labels.insert("soma.username", env.username().as_str());
-    labels.insert("soma.repository", "test");
+    labels.insert(LABEL_KEY_VERSION, VERSION);
+    labels.insert(LABEL_KEY_USERNAME, &env.username());
+    labels.insert(LABEL_KEY_REPOSITORY, "test");
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,
