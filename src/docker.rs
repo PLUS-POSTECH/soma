@@ -64,25 +64,21 @@ pub fn list(
             images
                 .into_iter()
                 .filter_map(|image| match &image.labels {
-                    Some(labels) => {
-                        if labels.get(LABEL_KEY_USERNAME) == Some(&username) {
-                            let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
-                                Some(name) => name.clone(),
-                                None => "**NONAME**".to_string(),
-                            };
-                            let status = match labels.get(LABEL_KEY_VERSION) {
-                                Some(image_version) => match image_version.as_str() {
-                                    VERSION => ImageStatus::Normal,
-                                    _ => ImageStatus::VersionMismatch,
-                                },
-                                None => ImageStatus::NoVersionFound,
-                            };
-                            Some(SomaImage::new(repository_name, image, status))
-                        } else {
-                            None
-                        }
+                    Some(labels) if labels.get(LABEL_KEY_USERNAME) == Some(&username) => {
+                        let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                            Some(name) => name.clone(),
+                            None => "**NONAME**".to_string(),
+                        };
+                        let status = match labels.get(LABEL_KEY_VERSION) {
+                            Some(image_version) => match image_version.as_str() {
+                                VERSION => ImageStatus::Normal,
+                                _ => ImageStatus::VersionMismatch,
+                            },
+                            None => ImageStatus::NoVersionFound,
+                        };
+                        Some(SomaImage::new(repository_name, image, status))
                     }
-                    None => None,
+                    _ => None,
                 })
                 .collect()
         })
