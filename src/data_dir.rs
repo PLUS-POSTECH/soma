@@ -8,7 +8,7 @@ use question::{Answer, Question};
 
 use crate::error::{Error as SomaError, Result as SomaResult};
 use crate::repo::backend::Backend;
-use crate::repo::RepositoryIndex;
+use crate::repo::{BTreeMapExt, RepositoryIndex};
 
 const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
 const SOMA_DATA_DIR_NAME: &str = ".soma";
@@ -99,7 +99,7 @@ impl DataDirectory {
         let mut repo_index = self.read_repo_index()?;
 
         self.init_repo(&repo_name)?;
-        repo_index.insert(repo_name, backend);
+        repo_index.unique_insert(repo_name, backend)?;
 
         self.write_repo_index(repo_index)?;
 

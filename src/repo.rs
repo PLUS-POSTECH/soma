@@ -5,12 +5,26 @@ use std::path::Path;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::error::Result as SomaResult;
+use crate::error::{Error as SomaError, Result as SomaResult};
 use crate::repo::backend::Backend;
 
 pub mod backend;
 
 pub type RepositoryIndex = BTreeMap<String, Backend>;
+
+pub trait BTreeMapExt<K, V> {
+    fn unique_insert(&mut self, key: K, value: V) -> SomaResult<Option<V>>;
+}
+
+impl BTreeMapExt<String, Backend> for RepositoryIndex {
+    fn unique_insert(&mut self, key: String, value: Backend) -> SomaResult<Option<Backend>> {
+        if self.contains_key(&key) {
+            Err(SomaError::DuplicateRepositoryError)?
+        } else {
+            Ok(self.insert(key, value))
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct Repository {
