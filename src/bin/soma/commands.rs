@@ -5,10 +5,13 @@ use tokio::runtime::current_thread::Runtime;
 use soma::error::Result as SomaResult;
 use soma::{Environment, Printer};
 
-pub use self::{add::AddCommand, clone::CloneCommand, list::ListCommand};
+pub use self::{
+    add::AddCommand, clone::CloneCommand, download::DownloadCommand, list::ListCommand,
+};
 
 pub mod add;
 pub mod clone;
+pub mod download;
 pub mod list;
 
 type App = clap::App<'static, 'static>;
