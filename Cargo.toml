@@ -23,6 +23,7 @@ serde_derive = "1.0"
 tempfile = "3"
 tokio = "0.1"
 toml = "0.4"
+url = "1.7.2"
 question = "0.2"
 whoami = "0.2"
 

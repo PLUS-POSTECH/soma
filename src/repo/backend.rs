@@ -2,20 +2,15 @@ use std::path::PathBuf;
 
 use serde_derive::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum Backend {
-    GitBackend(PathBuf),
+    GitBackend(String),
+    // On Windows, this path corresponds to extended length path
+    // which means we can only join backslash-delimited paths to it
     LocalBackend(PathBuf),
 }
 
 impl Backend {
-    pub fn path(&self) -> PathBuf {
-        match self {
-            Backend::GitBackend(path) => path.clone(),
-            Backend::LocalBackend(path) => path.clone(),
-        }
-    }
-
     pub fn update(&self) {
         unimplemented!()
     }

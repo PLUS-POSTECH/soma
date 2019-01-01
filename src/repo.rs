@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -10,7 +10,7 @@ use crate::repo::backend::Backend;
 
 pub mod backend;
 
-pub type RepositoryList = HashMap<String, Backend>;
+pub type RepositoryIndex = BTreeMap<String, Backend>;
 
 #[derive(Deserialize, Serialize)]
 pub struct Repository {
