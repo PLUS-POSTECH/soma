@@ -16,33 +16,25 @@ pub const LABEL_KEY_VERSION: &'static str = "soma.version";
 pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
 pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
 
-#[derive(Debug)]
-pub enum SomaAPIImages {
-    Normal(APIImages),
-    VersionMismatch(APIImages),
-    NoVersionFound(APIImages),
-}
+pub type SomaImage = (APIImages, ImageStatus);
 
-impl SomaAPIImages {
-    pub fn api_images(&self) -> &APIImages {
-        match self {
-            SomaAPIImages::Normal(image) => image,
-            SomaAPIImages::VersionMismatch(image) => image,
-            SomaAPIImages::NoVersionFound(image) => image,
-        }
-    }
+#[derive(Debug)]
+pub enum ImageStatus {
+    Normal,
+    VersionMismatch,
+    NoVersionFound,
 }
 
 pub fn list(
     env: &Environment<impl Connect + 'static, impl Printer>,
-) -> impl Future<Item = Vec<SomaAPIImages>, Error = Error> {
+) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
     let username = env.username().clone();
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
             all: true,
             ..Default::default()
         }))
-        .map(move |images| -> Vec<SomaAPIImages> {
+        .map(move |images| -> Vec<SomaImage> {
             images
                 .into_iter()
                 .filter(|image| match &image.labels {
@@ -52,18 +44,15 @@ pub fn list(
                     },
                     None => false,
                 })
-                .map(|image| match &image.labels {
-                    Some(labels) => match labels.get(LABEL_KEY_VERSION) {
-                        Some(image_version) => {
-                            if image_version == VERSION {
-                                SomaAPIImages::Normal(image)
-                            } else {
-                                SomaAPIImages::VersionMismatch(image)
-                            }
-                        }
-                        None => SomaAPIImages::NoVersionFound(image),
-                    },
-                    None => panic!("Impossible"),
+                .map(|image| {
+                    let status = match image.labels.as_ref().unwrap().get(LABEL_KEY_VERSION) {
+                        Some(image_version) => match image_version.as_str() {
+                            VERSION => ImageStatus::Normal,
+                            _ => ImageStatus::VersionMismatch,
+                        },
+                        None => ImageStatus::NoVersionFound,
+                    };
+                    (image, status)
                 })
                 .collect()
         })
