@@ -1,3 +1,4 @@
+use std::fmt;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
@@ -13,5 +14,14 @@ pub enum Backend {
 impl Backend {
     pub fn update(&self) {
         unimplemented!()
+    }
+}
+
+impl fmt::Display for Backend {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Backend::GitBackend(url) => write!(f, "Git: {}", url),
+            Backend::LocalBackend(path) => write!(f, "Local: {}", path.to_string_lossy()),
+        }
     }
 }
