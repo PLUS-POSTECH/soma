@@ -41,10 +41,9 @@ pub fn build_soma_image(
     image_name: &str,
     repo_path: impl AsRef<Path>,
 ) -> SomaResult<()> {
-    let temp_dir = tempdir()?;
-    let mut copy_options = CopyOptions::new();
-    copy_options.copy_inside = true;
-    copy_items(&vec![&repo_path], &temp_dir, &copy_options)?;
+    let work_dir = tempdir()?;
+    let work_dir_path = work_dir.path();
+    copy_items(&vec![&repo_path], &work_dir, &CopyOptions::new())?;
 
     let repository_name = repo_path
         .as_ref()
@@ -52,8 +51,7 @@ pub fn build_soma_image(
         .ok_or(SomaError::InvalidRepositoryPathError)?
         .to_str()
         .ok_or(SomaError::InvalidRepositoryPathError)?;
-    let work_dir = temp_dir.path().join(repository_name);
-    let manifest = load_manifest(work_dir.join(MANIFEST_FILE_NAME))?;
+    let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?;
 
     let rendering_input = RenderingInput {
         username: env.username(),
@@ -67,14 +65,14 @@ pub fn build_soma_image(
             render_file_from_template_string(
                 template_string,
                 &rendering_input,
-                work_dir.join(file_name),
+                work_dir_path.join(file_name),
             )?;
             Ok(())
         },
     )?;
 
-    docker::build(image_name, work_dir)?;
-    temp_dir.close()?;
+    docker::build(image_name, work_dir_path)?;
+    work_dir.close()?;
     Ok(())
 }
 
