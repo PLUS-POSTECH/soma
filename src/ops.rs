@@ -11,7 +11,7 @@ use crate::repo::MANIFEST_FILE_NAME;
 use crate::Environment;
 use crate::Printer;
 
-pub fn parse_repo_url(url: &str) -> SomaResult<(String, Backend)> {
+pub fn parse_repo_location(url: &str) -> SomaResult<(String, Backend)> {
     let path = Path::new(url);
     if path.is_dir() {
         // local backend
@@ -40,6 +40,17 @@ pub fn parse_repo_url(url: &str) -> SomaResult<(String, Backend)> {
         };
         Ok((repo_name.to_owned(), Backend::GitBackend(url.to_owned())))
     }
+}
+
+pub fn add(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    repo_location: &str,
+) -> SomaResult<()> {
+    let (repo_name, backend) = parse_repo_location(repo_location)?;
+    env.data_dir().add_repo(repo_name.clone(), backend)?;
+    env.printer()
+        .write_line(&format!("successfully added a repository '{}'", &repo_name));
+    Ok(())
 }
 
 pub fn fetch(
