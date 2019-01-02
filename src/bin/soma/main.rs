@@ -37,7 +37,6 @@ fn cli_env(data_dir: DataDirectory) -> Environment<impl Connect, impl Printer> {
 fn main_result() -> SomaResult<()> {
     let add_command = AddCommand::new();
     let list_command = ListCommand::new();
-    let clone_command = CloneCommand::new();
     let fetch_command = FetchCommand::new();
     let pull_command = PullCommand::new();
 
@@ -47,7 +46,6 @@ fn main_result() -> SomaResult<()> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(add_command.app())
         .subcommand(list_command.app())
-        .subcommand(clone_command.app())
         .subcommand(fetch_command.app())
         .subcommand(pull_command.app())
         .get_matches();
@@ -58,7 +56,6 @@ fn main_result() -> SomaResult<()> {
     match matches.subcommand() {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
-        (CloneCommand::NAME, Some(matches)) => clone_command.handle_match(env, matches),
         (FetchCommand::NAME, Some(matches)) => fetch_command.handle_match(env, matches),
         (PullCommand::NAME, Some(matches)) => pull_command.handle_match(env, matches),
         _ => unreachable!(),
