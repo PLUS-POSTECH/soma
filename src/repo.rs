@@ -1,12 +1,18 @@
 use std::collections::BTreeMap;
-use std::fs::File;
+use std::fs::{remove_dir_all, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+use fs_extra::dir::{copy, CopyOptions};
+use hyper::client::connect::Connect;
 use serde::{Deserialize, Serialize};
+use tempfile::tempdir;
 
+use crate::docker;
 use crate::error::{Error as SomaError, Result as SomaResult};
 use crate::repo::backend::Backend;
+use crate::template::{render_files_from_template, RenderingInput, Templates};
+use crate::{Environment, Printer};
 
 pub mod backend;
 
@@ -53,6 +59,32 @@ impl Repository {
 
     pub fn backend(&self) -> &Backend {
         &self.backend
+    }
+
+    pub fn build_image(
+        &self,
+        env: &Environment<impl Connect + 'static, impl Printer>,
+        problem_name: &str,
+    ) -> SomaResult<()> {
+        let work_dir = tempdir()?;
+        let work_dir_path = work_dir.path();
+        let repo_path = self.local_path();
+        let image_name = format!("soma/{}", problem_name);
+
+        remove_dir_all(&work_dir)?;
+        let mut copy_options = CopyOptions::new();
+        copy_options.copy_inside = true;
+        copy(&repo_path, &work_dir, &copy_options)?;
+
+        let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?;
+
+        let rendering_input = RenderingInput::new(env, self.name(), manifest);
+
+        render_files_from_template(Templates::Binary, &rendering_input, work_dir_path)?;
+
+        docker::build(&image_name, work_dir_path)?;
+        work_dir.close()?;
+        Ok(())
     }
 }
 
