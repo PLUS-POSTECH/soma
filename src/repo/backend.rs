@@ -1,5 +1,5 @@
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,7 @@ pub enum Backend {
 }
 
 impl Backend {
-    pub fn update(&self) {
+    pub fn update(&self, local_path: impl AsRef<Path>) {
         unimplemented!()
     }
 }

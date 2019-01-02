@@ -10,6 +10,8 @@ pub enum Error {
     DuplicateRepositoryError,
     #[fail(display = "the specified repository path is invalid")]
     InvalidRepositoryPathError,
+    #[fail(display = "the specified repository is not found")]
+    RepositoryNotFoundError,
 }
 
 pub type Result<T> = std::result::Result<T, failure::Error>;
