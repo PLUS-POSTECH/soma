@@ -10,6 +10,8 @@ use crate::repo::backend::Backend;
 
 pub mod backend;
 
+pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
+
 pub type RepositoryIndex = BTreeMap<String, Backend>;
 
 pub trait BTreeMapExt<K, V> {
@@ -32,6 +34,16 @@ pub struct Repository {
     manifest: Manifest,
 }
 
+impl Repository {
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn manifest(&self) -> &Manifest {
+        &self.manifest
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct Manifest {
     name: String,
@@ -40,10 +52,34 @@ pub struct Manifest {
     binary: BinaryConfig,
 }
 
+impl Manifest {
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn executable(&self) -> &Vec<FileEntry> {
+        &self.executable
+    }
+
+    pub fn readonly(&self) -> &Vec<FileEntry> {
+        &self.readonly
+    }
+}
+
 #[derive(Deserialize, Serialize)]
-struct FileEntry {
+pub struct FileEntry {
     path: String,
     public: Option<bool>,
+}
+
+impl FileEntry {
+    pub fn path(&self) -> &String {
+        &self.path
+    }
+
+    pub fn public(&self) -> bool {
+        self.public.unwrap_or(false)
+    }
 }
 
 #[derive(Deserialize, Serialize)]

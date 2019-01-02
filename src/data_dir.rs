@@ -62,17 +62,21 @@ impl DataDirectory {
         self.root_path.clone()
     }
 
-    pub fn repo_path(&self) -> PathBuf {
+    pub fn repo_root_path(&self) -> PathBuf {
         self.root_path.join(REPOSITORY_DIR_NAME)
     }
 
     pub fn repo_index_path(&self) -> PathBuf {
-        self.repo_path().join(REPOSITORY_INDEX_FILE_NAME)
+        self.repo_root_path().join(REPOSITORY_INDEX_FILE_NAME)
+    }
+
+    pub fn repo_path(&self, repo_name: impl AsRef<Path>) -> PathBuf {
+        self.repo_root_path().join(repo_name)
     }
 
     fn init_repo(&self, repo_name: impl AsRef<Path>) -> SomaResult<PathBuf> {
-        fs::create_dir_all(self.repo_path())?;
-        let new_repo_path = self.repo_path().join(repo_name);
+        fs::create_dir_all(self.repo_root_path())?;
+        let new_repo_path = self.repo_path(repo_name);
         fs::create_dir(&new_repo_path).or(Err(SomaError::DuplicateRepositoryError))?;
         Ok(new_repo_path)
     }
@@ -88,7 +92,7 @@ impl DataDirectory {
     }
 
     fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
-        fs::create_dir_all(self.repo_path())?;
+        fs::create_dir_all(self.repo_root_path())?;
         let path = self.repo_index_path();
         let mut file = File::create(path)?;
         serde_cbor::to_writer(&mut file, &repository_list)?;
