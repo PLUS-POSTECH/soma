@@ -77,7 +77,7 @@ impl DataDirectory {
         Ok(new_repo_path)
     }
 
-    fn read_repo_index(&self) -> SomaResult<RepositoryIndex> {
+    pub fn read_repo_index(&self) -> SomaResult<RepositoryIndex> {
         let path = self.repo_index_path();
         if path.exists() {
             let file = File::open(path.as_path())?;

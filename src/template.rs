@@ -19,7 +19,7 @@ enum Templates {
 
 impl Templates {
     fn templates(&self) -> Vec<(&'static str, &'static str)> {
-        match *self {
+        match self {
             Templates::Binary => vec![
                 ("Dockerfile", include_str!("../templates/binary/Dockerfile")),
                 ("start.sh", include_str!("../templates/binary/start.sh")),
