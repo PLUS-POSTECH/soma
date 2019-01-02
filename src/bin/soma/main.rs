@@ -38,7 +38,7 @@ fn main_result() -> SomaResult<()> {
     let add_command = AddCommand::new();
     let list_command = ListCommand::new();
     let clone_command = CloneCommand::new();
-    let download_command = DownloadCommand::new();
+    let fetch_command = FetchCommand::new();
 
     let matches = App::new("soma")
         .version(VERSION)
@@ -47,7 +47,7 @@ fn main_result() -> SomaResult<()> {
         .subcommand(add_command.app())
         .subcommand(list_command.app())
         .subcommand(clone_command.app())
-        .subcommand(download_command.app())
+        .subcommand(fetch_command.app())
         .get_matches();
 
     let data_dir = DataDirectory::new()?;
@@ -57,7 +57,7 @@ fn main_result() -> SomaResult<()> {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
         (CloneCommand::NAME, Some(matches)) => clone_command.handle_match(env, matches),
-        (DownloadCommand::NAME, Some(matches)) => download_command.handle_match(env, matches),
+        (FetchCommand::NAME, Some(matches)) => fetch_command.handle_match(env, matches),
         _ => unreachable!(),
     }
 }

@@ -9,15 +9,15 @@ use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};
 
-pub struct DownloadCommand;
+pub struct FetchCommand;
 
-impl DownloadCommand {
-    pub fn new() -> DownloadCommand {
-        DownloadCommand {}
+impl FetchCommand {
+    pub fn new() -> FetchCommand {
+        FetchCommand {}
     }
 }
 
-impl SomaCommand for DownloadCommand {
+impl SomaCommand for FetchCommand {
     const NAME: &'static str = "download";
 
     fn app(&self) -> App {
@@ -38,8 +38,7 @@ impl SomaCommand for DownloadCommand {
     ) -> SomaResult<()> {
         let repo_path = env
             .data_dir()
-            .repo_path()
-            .join(matches.value_of("problem").unwrap());
+            .repo_path(matches.value_of("problem").unwrap());
         let repo_manifest_path = repo_path.join(MANIFEST_FILE_NAME);
         let manifest = load_manifest(repo_manifest_path)?;
         let executables = manifest.executable().iter();
