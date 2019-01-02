@@ -1,7 +1,12 @@
 use std::fmt;
-use std::path::PathBuf;
+use std::fs::remove_dir_all;
+use std::path::{Path, PathBuf};
 
+use fs_extra::dir::{copy, CopyOptions};
+use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
 use serde::{Deserialize, Serialize};
+
+use crate::error::Result as SomaResult;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Backend {
@@ -12,8 +17,33 @@ pub enum Backend {
 }
 
 impl Backend {
-    pub fn update(&self) {
-        unimplemented!()
+    pub fn update(&self, local_path: impl AsRef<Path>) -> SomaResult<()> {
+        match self {
+            Backend::GitBackend(url) => {
+                let git_repo =
+                    GitRepository::open(&local_path).or(GitRepository::clone(url, &local_path))?;
+                git_repo
+                    .find_remote("origin")?
+                    .fetch(&["master"], None, None)?;
+
+                let origin_master = git_repo.find_branch("origin/master", BranchType::Remote)?;
+                let head_commit = origin_master.get().peel(ObjectType::Commit)?;
+                git_repo.reset(&head_commit, ResetType::Hard, None)?;
+
+                Ok(())
+            }
+            Backend::LocalBackend(path) => {
+                if local_path.as_ref().exists() {
+                    remove_dir_all(&local_path)?;
+                }
+
+                let mut copy_options = CopyOptions::new();
+                copy_options.copy_inside = true;
+                copy(&path, &local_path, &copy_options)?;
+
+                Ok(())
+            }
+        }
     }
 }
 
