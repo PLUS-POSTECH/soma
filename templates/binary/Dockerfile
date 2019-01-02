@@ -11,9 +11,8 @@ RUN apt install -y socat
 {{ #with manifest }}
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
+ADD build/ /home/$PROB
 RUN chown -R root:$PROB /home/$PROB
-
-ADD deploy/ /
 
 {{ #each executable }}
 RUN chmod +x "{{ this.path }}"
