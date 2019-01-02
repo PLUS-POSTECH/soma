@@ -23,7 +23,7 @@ impl SomaCommand for AddCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("registers a soma repository")
+            .about("registers a Soma repository")
             .arg(
                 Arg::with_name("repository")
                     .required(true)

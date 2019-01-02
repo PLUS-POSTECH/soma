@@ -38,7 +38,7 @@ impl DataDirectory {
 
         if !path.exists() {
             if let Answer::NO = Question::new(&format!(
-                "It seems that you use soma for the first time. The data directory will be initialized at {:?}. [y/n]\n",
+                "It seems that you use Soma for the first time. The data directory will be initialized at {:?}. [y/n]\n",
                 path.as_os_str(),
             ))
                 .confirm()

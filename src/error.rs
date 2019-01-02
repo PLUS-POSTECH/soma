@@ -4,7 +4,7 @@ use failure::Fail;
 pub enum Error {
     #[fail(display = "failed to access the data directory")]
     DataDirectoryAccessError,
-    #[fail(display = "another soma instance is using the data directory")]
+    #[fail(display = "another Soma instance is using the data directory")]
     DataDirectoryLockError,
     #[fail(display = "a repository with the same name already exists")]
     DuplicateRepositoryError,
