@@ -39,7 +39,7 @@ impl SomaCommand for PullCommand {
             .ok_or(SomaError::RepositoryNotFoundError)?;
         let backend = repository.backend();
         let local_path = repository.local_path();
-        backend.update(local_path);
+        backend.update(local_path)?;
         env.printer().write_line(&format!(
             "successfully updated repository: '{}'",
             &repo_name
