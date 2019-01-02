@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -12,14 +12,14 @@ pub mod backend;
 
 pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
 
-pub type RepositoryIndex = BTreeMap<String, Backend>;
+pub type RepositoryIndex = BTreeMap<String, Repository>;
 
 pub trait BTreeMapExt<K, V> {
     fn unique_insert(&mut self, key: K, value: V) -> SomaResult<Option<V>>;
 }
 
-impl BTreeMapExt<String, Backend> for RepositoryIndex {
-    fn unique_insert(&mut self, key: String, value: Backend) -> SomaResult<Option<Backend>> {
+impl BTreeMapExt<String, Repository> for RepositoryIndex {
+    fn unique_insert(&mut self, key: String, value: Repository) -> SomaResult<Option<Repository>> {
         if self.contains_key(&key) {
             Err(SomaError::DuplicateRepositoryError)?
         } else {
@@ -31,16 +31,28 @@ impl BTreeMapExt<String, Backend> for RepositoryIndex {
 #[derive(Deserialize, Serialize)]
 pub struct Repository {
     name: String,
-    manifest: Manifest,
+    local_path: PathBuf,
+    backend: Backend,
 }
 
 impl Repository {
+    pub fn new(name: String, local_path: PathBuf, backend: Backend) -> Repository {
+        Repository {
+            name,
+            local_path,
+            backend,
+        }
+    }
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    pub fn manifest(&self) -> &Manifest {
-        &self.manifest
+    pub fn local_path(&self) -> &PathBuf {
+        &self.local_path
+    }
+
+    pub fn backend(&self) -> &Backend {
+        &self.backend
     }
 }
 

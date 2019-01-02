@@ -35,9 +35,9 @@ impl SomaCommand for ListCommand {
             env.printer()
                 .write_line(&format!("{:<20}{:<40}", "Name", "Origin"));
 
-            for (repo_name, backend) in &repo_index {
+            for (repo_name, repository) in &repo_index {
                 env.printer()
-                    .write_line(&format!("{:<20}{:<40}", repo_name, backend));
+                    .write_line(&format!("{:<20}{:<40}", repo_name, repository.backend()));
             }
         }
 
