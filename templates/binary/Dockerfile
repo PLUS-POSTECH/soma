@@ -1,20 +1,20 @@
-FROM {{ repository.manifest.binary.os }}
+FROM {{ manifest.binary.os }}
 
 LABEL maintainer="soma_{{ username }}"
 LABEL soma.username="{{ username }}"
 LABEL soma.version="{{ version }}"
-LABEL soma.repository="{{ repository.name }}"
+LABEL soma.repository="{{ repository_name }}"
 
 RUN apt update && apt -y upgrade
 RUN apt install -y socat
 
-ENV PROB "{{ repository.name }}"
+{{ #with manifest }}
+ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 RUN chown -R root:$PROB /home/$PROB
 
 ADD deploy/ /
 
-{{ #with repository.manifest }}
 {{ #each executable }}
 RUN chmod +x "{{ this.path }}"
 {{ /each }}

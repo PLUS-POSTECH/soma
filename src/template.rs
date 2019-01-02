@@ -10,7 +10,7 @@ use tempfile::tempdir;
 
 use crate::docker;
 use crate::error::{Error as SomaError, Result as SomaResult};
-use crate::repo::Repository as SomaRepository;
+use crate::repo::{load_manifest, Manifest, MANIFEST_FILE_NAME};
 use crate::{Environment, Printer, VERSION};
 
 enum Templates {
@@ -32,30 +32,34 @@ impl Templates {
 struct RenderingInput<'a> {
     username: &'a str,
     version: &'a str,
-    repository: SomaRepository,
+    repository_name: &'a str,
+    manifest: Manifest,
 }
 
 pub fn build_soma_image(
     env: &Environment<impl Connect + 'static, impl Printer>,
     image_name: &str,
     repo_path: impl AsRef<Path>,
-    repository: SomaRepository,
 ) -> SomaResult<()> {
     let temp_dir = tempdir()?;
     let mut copy_options = CopyOptions::new();
     copy_options.copy_inside = true;
     copy_items(&vec![&repo_path], &temp_dir, &copy_options)?;
 
-    let repo_dir_name = repo_path
+    let repository_name = repo_path
         .as_ref()
         .file_name()
+        .ok_or(SomaError::InvalidRepositoryPathError)?
+        .to_str()
         .ok_or(SomaError::InvalidRepositoryPathError)?;
-    let work_dir = temp_dir.path().join(repo_dir_name);
+    let work_dir = temp_dir.path().join(repository_name);
+    let manifest = load_manifest(work_dir.join(MANIFEST_FILE_NAME))?;
 
     let rendering_input = RenderingInput {
         username: env.username(),
         version: VERSION,
-        repository,
+        repository_name,
+        manifest,
     };
 
     Templates::Binary.templates().into_iter().try_for_each(
