@@ -1,9 +1,8 @@
 use std::fmt;
-use std::fs::{create_dir_all, remove_dir_all};
+use std::fs::remove_dir_all;
 use std::path::{Path, PathBuf};
 
-use fs_extra::copy_items;
-use fs_extra::dir::CopyOptions;
+use fs_extra::dir::{copy, CopyOptions};
 use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
 use serde::{Deserialize, Serialize};
 
@@ -36,9 +35,13 @@ impl Backend {
                 Ok(())
             }
             Backend::LocalBackend(path) => {
-                remove_dir_all(&local_path)?;
-                create_dir_all(&local_path)?;
-                copy_items(&vec![&path], &local_path, &CopyOptions::new())?;
+                if local_path.as_ref().exists() {
+                    remove_dir_all(&local_path)?;
+                }
+
+                let mut copy_options = CopyOptions::new();
+                copy_options.copy_inside = true;
+                copy(&path, &local_path, &copy_options)?;
 
                 Ok(())
             }

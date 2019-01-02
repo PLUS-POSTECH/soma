@@ -1,8 +1,7 @@
-use std::fs::File;
+use std::fs::{remove_dir_all, File};
 use std::path::Path;
 
-use fs_extra::copy_items;
-use fs_extra::dir::CopyOptions;
+use fs_extra::dir::{copy, CopyOptions};
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
 use serde::{Deserialize, Serialize};
@@ -43,7 +42,11 @@ pub fn build_soma_image(
 ) -> SomaResult<()> {
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
-    copy_items(&vec![&repo_path], &work_dir, &CopyOptions::new())?;
+
+    remove_dir_all(&work_dir)?;
+    let mut copy_options = CopyOptions::new();
+    copy_options.copy_inside = true;
+    copy(&repo_path, &work_dir, &copy_options)?;
 
     let repository_name = repo_path
         .as_ref()
