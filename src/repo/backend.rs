@@ -26,8 +26,6 @@ impl Backend {
                     .find_remote("origin")?
                     .fetch(&["master"], None, None)?;
 
-                // let oid = repo.refname_to_id("refs/remotes/origin/master")?;
-                // let object = repo.find_object(oid, None).unwrap();
                 let origin_master = git_repo.find_branch("origin/master", BranchType::Remote)?;
                 let head_commit = origin_master.get().peel(ObjectType::Commit)?;
                 git_repo.reset(&head_commit, ResetType::Hard, None)?;
