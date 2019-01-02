@@ -50,8 +50,8 @@ entry = "./simple-bof"
 
 That's all! Soma gets enough information to run your binary from these 12 lines of configuration.
 
-It will use reasonable default value for the other things not specified such as
-default working directory, file permissions, buffering, and fork daemon.
+Soma will use reasonable default value for the other things not specified such as
+default working directory, file permissions, fork daemon, and standard stream buffering.
 Of course they can be manually configured if needed :)
 
 ## Current Status
@@ -69,7 +69,7 @@ Soma team is hoping to ship it in the first quarter of 2019.
 * Write tests. (priority: high)
 * Better documentation of features. (priority: medium)
 * Support multiple problems in a single repository. (priority: medium)
-* Support multiple containers for a single problem. (proiroty: medium)
+* Support multiple containers for a single problem. (priority: medium)
 * Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
 
 
