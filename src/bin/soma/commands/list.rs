@@ -19,7 +19,7 @@ impl SomaCommand for ListCommand {
     const NAME: &'static str = "list";
 
     fn app(&self) -> App {
-        SubCommand::with_name(Self::NAME).about("lists Soma problem repositories")
+        SubCommand::with_name(Self::NAME).about("Lists Soma problem repositories")
     }
 
     fn handle_match(

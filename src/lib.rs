@@ -9,6 +9,7 @@ use crate::data_dir::DataDirectory;
 pub mod data_dir;
 pub mod docker;
 pub mod error;
+pub mod ops;
 pub mod repo;
 pub mod template;
 
