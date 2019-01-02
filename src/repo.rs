@@ -4,9 +4,11 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use fs_extra::dir::{copy, CopyOptions};
+use futures::future::Future;
 use hyper::client::connect::Connect;
 use serde::{Deserialize, Serialize};
 use tempfile::tempdir;
+use tokio::runtime::current_thread::Runtime;
 
 use crate::docker;
 use crate::error::{Error as SomaError, Result as SomaResult};
@@ -85,6 +87,18 @@ impl Repository {
         docker::build(&image_name, work_dir_path)?;
         work_dir.close()?;
         Ok(())
+    }
+
+    pub fn run_container(
+        &self,
+        env: &Environment<impl Connect + 'static, impl Printer>,
+        problem_name: &str,
+        runtime: &mut Runtime,
+    ) -> SomaResult<String> {
+        let image_name = format!("soma/{}", problem_name);
+        let container_run = docker::create(env, &image_name)
+            .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
+        runtime.block_on(container_run)
     }
 }
 
