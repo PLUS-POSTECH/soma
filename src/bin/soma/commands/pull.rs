@@ -19,7 +19,7 @@ impl SomaCommand for PullCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("updates a soma repository")
+            .about("updates a Soma repository")
             .arg(
                 Arg::with_name("repository")
                     .required(true)
