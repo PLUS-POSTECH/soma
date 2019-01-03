@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::{remove_dir_all, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -20,8 +20,45 @@ pub mod backend;
 
 pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
 
-pub type DirectoryMapping = BTreeMap<PathBuf, PathBuf>;
+pub type DirectoryMap = HashMap<PathBuf, PathBuf>;
 pub type RepositoryIndex = BTreeMap<String, Repository>;
+
+pub trait FileEntryMap {
+    fn map_file(&self, file_entry: &FileEntry) -> SomaResult<FileEntry>;
+}
+
+impl FileEntryMap for DirectoryMap {
+    fn map_file(&self, file_entry: &FileEntry) -> SomaResult<FileEntry> {
+        fn find_prefix_matching(
+            path: Option<impl AsRef<Path>>,
+            directory_map: &DirectoryMap,
+        ) -> Option<PathBuf> {
+            match path {
+                Some(path) => {
+                    let path = path.as_ref();
+                    if directory_map.contains_key(&path.to_path_buf()) {
+                        Some(path.to_path_buf())
+                    } else {
+                        find_prefix_matching(path.parent(), directory_map)
+                    }
+                }
+                None => None,
+            }
+        }
+
+        let path = file_entry.path();
+        let prefix =
+            find_prefix_matching(Some(path), self).ok_or(SomaError::InvalidManifestError)?;
+        let stripped_path = path.strip_prefix(&prefix)?;
+        let new_prefix = self.get(&prefix).unwrap();
+        let new_path = new_prefix.join(stripped_path);
+
+        Ok(FileEntry {
+            path: new_path,
+            public: file_entry.public,
+        })
+    }
+}
 
 pub trait BTreeMapExt<K, V> {
     fn unique_insert(&mut self, key: K, value: V) -> SomaResult<Option<V>>;
@@ -79,13 +116,13 @@ impl Repository {
         copy_options.copy_inside = true;
         copy(&repo_path, &work_dir, &copy_options)?;
 
-        let mut directory_mapping = DirectoryMapping::new();
-        directory_mapping.insert(
+        let mut directory_map = DirectoryMap::new();
+        directory_map.insert(
             PathBuf::from("build/"),
             PathBuf::from(&format!("/home/{}", problem_name)),
         );
         let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
-            .convert_to_docker_entry(&directory_mapping)?;
+            .convert_to_docker_entry(&directory_map)?;
 
         let rendering_input = RenderingInput::new(env.username(), self.name(), manifest);
 
@@ -130,17 +167,14 @@ impl Manifest {
         &self.readonly
     }
 
-    pub fn convert_to_docker_entry(
-        &self,
-        directory_mapping: &DirectoryMapping,
-    ) -> SomaResult<Manifest> {
+    pub fn convert_to_docker_entry(&self, directory_map: &DirectoryMap) -> SomaResult<Manifest> {
         let executable = self.executable().iter();
         let readonly = self.readonly().iter();
         let new_executable: SomaResult<Vec<FileEntry>> = executable
-            .map(|file_entry| file_entry.convert_to_docker_entry(directory_mapping))
+            .map(|file_entry| directory_map.map_file(file_entry))
             .collect();
         let new_readonly: SomaResult<Vec<FileEntry>> = readonly
-            .map(|file_entry| file_entry.convert_to_docker_entry(directory_mapping))
+            .map(|file_entry| directory_map.map_file(file_entry))
             .collect();
 
         Ok(Manifest {
@@ -165,40 +199,6 @@ impl FileEntry {
 
     pub fn public(&self) -> bool {
         self.public.unwrap_or(false)
-    }
-
-    pub fn convert_to_docker_entry(
-        &self,
-        directory_mapping: &DirectoryMapping,
-    ) -> SomaResult<FileEntry> {
-        fn find_prefix_matching(
-            path: Option<impl AsRef<Path>>,
-            directory_mapping: &DirectoryMapping,
-        ) -> Option<PathBuf> {
-            match path {
-                Some(path) => {
-                    let path = path.as_ref();
-                    if directory_mapping.contains_key(&path.to_path_buf()) {
-                        Some(path.to_path_buf())
-                    } else {
-                        find_prefix_matching(path.parent(), directory_mapping)
-                    }
-                }
-                None => None,
-            }
-        }
-
-        let path = self.path();
-        let prefix = find_prefix_matching(Some(path), directory_mapping)
-            .ok_or(SomaError::InvalidManifestError)?;
-        let stripped_path = path.strip_prefix(&prefix)?;
-        let new_prefix = directory_mapping.get(&prefix).unwrap();
-        let new_path = new_prefix.join(stripped_path);
-
-        Ok(FileEntry {
-            path: new_path,
-            public: self.public,
-        })
     }
 }
 
