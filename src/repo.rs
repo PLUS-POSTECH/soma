@@ -20,6 +20,7 @@ pub mod backend;
 
 pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
 
+pub type DirectoryMapping = BTreeMap<String, String>;
 pub type RepositoryIndex = BTreeMap<String, Repository>;
 
 pub trait BTreeMapExt<K, V> {
@@ -122,6 +123,27 @@ impl Manifest {
     pub fn readonly(&self) -> &Vec<FileEntry> {
         &self.readonly
     }
+
+    pub fn convert_to_docker_entry(
+        &self,
+        directory_mapping: &DirectoryMapping,
+    ) -> SomaResult<Manifest> {
+        let executable = self.executable().iter();
+        let readonly = self.readonly().iter();
+        let new_executable: SomaResult<Vec<FileEntry>> = executable
+            .map(|file_entry| file_entry.convert_to_docker_entry(directory_mapping))
+            .collect();
+        let new_readonly: SomaResult<Vec<FileEntry>> = readonly
+            .map(|file_entry| file_entry.convert_to_docker_entry(directory_mapping))
+            .collect();
+
+        Ok(Manifest {
+            name: self.name().clone(),
+            executable: new_executable?,
+            readonly: new_readonly?,
+            binary: self.binary.clone(),
+        })
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -138,9 +160,47 @@ impl FileEntry {
     pub fn public(&self) -> bool {
         self.public.unwrap_or(false)
     }
+
+    pub fn convert_to_docker_entry(
+        &self,
+        directory_mapping: &DirectoryMapping,
+    ) -> SomaResult<FileEntry> {
+        fn find_prefix_matching(
+            path: Option<impl AsRef<Path>>,
+            directory_mapping: &DirectoryMapping,
+        ) -> Option<PathBuf> {
+            match path {
+                Some(path) => {
+                    if directory_mapping.contains_key(&path.as_ref().to_string_lossy().to_string())
+                    {
+                        Some(path.as_ref().to_path_buf())
+                    } else {
+                        find_prefix_matching(path.as_ref().parent(), directory_mapping)
+                    }
+                }
+                None => None,
+            }
+        }
+
+        let path = Path::new(self.path());
+        let prefix = find_prefix_matching(Some(path), directory_mapping)
+            .ok_or(SomaError::InvalidManifestError)?;
+        let stripped_path = path.strip_prefix(&prefix)?;
+        let new_prefix = Path::new(
+            directory_mapping
+                .get(&prefix.to_string_lossy().to_string())
+                .unwrap(),
+        );
+        let new_path = new_prefix.join(stripped_path);
+
+        Ok(FileEntry {
+            path: new_path.to_string_lossy().to_string(),
+            public: self.public,
+        })
+    }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 struct BinaryConfig {
     os: String,
     entry: String,

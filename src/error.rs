@@ -12,6 +12,8 @@ pub enum Error {
     DuplicateRepositoryError,
     #[fail(display = "the specified repository path is invalid")]
     InvalidRepositoryPathError,
+    #[fail(display = "some entry in the manifest is invalid")]
+    InvalidManifestError,
     #[fail(display = "the specified repository is not found")]
     RepositoryNotFoundError,
 }
