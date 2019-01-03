@@ -9,7 +9,7 @@ use futures::stream::Stream;
 use futures::Future;
 use hyper::client::connect::Connect;
 
-use crate::error::Result as SomaResult;
+use crate::error::{Error as SomaError, Result as SomaResult};
 use crate::{Environment, Printer, VERSION};
 
 pub const LABEL_KEY_VERSION: &'static str = "soma.version";
@@ -104,7 +104,7 @@ pub fn pull<'a>(
 // Bollard doesn't support image build yet :(
 // We are building images by executing docker client manually
 pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
-    Command::new("docker")
+    let status = Command::new("docker")
         .args(&[
             "build",
             "--pull",
@@ -114,7 +114,12 @@ pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
             &build_path.as_ref().to_string_lossy(),
         ])
         .status()?;
-    Ok(())
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(SomaError::DockerBuildFailError.into())
+    }
 }
 
 pub fn create<'a>(

@@ -40,8 +40,10 @@ impl SomaCommand for RunCommand {
             .ok_or(SomaError::RepositoryNotFoundError)?;
 
         repository.build_image(&env, repo_name)?;
-        env.printer()
-            .write_line(&format!("successfully built image: '{}'", &repo_name));
+        env.printer().write_line(&format!(
+            "successfully built image for problem: '{}'",
+            &repo_name
+        ));
 
         let mut runtime = Runtime::new().expect("failed to initialize tokio runtime");
         let conatiner_name = repository.run_container(&env, repo_name, &mut runtime)?;
