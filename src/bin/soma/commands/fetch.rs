@@ -18,7 +18,7 @@ impl FetchCommand {
 }
 
 impl SomaCommand for FetchCommand {
-    const NAME: &'static str = "download";
+    const NAME: &'static str = "fetch";
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
