@@ -81,8 +81,8 @@ impl Repository {
 
         let mut directory_mapping = DirectoryMapping::new();
         directory_mapping.insert(
-            Path::new("build/").to_path_buf(),
-            Path::new(&format!("/home/{}", problem_name)).to_path_buf(),
+            PathBuf::from("build/"),
+            PathBuf::from(&format!("/home/{}", problem_name)),
         );
         let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
             .convert_to_docker_entry(&directory_mapping)?;
@@ -177,10 +177,11 @@ impl FileEntry {
         ) -> Option<PathBuf> {
             match path {
                 Some(path) => {
-                    if directory_mapping.contains_key(&path.as_ref().to_path_buf()) {
-                        Some(path.as_ref().to_path_buf())
+                    let path = path.as_ref();
+                    if directory_mapping.contains_key(&path.to_path_buf()) {
+                        Some(path.to_path_buf())
                     } else {
-                        find_prefix_matching(path.as_ref().parent(), directory_mapping)
+                        find_prefix_matching(path.parent(), directory_mapping)
                     }
                 }
                 None => None,
@@ -191,7 +192,7 @@ impl FileEntry {
         let prefix = find_prefix_matching(Some(path), directory_mapping)
             .ok_or(SomaError::InvalidManifestError)?;
         let stripped_path = path.strip_prefix(&prefix)?;
-        let new_prefix = Path::new(directory_mapping.get(&prefix).unwrap());
+        let new_prefix = directory_mapping.get(&prefix).unwrap();
         let new_path = new_prefix.join(stripped_path);
 
         Ok(FileEntry {
