@@ -3,9 +3,8 @@ use hyper::client::connect::Connect;
 
 use soma::error::{Error as SomaError, Result as SomaResult};
 use soma::{Environment, Printer};
-use tokio::runtime::current_thread::Runtime;
 
-use crate::commands::{App, SomaCommand};
+use crate::commands::{default_runtime, App, SomaCommand};
 
 pub struct RunCommand;
 
@@ -45,7 +44,7 @@ impl SomaCommand for RunCommand {
             &repo_name
         ));
 
-        let mut runtime = Runtime::new().expect("failed to initialize tokio runtime");
+        let mut runtime = default_runtime();
         let conatiner_name = repository.run_container(&env, repo_name, &mut runtime)?;
         env.printer().write_line(&format!(
             "successfully started container: '{}'",

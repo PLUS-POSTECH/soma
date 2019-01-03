@@ -87,7 +87,7 @@ impl Repository {
         let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
             .convert_to_docker_entry(&directory_mapping)?;
 
-        let rendering_input = RenderingInput::new(env, self.name(), manifest);
+        let rendering_input = RenderingInput::new(env.username(), self.name(), manifest);
 
         render_files_from_template(Templates::Binary, &rendering_input, work_dir_path)?;
 
@@ -154,12 +154,12 @@ impl Manifest {
 
 #[derive(Deserialize, Serialize)]
 pub struct FileEntry {
-    path: String,
+    path: PathBuf,
     public: Option<bool>,
 }
 
 impl FileEntry {
-    pub fn path(&self) -> &String {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
@@ -188,7 +188,7 @@ impl FileEntry {
             }
         }
 
-        let path = Path::new(self.path());
+        let path = self.path();
         let prefix = find_prefix_matching(Some(path), directory_mapping)
             .ok_or(SomaError::InvalidManifestError)?;
         let stripped_path = path.strip_prefix(&prefix)?;
@@ -196,7 +196,7 @@ impl FileEntry {
         let new_path = new_prefix.join(stripped_path);
 
         Ok(FileEntry {
-            path: new_path.to_string_lossy().to_string(),
+            path: new_path,
             public: self.public,
         })
     }

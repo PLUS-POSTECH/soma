@@ -2,12 +2,11 @@ use std::fs::File;
 use std::path::Path;
 
 use handlebars::Handlebars;
-use hyper::client::connect::Connect;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result as SomaResult;
 use crate::repo::Manifest;
-use crate::{Environment, Printer, VERSION};
+use crate::VERSION;
 
 pub enum Templates {
     Binary,
@@ -34,12 +33,12 @@ pub struct RenderingInput<'a> {
 
 impl<'a> RenderingInput<'a> {
     pub fn new(
-        env: &'a Environment<impl Connect + 'static, impl Printer>,
+        username: &'a String,
         repository_name: &'a str,
         manifest: Manifest,
     ) -> RenderingInput<'a> {
         RenderingInput {
-            username: env.username(),
+            username,
             version: VERSION,
             repository_name,
             manifest,
