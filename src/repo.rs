@@ -20,7 +20,7 @@ pub mod backend;
 
 pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
 
-pub type DirectoryMapping = BTreeMap<String, String>;
+pub type DirectoryMapping = BTreeMap<PathBuf, PathBuf>;
 pub type RepositoryIndex = BTreeMap<String, Repository>;
 
 pub trait BTreeMapExt<K, V> {
@@ -80,7 +80,10 @@ impl Repository {
         copy(&repo_path, &work_dir, &copy_options)?;
 
         let mut directory_mapping = DirectoryMapping::new();
-        directory_mapping.insert("build/".to_string(), format!("/home/{}", problem_name));
+        directory_mapping.insert(
+            Path::new("build/").to_path_buf(),
+            Path::new(&format!("/home/{}", problem_name)).to_path_buf(),
+        );
         let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
             .convert_to_docker_entry(&directory_mapping)?;
 
@@ -174,8 +177,7 @@ impl FileEntry {
         ) -> Option<PathBuf> {
             match path {
                 Some(path) => {
-                    if directory_mapping.contains_key(&path.as_ref().to_string_lossy().to_string())
-                    {
+                    if directory_mapping.contains_key(&path.as_ref().to_path_buf()) {
                         Some(path.as_ref().to_path_buf())
                     } else {
                         find_prefix_matching(path.as_ref().parent(), directory_mapping)
@@ -189,11 +191,7 @@ impl FileEntry {
         let prefix = find_prefix_matching(Some(path), directory_mapping)
             .ok_or(SomaError::InvalidManifestError)?;
         let stripped_path = path.strip_prefix(&prefix)?;
-        let new_prefix = Path::new(
-            directory_mapping
-                .get(&prefix.to_string_lossy().to_string())
-                .unwrap(),
-        );
+        let new_prefix = Path::new(directory_mapping.get(&prefix).unwrap());
         let new_path = new_prefix.join(stripped_path);
 
         Ok(FileEntry {

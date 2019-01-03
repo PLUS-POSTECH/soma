@@ -26,6 +26,7 @@ COPY ./start.sh /start.sh
 RUN chmod 555 /start.sh
 
 USER $PROB
+WORKDIR /home/$PROB
 CMD ["/start.sh"]
 
 # TODO: Container internal port settings may be implemented afterwards
