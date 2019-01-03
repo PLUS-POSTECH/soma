@@ -1,13 +1,13 @@
 use std::string::ToString;
 
-use bollard::Docker;
 use clap::{App, AppSettings};
 use hyper::client::connect::Connect;
 use whoami::username;
 
 use soma::data_dir::DataDirectory;
+use soma::docker::connect_default;
 use soma::error::Result as SomaResult;
-use soma::{Environment, Printer, VERSION};
+use soma::{Environment, VERSION};
 
 use crate::commands::*;
 use crate::terminal_printer::TerminalPrinter;
@@ -15,23 +15,13 @@ use crate::terminal_printer::TerminalPrinter;
 mod commands;
 mod terminal_printer;
 
-#[cfg(windows)]
-fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_named_pipe_defaults()
-}
-
-#[cfg(unix)]
-fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_unix_defaults()
-}
-
-fn cli_env(data_dir: DataDirectory) -> Environment<impl Connect, impl Printer> {
-    Environment::new(
+fn cli_env(data_dir: DataDirectory) -> SomaResult<Environment<impl Connect, TerminalPrinter>> {
+    Ok(Environment::new(
         username(),
         data_dir,
-        connect_default().expect("failed to connect to docker"),
+        connect_default()?,
         TerminalPrinter::new(),
-    )
+    ))
 }
 
 fn main_result() -> SomaResult<()> {
@@ -51,7 +41,7 @@ fn main_result() -> SomaResult<()> {
         .get_matches();
 
     let data_dir = DataDirectory::new()?;
-    let env = cli_env(data_dir);
+    let env = cli_env(data_dir)?;
 
     match matches.subcommand() {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),

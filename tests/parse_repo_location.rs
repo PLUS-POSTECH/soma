@@ -1,11 +1,10 @@
 use soma::ops::parse_repo_location;
 use soma::repo::backend::Backend;
 
-mod common;
-
-fn test_parse_git(url: &str, repo_name: &str) {
+fn test_parse_git(url: &str, expected_repo_name: &str) {
     assert!(
         if let Ok((repo_name, Backend::GitBackend(_))) = parse_repo_location(url) {
+            assert_eq!(repo_name, expected_repo_name);
             true
         } else {
             false
@@ -13,9 +12,10 @@ fn test_parse_git(url: &str, repo_name: &str) {
     );
 }
 
-fn test_parse_local(url: &str, repo_name: &str) {
+fn test_parse_local(url: &str, expected_repo_name: &str) {
     assert!(
         if let Ok((repo_name, Backend::LocalBackend(_))) = parse_repo_location(url) {
+            assert_eq!(repo_name, expected_repo_name);
             true
         } else {
             false
