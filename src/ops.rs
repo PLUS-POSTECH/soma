@@ -56,6 +56,7 @@ pub fn add(
 pub fn fetch(
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
+    cwd: impl AsRef<Path>,
 ) -> SomaResult<()> {
     let repo_path = env.data_dir().repo_path(problem_name);
     let repo_manifest_path = repo_path.join(MANIFEST_FILE_NAME);
@@ -69,13 +70,11 @@ pub fn fetch(
             let file_path = repo_path.join(file_entry.path());
             let file_name = file_path
                 .file_name()
-                .ok_or(SomaError::InvalidRepositoryPathError)?
-                .to_str()
                 .ok_or(SomaError::InvalidRepositoryPathError)?;
 
             env.printer()
-                .write_line(&format!("Fetching '{}'", file_name));
-            fs::copy(&file_path, file_name)?;
+                .write_line(&format!("Fetching '{}'", file_name.to_string_lossy()));
+            fs::copy(&file_path, cwd.as_ref().join(file_name))?;
             Ok(())
         })
 }

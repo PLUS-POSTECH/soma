@@ -1,3 +1,5 @@
+use std::env::current_dir;
+
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
@@ -34,6 +36,6 @@ impl SomaCommand for FetchCommand {
         env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        fetch(&env, matches.value_of("problem").unwrap())
+        fetch(&env, matches.value_of("problem").unwrap(), current_dir()?)
     }
 }
