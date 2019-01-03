@@ -127,46 +127,27 @@ impl Manifest {
     pub fn convert_to_docker_entry(&self, default_path: impl AsRef<Path>) -> SomaResult<Manifest> {
         let executable = self.executable().iter();
         let readonly = self.readonly().iter();
-        let new_executable: SomaResult<Vec<FileEntry>> = executable
-            .map(|file_entry| {
-                let new_file_entry = file_entry
-                    .target_path
-                    .as_ref()
-                    .unwrap_or(&default_path.as_ref().to_path_buf())
-                    .clone()
-                    .join(
+        let map_file_entry = |file_entry: &FileEntry| -> SomaResult<FileEntry> {
+            let new_file_entry = file_entry
+                .target_path
+                .as_ref()
+                .unwrap_or(
+                    &default_path.as_ref().join(
                         file_entry
                             .path
                             .file_name()
                             .ok_or(SomaError::InvalidManifestError)?,
-                    );
-                Ok(FileEntry {
-                    path: file_entry.path.clone(),
-                    public: file_entry.public,
-                    target_path: Some(new_file_entry),
-                })
+                    ),
+                )
+                .clone();
+            Ok(FileEntry {
+                path: file_entry.path.clone(),
+                public: file_entry.public,
+                target_path: Some(new_file_entry),
             })
-            .collect();
-        let new_readonly: SomaResult<Vec<FileEntry>> = readonly
-            .map(|file_entry| {
-                let new_file_entry = file_entry
-                    .target_path
-                    .as_ref()
-                    .unwrap_or(&default_path.as_ref().to_path_buf())
-                    .clone()
-                    .join(
-                        file_entry
-                            .path
-                            .file_name()
-                            .ok_or(SomaError::InvalidManifestError)?,
-                    );
-                Ok(FileEntry {
-                    path: file_entry.path.clone(),
-                    public: file_entry.public,
-                    target_path: Some(new_file_entry),
-                })
-            })
-            .collect();
+        };
+        let new_executable: SomaResult<Vec<FileEntry>> = executable.map(map_file_entry).collect();
+        let new_readonly: SomaResult<Vec<FileEntry>> = readonly.map(map_file_entry).collect();
 
         Ok(Manifest {
             name: self.name().clone(),
