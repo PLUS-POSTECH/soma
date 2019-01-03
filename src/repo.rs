@@ -79,7 +79,10 @@ impl Repository {
         copy_options.copy_inside = true;
         copy(&repo_path, &work_dir, &copy_options)?;
 
-        let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?;
+        let mut directory_mapping = DirectoryMapping::new();
+        directory_mapping.insert("build/".to_string(), format!("/home/{}", problem_name));
+        let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
+            .convert_to_docker_entry(&directory_mapping)?;
 
         let rendering_input = RenderingInput::new(env, self.name(), manifest);
 
