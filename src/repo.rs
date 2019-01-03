@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fs::{remove_dir_all, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -20,45 +20,7 @@ pub mod backend;
 
 pub const MANIFEST_FILE_NAME: &'static str = "soma.toml";
 
-pub type DirectoryMap = HashMap<PathBuf, PathBuf>;
 pub type RepositoryIndex = BTreeMap<String, Repository>;
-
-pub trait FileEntryMap {
-    fn map_file(&self, file_entry: &FileEntry) -> SomaResult<FileEntry>;
-}
-
-impl FileEntryMap for DirectoryMap {
-    fn map_file(&self, file_entry: &FileEntry) -> SomaResult<FileEntry> {
-        fn find_prefix_matching(
-            path: Option<impl AsRef<Path>>,
-            directory_map: &DirectoryMap,
-        ) -> Option<PathBuf> {
-            match path {
-                Some(path) => {
-                    let path = path.as_ref();
-                    if directory_map.contains_key(&path.to_path_buf()) {
-                        Some(path.to_path_buf())
-                    } else {
-                        find_prefix_matching(path.parent(), directory_map)
-                    }
-                }
-                None => None,
-            }
-        }
-
-        let path = file_entry.path();
-        let prefix =
-            find_prefix_matching(Some(path), self).ok_or(SomaError::InvalidManifestError)?;
-        let stripped_path = path.strip_prefix(&prefix)?;
-        let new_prefix = self.get(&prefix).unwrap();
-        let new_path = new_prefix.join(stripped_path);
-
-        Ok(FileEntry {
-            path: new_path,
-            public: file_entry.public,
-        })
-    }
-}
 
 pub trait BTreeMapExt<K, V> {
     fn unique_insert(&mut self, key: K, value: V) -> SomaResult<Option<V>>;
@@ -116,13 +78,8 @@ impl Repository {
         copy_options.copy_inside = true;
         copy(&repo_path, &work_dir, &copy_options)?;
 
-        let mut directory_map = DirectoryMap::new();
-        directory_map.insert(
-            PathBuf::from("build/"),
-            PathBuf::from(&format!("/home/{}", problem_name)),
-        );
         let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
-            .convert_to_docker_entry(&directory_map)?;
+            .convert_to_docker_entry(&format!("/home/{}", problem_name))?;
 
         let rendering_input = RenderingInput::new(env.username(), self.name(), manifest);
 
@@ -167,14 +124,48 @@ impl Manifest {
         &self.readonly
     }
 
-    pub fn convert_to_docker_entry(&self, directory_map: &DirectoryMap) -> SomaResult<Manifest> {
+    pub fn convert_to_docker_entry(&self, default_path: impl AsRef<Path>) -> SomaResult<Manifest> {
         let executable = self.executable().iter();
         let readonly = self.readonly().iter();
         let new_executable: SomaResult<Vec<FileEntry>> = executable
-            .map(|file_entry| directory_map.map_file(file_entry))
+            .map(|file_entry| {
+                let new_file_entry = file_entry
+                    .target_path
+                    .as_ref()
+                    .unwrap_or(&default_path.as_ref().to_path_buf())
+                    .clone()
+                    .join(
+                        file_entry
+                            .path
+                            .file_name()
+                            .ok_or(SomaError::InvalidManifestError)?,
+                    );
+                Ok(FileEntry {
+                    path: file_entry.path.clone(),
+                    public: file_entry.public,
+                    target_path: Some(new_file_entry),
+                })
+            })
             .collect();
         let new_readonly: SomaResult<Vec<FileEntry>> = readonly
-            .map(|file_entry| directory_map.map_file(file_entry))
+            .map(|file_entry| {
+                let new_file_entry = file_entry
+                    .target_path
+                    .as_ref()
+                    .unwrap_or(&default_path.as_ref().to_path_buf())
+                    .clone()
+                    .join(
+                        file_entry
+                            .path
+                            .file_name()
+                            .ok_or(SomaError::InvalidManifestError)?,
+                    );
+                Ok(FileEntry {
+                    path: file_entry.path.clone(),
+                    public: file_entry.public,
+                    target_path: Some(new_file_entry),
+                })
+            })
             .collect();
 
         Ok(Manifest {
@@ -190,6 +181,7 @@ impl Manifest {
 pub struct FileEntry {
     path: PathBuf,
     public: Option<bool>,
+    target_path: Option<PathBuf>,
 }
 
 impl FileEntry {
@@ -199,6 +191,10 @@ impl FileEntry {
 
     pub fn public(&self) -> bool {
         self.public.unwrap_or(false)
+    }
+
+    pub fn target_path(&self) -> &Option<PathBuf> {
+        &self.target_path
     }
 }
 
