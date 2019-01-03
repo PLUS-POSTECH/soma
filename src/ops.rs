@@ -11,8 +11,8 @@ use crate::repo::MANIFEST_FILE_NAME;
 use crate::Environment;
 use crate::Printer;
 
-pub fn parse_repo_location(url: &str) -> SomaResult<(String, Backend)> {
-    let path = Path::new(url);
+pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)> {
+    let path = Path::new(repo_location);
     if path.is_dir() {
         // local backend
         Ok((
@@ -27,7 +27,8 @@ pub fn parse_repo_location(url: &str) -> SomaResult<(String, Backend)> {
         ))
     } else {
         // git backend
-        let parsed_url = Url::parse(url).or(Err(SomaError::InvalidRepositoryPathError))?;
+        let parsed_url =
+            Url::parse(repo_location).or(Err(SomaError::InvalidRepositoryPathError))?;
         let last_name = parsed_url
             .path_segments()
             .ok_or(SomaError::InvalidRepositoryPathError)?
@@ -38,7 +39,10 @@ pub fn parse_repo_location(url: &str) -> SomaResult<(String, Backend)> {
         } else {
             &last_name
         };
-        Ok((repo_name.to_owned(), Backend::GitBackend(url.to_owned())))
+        Ok((
+            repo_name.to_owned(),
+            Backend::GitBackend(repo_location.to_owned()),
+        ))
     }
 }
 
@@ -46,7 +50,7 @@ pub fn add(
     env: &Environment<impl Connect + 'static, impl Printer>,
     repo_location: &str,
 ) -> SomaResult<()> {
-    let (repo_name, backend) = parse_repo_location(repo_location)?;
+    let (repo_name, backend) = location_to_backend(repo_location)?;
     env.data_dir().add_repo(repo_name.clone(), backend)?;
     env.printer()
         .write_line(&format!("successfully added a repository '{}'", &repo_name));

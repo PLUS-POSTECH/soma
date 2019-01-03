@@ -1,9 +1,9 @@
-use soma::ops::parse_repo_location;
+use soma::ops::location_to_backend;
 use soma::repo::backend::Backend;
 
-fn test_parse_git(url: &str, expected_repo_name: &str) {
+fn test_parse_git(location: &str, expected_repo_name: &str) {
     assert!(
-        if let Ok((repo_name, Backend::GitBackend(_))) = parse_repo_location(url) {
+        if let Ok((repo_name, Backend::GitBackend(_))) = location_to_backend(location) {
             assert_eq!(repo_name, expected_repo_name);
             true
         } else {
@@ -12,9 +12,9 @@ fn test_parse_git(url: &str, expected_repo_name: &str) {
     );
 }
 
-fn test_parse_local(url: &str, expected_repo_name: &str) {
+fn test_parse_local(location: &str, expected_repo_name: &str) {
     assert!(
-        if let Ok((repo_name, Backend::LocalBackend(_))) = parse_repo_location(url) {
+        if let Ok((repo_name, Backend::LocalBackend(_))) = location_to_backend(location) {
             assert_eq!(repo_name, expected_repo_name);
             true
         } else {
@@ -23,8 +23,8 @@ fn test_parse_local(url: &str, expected_repo_name: &str) {
     );
 }
 
-fn test_parse_fail(url: &str) {
-    assert!(if let Err(_) = parse_repo_location(url) {
+fn test_parse_fail(location: &str) {
+    assert!(if let Err(_) = location_to_backend(location) {
         true
     } else {
         false
@@ -32,7 +32,7 @@ fn test_parse_fail(url: &str) {
 }
 
 #[test]
-fn parse_repo_location_success() {
+fn location_to_backend_success() {
     test_parse_git(
         "https://github.com/PLUS-POSTECH/simple-bof.git",
         "simple-bof",
@@ -43,6 +43,6 @@ fn parse_repo_location_success() {
 }
 
 #[test]
-fn parse_repo_location_fail() {
+fn location_to_backend_fail() {
     test_parse_fail("not_existing");
 }
