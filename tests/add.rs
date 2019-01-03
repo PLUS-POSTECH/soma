@@ -11,7 +11,7 @@ fn test_add() {
 
     let repo_name = "simple-bof";
     assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git").is_ok());
-    assert!(env.data_dir().repo_root_path().join(repo_name).is_dir());
+    assert!(env.data_dir().repo_path(repo_name).is_dir());
 
     let repo_index = env
         .data_dir()

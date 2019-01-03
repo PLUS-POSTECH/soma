@@ -1,14 +1,20 @@
 use soma::Printer;
 
 pub struct TestPrinter {
-    buffer: String,
+    output: String,
 }
 
 impl TestPrinter {
     pub fn new() -> TestPrinter {
         TestPrinter {
-            buffer: String::new(),
+            output: String::new(),
         }
+    }
+}
+
+impl TestPrinter {
+    pub fn output(&self) -> &str {
+        &self.output
     }
 }
 
@@ -25,6 +31,7 @@ impl Printer for TestPrinter {
     }
 
     fn write_line(&mut self, message: &str) {
-        self.buffer.push_str(message);
+        self.output.push_str(message);
+        self.output.push('\n');
     }
 }

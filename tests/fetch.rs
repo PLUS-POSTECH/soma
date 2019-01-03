@@ -1,4 +1,4 @@
-use soma::ops::{add, fetch};
+use soma::ops::{add, fetch, pull};
 
 pub use self::common::*;
 
@@ -13,7 +13,8 @@ fn test_fetch() {
 
     let repo_name = "simple-bof";
     assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git").is_ok());
+    assert!(pull(&env, repo_name).is_ok());
     assert!(fetch(&env, repo_name, &temp_copy_dir).is_ok());
 
-    assert!(temp_copy_dir.path().join("simple-bof").is_file());
+    expect_dir_contents(&temp_copy_dir, &vec!["simple-bof"]);
 }
