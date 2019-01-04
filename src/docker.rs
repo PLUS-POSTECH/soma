@@ -3,7 +3,8 @@ use std::path::Path;
 use std::process::Command;
 
 use bollard::container::{
-    APIContainers, Config, CreateContainerOptions, ListContainersOptions, StartContainerOptions,
+    APIContainers, Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
+    StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
 use bollard::Docker;
@@ -244,4 +245,20 @@ pub fn start(
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
         .start_container(container_id, None::<StartContainerOptions<String>>)
+}
+
+pub fn stop(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    container_id: &str,
+) -> impl Future<Item = (), Error = Error> {
+    env.docker
+        .stop_container(container_id, None::<StopContainerOptions>)
+}
+
+pub fn remove_container(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    container_id: &str,
+) -> impl Future<Item = (), Error = Error> {
+    env.docker
+        .remove_container(container_id, None::<RemoveContainerOptions>)
 }
