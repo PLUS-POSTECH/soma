@@ -6,7 +6,9 @@ use bollard::container::{
     APIContainers, Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
     StartContainerOptions, StopContainerOptions,
 };
-use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
+use bollard::image::{
+    APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions, RemoveImageOptions,
+};
 use bollard::Docker;
 use failure::Error;
 use futures::stream::Stream;
@@ -237,6 +239,15 @@ pub fn create<'a>(
             },
         )
         .map(|container_results| container_results.id)
+}
+
+pub fn remove_image(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    image_name: &str,
+) -> impl Future<Item = (), Error = Error> {
+    env.docker
+        .remove_image(image_name, None::<RemoveImageOptions>)
+        .map(|_| ())
 }
 
 pub fn start(
