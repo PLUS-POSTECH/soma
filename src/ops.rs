@@ -108,7 +108,7 @@ pub fn pull(
     Ok(())
 }
 
-pub fn build_image(
+fn build_image(
     repository: &Repository,
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
@@ -135,7 +135,7 @@ pub fn build_image(
     Ok(())
 }
 
-pub fn run_container(
+fn run_container(
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
     runtime: &mut Runtime,
@@ -144,4 +144,29 @@ pub fn run_container(
     let container_run = docker::create(env, &image_name)
         .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
     runtime.block_on(container_run)
+}
+
+pub fn run(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    problem_name: &str,
+    mut runtime: &mut Runtime,
+) -> SomaResult<()> {
+    let repo_name = problem_name;
+    let repo_index = env.data_dir().read_repo_index()?;
+    let repository = repo_index
+        .get(repo_name)
+        .ok_or(SomaError::RepositoryNotFoundError)?;
+
+    build_image(&repository, &env, repo_name)?;
+    env.printer().write_line(&format!(
+        "successfully built image for problem: '{}'",
+        &repo_name
+    ));
+
+    let container_name = run_container(&env, repo_name, &mut runtime)?;
+    env.printer().write_line(&format!(
+        "successfully started container: '{}'",
+        &container_name
+    ));
+    Ok(())
 }
