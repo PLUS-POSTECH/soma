@@ -11,22 +11,24 @@ RUN apt install -y socat
 {{ #with manifest }}
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
-RUN chown -R root:$PROB /home/$PROB
-
-ADD deploy/ /
 
 {{ #each executable }}
-RUN chmod +x "{{ this.path }}"
+COPY "{{ this.path }}" "{{ this.target_path }}"
+RUN chmod +x "{{ this.target_path }}"
 {{ /each }}
 
 {{ #each readonly }}
-RUN chmod -w "{{ this.path }}"
+COPY "{{ this.path }}" "{{ this.target_path }}"
+RUN chmod -w "{{ this.target_path }}"
 {{ /each }}
+
+RUN chown -R root:$PROB /home/$PROB
 
 COPY ./start.sh /start.sh
 RUN chmod 555 /start.sh
 
 USER $PROB
+WORKDIR /home/$PROB
 CMD ["/start.sh"]
 
 # TODO: Container internal port settings may be implemented afterwards

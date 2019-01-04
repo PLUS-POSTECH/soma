@@ -76,25 +76,60 @@ impl Manifest {
     pub fn readonly(&self) -> &Vec<FileEntry> {
         &self.readonly
     }
+
+    pub fn convert_to_docker_entry(&self, default_path: impl AsRef<Path>) -> SomaResult<Manifest> {
+        let executable = self.executable().iter();
+        let readonly = self.readonly().iter();
+        let map_file_entry = |file_entry: &FileEntry| -> SomaResult<FileEntry> {
+            let file_name = file_entry
+                .path
+                .file_name()
+                .ok_or(SomaError::InvalidManifestError)?;
+            let new_file_entry = file_entry
+                .target_path
+                .as_ref()
+                .unwrap_or(&default_path.as_ref().join(file_name))
+                .clone();
+            Ok(FileEntry {
+                path: file_entry.path.clone(),
+                public: file_entry.public,
+                target_path: Some(new_file_entry),
+            })
+        };
+        let new_executable: SomaResult<Vec<FileEntry>> = executable.map(map_file_entry).collect();
+        let new_readonly: SomaResult<Vec<FileEntry>> = readonly.map(map_file_entry).collect();
+
+        Ok(Manifest {
+            name: self.name().clone(),
+            executable: new_executable?,
+            readonly: new_readonly?,
+            binary: self.binary.clone(),
+        })
+    }
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct FileEntry {
-    path: String,
+    path: PathBuf,
     public: Option<bool>,
+    target_path: Option<PathBuf>,
 }
 
 impl FileEntry {
-    pub fn path(&self) -> &String {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
     pub fn public(&self) -> bool {
         self.public.unwrap_or(false)
     }
+
+    pub fn target_path(&self) -> &Option<PathBuf> {
+        &self.target_path
+    }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 struct BinaryConfig {
     os: String,
     entry: String,
