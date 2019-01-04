@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 
-use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
+use bollard::container::{
+    APIContainers, Config, CreateContainerOptions, ListContainersOptions, StartContainerOptions,
+};
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
 use bollard::Docker;
 use failure::Error;
@@ -28,7 +30,7 @@ pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum ImageStatus {
+pub enum VersionStatus {
     Normal,
     VersionMismatch,
     NoVersionFound,
@@ -38,11 +40,11 @@ pub enum ImageStatus {
 pub struct SomaImage {
     repository_name: String,
     image: APIImages,
-    status: ImageStatus,
+    status: VersionStatus,
 }
 
 impl SomaImage {
-    pub fn new(repository_name: String, image: APIImages, status: ImageStatus) -> SomaImage {
+    pub fn new(repository_name: String, image: APIImages, status: VersionStatus) -> SomaImage {
         SomaImage {
             repository_name,
             image,
@@ -58,38 +60,121 @@ impl SomaImage {
         &self.image
     }
 
-    pub fn status(&self) -> ImageStatus {
+    pub fn status(&self) -> VersionStatus {
         self.status
     }
 }
 
-pub fn list(
+#[derive(Debug)]
+pub struct SomaContainer {
+    repository_name: String,
+    container: APIContainers,
+    status: VersionStatus,
+}
+
+impl SomaContainer {
+    pub fn new(
+        repository_name: String,
+        container: APIContainers,
+        status: VersionStatus,
+    ) -> SomaContainer {
+        SomaContainer {
+            repository_name,
+            container,
+            status,
+        }
+    }
+
+    pub fn repository_name(&self) -> &String {
+        &self.repository_name
+    }
+
+    pub fn container(&self) -> &APIContainers {
+        &self.container
+    }
+
+    pub fn status(&self) -> VersionStatus {
+        self.status
+    }
+}
+
+pub fn list_containers(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+) -> impl Future<Item = Vec<SomaContainer>, Error = Error> {
+    let username = env.username().clone();
+    let mut soma_filter = HashMap::new();
+    soma_filter.insert(
+        "label".to_string(),
+        vec![format!(
+            "\"{}\"=\"{}\"",
+            LABEL_KEY_USERNAME.to_string(),
+            username.clone()
+        )],
+    );
+    env.docker
+        .list_containers(Some(ListContainersOptions::<String> {
+            all: true,
+            filters: soma_filter,
+            ..Default::default()
+        }))
+        .map(move |containers| -> Vec<SomaContainer> {
+            containers
+                .into_iter()
+                .filter_map(|container| {
+                    let labels = &container.labels;
+                    let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                        Some(name) => name.clone(),
+                        None => "**NONAME**".to_string(),
+                    };
+                    let status = match labels.get(LABEL_KEY_VERSION) {
+                        Some(container_version) => match container_version.as_str() {
+                            VERSION => VersionStatus::Normal,
+                            _ => VersionStatus::VersionMismatch,
+                        },
+                        None => VersionStatus::NoVersionFound,
+                    };
+                    Some(SomaContainer::new(repository_name, container, status))
+                })
+                .collect()
+        })
+}
+
+pub fn list_images(
     env: &Environment<impl Connect + 'static, impl Printer>,
 ) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
     let username = env.username().clone();
+    let mut soma_filter = HashMap::new();
+    soma_filter.insert(
+        "label".to_string(),
+        format!(
+            "\"{}\"=\"{}\"",
+            LABEL_KEY_USERNAME.to_string(),
+            username.clone()
+        ),
+    );
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
+            filters: soma_filter,
             ..Default::default()
         }))
         .map(move |images| -> Vec<SomaImage> {
             images
                 .into_iter()
-                .filter_map(|image| match &image.labels {
-                    Some(labels) if labels.get(LABEL_KEY_USERNAME) == Some(&username) => {
-                        let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
-                            Some(name) => name.clone(),
-                            None => "**NONAME**".to_string(),
-                        };
-                        let status = match labels.get(LABEL_KEY_VERSION) {
-                            Some(image_version) => match image_version.as_str() {
-                                VERSION => ImageStatus::Normal,
-                                _ => ImageStatus::VersionMismatch,
-                            },
-                            None => ImageStatus::NoVersionFound,
-                        };
-                        Some(SomaImage::new(repository_name, image, status))
-                    }
-                    _ => None,
+                .filter_map(|image| {
+                    // Unwrap guaranteed by filter option in ListImagesOptions
+                    let labels = image.labels.as_ref().unwrap();
+                    let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                        Some(name) => name.clone(),
+                        None => "**NONAME**".to_string(),
+                    };
+                    let status = match labels.get(LABEL_KEY_VERSION) {
+                        Some(image_version) => match image_version.as_str() {
+                            VERSION => VersionStatus::Normal,
+                            _ => VersionStatus::VersionMismatch,
+                        },
+                        None => VersionStatus::NoVersionFound,
+                    };
+                    Some(SomaImage::new(repository_name, image, status))
                 })
                 .collect()
         })
