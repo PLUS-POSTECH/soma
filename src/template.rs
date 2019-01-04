@@ -24,20 +24,20 @@ impl Templates {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct RenderingInput<'a> {
+pub struct RenderingContext<'a> {
     username: &'a str,
     version: &'a str,
     repository_name: &'a str,
     manifest: Manifest,
 }
 
-impl<'a> RenderingInput<'a> {
+impl<'a> RenderingContext<'a> {
     pub fn new(
         username: &'a String,
         repository_name: &'a str,
         manifest: Manifest,
-    ) -> RenderingInput<'a> {
-        RenderingInput {
+    ) -> RenderingContext<'a> {
+        RenderingContext {
             username,
             version: VERSION,
             repository_name,
@@ -46,23 +46,26 @@ impl<'a> RenderingInput<'a> {
     }
 }
 
-pub fn render_files_from_template<T>(
-    template: Templates,
-    input_data: &T,
-    output_path: impl AsRef<Path>,
-) -> SomaResult<()>
-where
-    T: Serialize,
-{
-    template.templates().into_iter().try_for_each(
-        |(file_name, template_string)| -> SomaResult<()> {
-            let render_engine = Handlebars::new();
+pub trait HandleBarsExt {
+    fn render_templates(
+        &self,
+        templates: Templates,
+        input_data: &impl Serialize,
+        output_path: impl AsRef<Path>,
+    ) -> SomaResult<()>;
+}
+
+impl HandleBarsExt for Handlebars {
+    fn render_templates(
+        &self,
+        templates: Templates,
+        input_data: &impl Serialize,
+        output_path: impl AsRef<Path>,
+    ) -> SomaResult<()> {
+        for (file_name, template_string) in templates.templates() {
             let mut rendered_file = File::create(output_path.as_ref().join(file_name))?;
-            Ok(render_engine.render_template_to_write(
-                template_string,
-                &input_data,
-                &mut rendered_file,
-            )?)
-        },
-    )
+            self.render_template_to_write(template_string, &input_data, &mut rendered_file)?;
+        }
+        Ok(())
+    }
 }

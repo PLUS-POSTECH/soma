@@ -2,6 +2,7 @@ use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
 use soma::error::{Error as SomaError, Result as SomaResult};
+use soma::ops::{build_image, run_container};
 use soma::{Environment, Printer};
 
 use crate::commands::{default_runtime, App, SomaCommand};
@@ -38,17 +39,17 @@ impl SomaCommand for RunCommand {
             .get(repo_name)
             .ok_or(SomaError::RepositoryNotFoundError)?;
 
-        repository.build_image(&env, repo_name)?;
+        build_image(&repository, &env, repo_name)?;
         env.printer().write_line(&format!(
             "successfully built image for problem: '{}'",
             &repo_name
         ));
 
         let mut runtime = default_runtime();
-        let conatiner_name = repository.run_container(&env, repo_name, &mut runtime)?;
+        let container_name = run_container(&env, repo_name, &mut runtime)?;
         env.printer().write_line(&format!(
             "successfully started container: '{}'",
-            &conatiner_name
+            &container_name
         ));
         Ok(())
     }
