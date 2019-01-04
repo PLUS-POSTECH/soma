@@ -6,7 +6,7 @@
 
 Soma is a CTF problem management tool.
 
-Soma helps to manage and distribute CTF problems after the contests.
+Soma helps to manage and distribute CTF problems after contests.
 
 ### For problem solvers
 
@@ -58,7 +58,7 @@ Of course they can be manually configured if needed :)
 
 Soma is in **pre-alpha** stage. Currently, Soma does not have any stable release, and everything is subject to change.
 
-The initial 0.1.0 release will contain the features listed in the issues #4.
+The initial 0.1.0 release will contain the features listed in the [issue #4](https://github.com/PLUS-POSTECH/soma/issues/4).
 Issues related to 0.1.0 release are marked with `0.1.0` milestone.
 
 Soma team is hoping to ship it in the first quarter of 2019.

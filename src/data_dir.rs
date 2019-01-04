@@ -48,6 +48,15 @@ impl DataDirectory {
             fs::create_dir_all(&path)?;
         }
 
+        DataDirectory::initialize_and_lock(path)
+    }
+
+    pub fn at_path(path: impl AsRef<Path>) -> SomaResult<DataDirectory> {
+        fs::create_dir_all(&path)?;
+        DataDirectory::initialize_and_lock(path.as_ref().to_owned())
+    }
+
+    fn initialize_and_lock(path: PathBuf) -> SomaResult<DataDirectory> {
         let lock = File::create(path.join(LOCK_FILE_NAME))?;
         // TODO: use more fine-tuned lock
         lock.try_lock_exclusive()

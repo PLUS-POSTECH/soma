@@ -4,6 +4,7 @@ use std::process::Command;
 
 use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
 use bollard::image::{APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions};
+use bollard::Docker;
 use failure::Error;
 use futures::stream::Stream;
 use futures::Future;
@@ -15,6 +16,16 @@ use crate::{Environment, Printer, VERSION};
 pub const LABEL_KEY_VERSION: &'static str = "soma.version";
 pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
 pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
+
+#[cfg(windows)]
+pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
+    Docker::connect_with_named_pipe_defaults()
+}
+
+#[cfg(unix)]
+pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
+    Docker::connect_with_unix_defaults()
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum ImageStatus {
