@@ -37,6 +37,7 @@ impl SomaCommand for RunCommand {
             &env,
             matches.value_of("problem").unwrap(),
             &mut default_runtime(),
-        )
+        )?;
+        Ok(())
     }
 }

@@ -150,7 +150,7 @@ pub fn run(
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
     mut runtime: &mut Runtime,
-) -> SomaResult<()> {
+) -> SomaResult<String> {
     let repo_name = problem_name;
     let repo_index = env.data_dir().read_repo_index()?;
     let repository = repo_index
@@ -168,5 +168,5 @@ pub fn run(
         "successfully started container: '{}'",
         &container_name
     ));
-    Ok(())
+    Ok(container_name)
 }
