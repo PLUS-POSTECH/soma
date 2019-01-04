@@ -43,7 +43,7 @@ impl SomaCommand for AddCommand {
         add(
             &env,
             matches.value_of("repository").unwrap(),
-            matches.value_of("NAME"),
+            matches.value_of("name"),
         )
     }
 }

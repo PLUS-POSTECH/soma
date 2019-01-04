@@ -12,7 +12,7 @@ fn test_fetch() {
     let env = test_env(&temp_data_dir);
 
     let repo_name = "simple-bof";
-    assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git").is_ok());
+    assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
     assert!(pull(&env, repo_name).is_ok());
     assert!(fetch(&env, repo_name, &temp_copy_dir).is_ok());
 
