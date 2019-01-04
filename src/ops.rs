@@ -56,8 +56,16 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)>
 pub fn add(
     env: &Environment<impl Connect + 'static, impl Printer>,
     repo_location: &str,
+    repo_name: Option<&str>,
 ) -> SomaResult<()> {
-    let (repo_name, backend) = location_to_backend(repo_location)?;
+    let (resolved_repo_name, backend) = location_to_backend(repo_location)?;
+    let repo_name = match repo_name {
+        Some(repo_name) => match backend {
+            Backend::LocalBackend(_) => format!("#{}", repo_name),
+            Backend::GitBackend(_) => repo_name.to_string(),
+        },
+        None => resolved_repo_name,
+    };
     env.data_dir().add_repo(repo_name.clone(), backend)?;
     env.printer()
         .write_line(&format!("successfully added a repository '{}'", &repo_name));

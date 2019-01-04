@@ -26,6 +26,13 @@ impl SomaCommand for AddCommand {
                     .required(true)
                     .help("git address or local path of a problem repository"),
             )
+            .arg(
+                Arg::with_name("name")
+                    .long("name")
+                    .help("customized name for the repository")
+                    .value_name("NAME")
+                    .takes_value(true),
+            )
     }
 
     fn handle_match(
@@ -33,6 +40,10 @@ impl SomaCommand for AddCommand {
         env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        add(&env, matches.value_of("repository").unwrap())
+        add(
+            &env,
+            matches.value_of("repository").unwrap(),
+            matches.value_of("NAME"),
+        )
     }
 }
