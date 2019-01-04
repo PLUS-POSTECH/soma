@@ -81,17 +81,14 @@ impl Manifest {
         let executable = self.executable().iter();
         let readonly = self.readonly().iter();
         let map_file_entry = |file_entry: &FileEntry| -> SomaResult<FileEntry> {
+            let file_name = file_entry
+                .path
+                .file_name()
+                .ok_or(SomaError::InvalidManifestError)?;
             let new_file_entry = file_entry
                 .target_path
                 .as_ref()
-                .unwrap_or(
-                    &default_path.as_ref().join(
-                        file_entry
-                            .path
-                            .file_name()
-                            .ok_or(SomaError::InvalidManifestError)?,
-                    ),
-                )
+                .unwrap_or(&default_path.as_ref().join(file_name))
                 .clone();
             Ok(FileEntry {
                 path: file_entry.path.clone(),
