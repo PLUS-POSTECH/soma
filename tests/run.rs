@@ -31,12 +31,14 @@ fn test_run() {
     assert!(runtime
         .block_on(docker::remove_container(&env, &container_id))
         .is_ok());
+    let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
     expect_container_exists(&containers, &container_id, true);
     expect_container_from_repo_exists(&containers, repo_name, true);
 
     assert!(runtime
         .block_on(docker::remove_image(&env, &expected_image_name))
         .is_ok());
+    let images = runtime.block_on(docker::list_images(&env)).unwrap();
     expect_image_exists(&images, &expected_image_name, true);
     expect_image_from_repo_exists(&images, repo_name, true);
 }
