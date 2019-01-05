@@ -6,6 +6,7 @@ pub use self::common::*;
 mod common;
 
 #[test]
+#[cfg(not(target_os = "windows"))]
 fn test_run() {
     let temp_data_dir = tempdir();
 
