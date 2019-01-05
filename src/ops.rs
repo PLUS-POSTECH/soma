@@ -131,11 +131,10 @@ fn build_image(
     copy_options.copy_inside = true;
     copy(&repo_path, &work_dir, &copy_options)?;
 
-    let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?
-        .convert_to_docker_entry(&format!("/home/{}", problem_name))?;
+    let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?.solidify()?;
 
-    let render_context = RenderingContext::new(env.username(), repository.name(), manifest);
-    Handlebars::new().render_templates(Templates::Binary, &render_context, work_dir_path)?;
+    let context = RenderingContext::new(env.username(), repository.name(), manifest);
+    Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
 
     docker::build(&image_name, work_dir_path)?;
     work_dir.close()?;
