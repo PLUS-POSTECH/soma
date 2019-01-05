@@ -49,47 +49,31 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
     );
 }
 
-pub fn expect_image_exists(images: &Vec<SomaImage>, image_name: &str, negate: bool) {
-    assert_eq!(
-        images.iter().any(|image| match &image.image().repo_tags {
-            Some(tags) => tags
-                .iter()
-                .any(|tag| tag.starts_with(format!("{}:", image_name).as_str())),
-            None => false,
-        }),
-        !negate
-    )
+pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
+    images.iter().any(|image| match &image.image().repo_tags {
+        Some(tags) => tags
+            .iter()
+            .any(|tag| tag.starts_with(format!("{}:", image_name).as_str())),
+        None => false,
+    })
 }
 
-pub fn expect_image_from_repo_exists(images: &Vec<SomaImage>, repo_name: &str, negate: bool) {
-    assert_eq!(
-        images
-            .iter()
-            .any(|image| image.repository_name() == repo_name),
-        !negate
-    )
+pub fn image_from_repo_exists(images: &Vec<SomaImage>, repo_name: &str) -> bool {
+    images
+        .iter()
+        .any(|image| image.repository_name() == repo_name)
 }
 
-pub fn expect_container_exists(containers: &Vec<SomaContainer>, container_id: &str, negate: bool) {
-    assert_eq!(
-        containers
-            .iter()
-            .any(|container| container.container().id == container_id),
-        !negate
-    )
+pub fn container_exists(containers: &Vec<SomaContainer>, container_id: &str) -> bool {
+    containers
+        .iter()
+        .any(|container| container.container().id == container_id)
 }
 
-pub fn expect_container_from_repo_exists(
-    containers: &Vec<SomaContainer>,
-    repo_name: &str,
-    negate: bool,
-) {
-    assert_eq!(
-        containers
-            .iter()
-            .any(|container| container.repository_name() == repo_name),
-        !negate
-    )
+pub fn container_from_repo_exists(containers: &Vec<SomaContainer>, repo_name: &str) -> bool {
+    containers
+        .iter()
+        .any(|container| container.repository_name() == repo_name)
 }
 
 pub fn default_runtime() -> Runtime {

@@ -22,10 +22,10 @@ fn test_run() {
 
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
-    expect_image_exists(&images, &expected_image_name, false);
-    expect_image_from_repo_exists(&images, repo_name, false);
-    expect_container_exists(&containers, &container_id, false);
-    expect_container_from_repo_exists(&containers, repo_name, false);
+    assert!(image_exists(&images, &expected_image_name));
+    assert!(image_from_repo_exists(&images, repo_name));
+    assert!(container_exists(&containers, &container_id));
+    assert!(container_from_repo_exists(&containers, repo_name));
 
     // Cleanup
     assert!(runtime.block_on(docker::stop(&env, &container_id)).is_ok());
@@ -33,13 +33,13 @@ fn test_run() {
         .block_on(docker::remove_container(&env, &container_id))
         .is_ok());
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
-    expect_container_exists(&containers, &container_id, true);
-    expect_container_from_repo_exists(&containers, repo_name, true);
+    assert!(!container_exists(&containers, &container_id));
+    assert!(!container_from_repo_exists(&containers, repo_name));
 
     assert!(runtime
         .block_on(docker::remove_image(&env, &expected_image_name))
         .is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
-    expect_image_exists(&images, &expected_image_name, true);
-    expect_image_from_repo_exists(&images, repo_name, true);
+    assert!(!image_exists(&images, &expected_image_name));
+    assert!(!image_from_repo_exists(&images, repo_name));
 }
