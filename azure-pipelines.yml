@@ -35,6 +35,8 @@ jobs:
   displayName: Windows Build
   pool:
     vmImage: 'vs2017-win2016'
+  variables:
+    windowsCI: true
   steps:
   - template: ci/rust-install.yml
     parameters:
