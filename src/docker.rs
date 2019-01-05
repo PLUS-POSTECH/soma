@@ -214,12 +214,13 @@ pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
 
 pub fn create<'a>(
     env: &'a Environment<impl Connect + 'static, impl Printer>,
+    repo_name: &'a str,
     image_name: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
     labels.insert(LABEL_KEY_VERSION, VERSION);
     labels.insert(LABEL_KEY_USERNAME, &env.username());
-    labels.insert(LABEL_KEY_REPOSITORY, "test");
+    labels.insert(LABEL_KEY_REPOSITORY, repo_name);
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,

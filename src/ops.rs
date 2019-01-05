@@ -141,7 +141,8 @@ fn run_container(
     runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let image_name = format!("soma/{}", problem_name);
-    let container_run = docker::create(env, &image_name)
+    let repo_name = problem_name;
+    let container_run = docker::create(env, repo_name, &image_name)
         .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
     runtime.block_on(container_run)
 }
