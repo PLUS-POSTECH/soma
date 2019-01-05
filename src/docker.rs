@@ -109,7 +109,7 @@ pub fn list_containers(
     soma_filter.insert(
         "label".to_string(),
         vec![format!(
-            "\"{}\"=\"{}\"",
+            "{}={}",
             LABEL_KEY_USERNAME.to_string(),
             username.clone()
         )],
@@ -146,38 +146,29 @@ pub fn list_images(
     env: &Environment<impl Connect + 'static, impl Printer>,
 ) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
     let username = env.username().clone();
-    let mut soma_filter = HashMap::new();
-    soma_filter.insert(
-        "label".to_string(),
-        format!(
-            "\"{}\"=\"{}\"",
-            LABEL_KEY_USERNAME.to_string(),
-            username.clone()
-        ),
-    );
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
-            filters: soma_filter,
             ..Default::default()
         }))
         .map(move |images| -> Vec<SomaImage> {
             images
                 .into_iter()
-                .filter_map(|image| {
-                    // Unwrap guaranteed by filter option in ListImagesOptions
-                    let labels = image.labels.as_ref().unwrap();
-                    let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
-                        Some(name) => name.clone(),
-                        None => "**NONAME**".to_string(),
-                    };
-                    let status = match labels.get(LABEL_KEY_VERSION) {
-                        Some(image_version) => match image_version.as_str() {
-                            VERSION => VersionStatus::Normal,
-                            _ => VersionStatus::VersionMismatch,
-                        },
-                        None => VersionStatus::NoVersionFound,
-                    };
-                    Some(SomaImage::new(repository_name, image, status))
+                .filter_map(|image| match &image.labels {
+                    Some(labels) if labels.get(LABEL_KEY_USERNAME) == Some(&username) => {
+                        let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                            Some(name) => name.clone(),
+                            None => "**NONAME**".to_string(),
+                        };
+                        let status = match labels.get(LABEL_KEY_VERSION) {
+                            Some(image_version) => match image_version.as_str() {
+                                VERSION => VersionStatus::Normal,
+                                _ => VersionStatus::VersionMismatch,
+                            },
+                            None => VersionStatus::NoVersionFound,
+                        };
+                        Some(SomaImage::new(repository_name, image, status))
+                    }
+                    _ => None,
                 })
                 .collect()
         })
