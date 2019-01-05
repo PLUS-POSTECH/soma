@@ -5,9 +5,10 @@ use std::path::Path;
 
 use hyper::client::connect::Connect;
 use tempfile::TempDir;
+use tokio::runtime::current_thread::Runtime;
 
 use soma::data_dir::DataDirectory;
-use soma::docker::connect_default;
+use soma::docker::{connect_default, SomaContainer, SomaImage};
 use soma::Environment;
 
 pub use self::test_printer::TestPrinter;
@@ -46,4 +47,35 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
             .collect::<HashSet<OsString>>(),
         dir_set
     );
+}
+
+pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
+    images.iter().any(|image| match &image.image().repo_tags {
+        Some(tags) => tags
+            .iter()
+            .any(|tag| tag.starts_with(format!("{}:", image_name).as_str())),
+        None => false,
+    })
+}
+
+pub fn image_from_repo_exists(images: &Vec<SomaImage>, repo_name: &str) -> bool {
+    images
+        .iter()
+        .any(|image| image.repository_name() == repo_name)
+}
+
+pub fn container_exists(containers: &Vec<SomaContainer>, container_id: &str) -> bool {
+    containers
+        .iter()
+        .any(|container| container.container().id == container_id)
+}
+
+pub fn container_from_repo_exists(containers: &Vec<SomaContainer>, repo_name: &str) -> bool {
+    containers
+        .iter()
+        .any(|container| container.repository_name() == repo_name)
+}
+
+pub fn default_runtime() -> Runtime {
+    Runtime::new().expect("failed to initialize tokio runtime")
 }
