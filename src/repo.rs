@@ -113,18 +113,19 @@ impl Manifest {
     }
 }
 
+// target_path is defined as String instead of PathBuf to support Windows
 #[derive(Deserialize)]
 pub struct FileEntry {
     path: PathBuf,
     public: Option<bool>,
-    target_path: Option<PathBuf>,
+    target_path: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct SolidFileEntry {
     path: PathBuf,
     public: bool,
-    target_path: PathBuf,
+    target_path: String,
 }
 
 impl FileEntry {
@@ -136,7 +137,7 @@ impl FileEntry {
         self.public.unwrap_or(false)
     }
 
-    pub fn target_path(&self) -> &Option<PathBuf> {
+    pub fn target_path(&self) -> &Option<String> {
         &self.target_path
     }
 
@@ -144,11 +145,18 @@ impl FileEntry {
         let target_path = match &self.target_path {
             Some(path) => path.clone(),
             None => {
+                let work_dir = work_dir
+                    .as_ref()
+                    .to_str()
+                    .ok_or(SomaError::InvalidUnicodeError)?;
                 let file_name = self
                     .path
                     .file_name()
-                    .ok_or(SomaError::InvalidRepositoryPathError)?;
-                work_dir.as_ref().join(file_name)
+                    .ok_or(SomaError::FileNameNotFoundError)?
+                    .to_str()
+                    .ok_or(SomaError::InvalidUnicodeError)?;
+                // manual string concatenation to support Windows
+                format!("{}/{}", work_dir, file_name)
             }
         };
         Ok(SolidFileEntry {

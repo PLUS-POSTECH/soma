@@ -26,21 +26,20 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)>
             format!(
                 "#{}",
                 path.file_name()
-                    .ok_or(SomaError::InvalidRepositoryPathError)?
+                    .ok_or(SomaError::FileNameNotFoundError)?
                     .to_str()
-                    .ok_or(SomaError::InvalidRepositoryPathError)?
+                    .ok_or(SomaError::InvalidUnicodeError)?
             ),
             Backend::LocalBackend(path.canonicalize()?.to_owned()),
         ))
     } else {
         // git backend
-        let parsed_url =
-            Url::parse(repo_location).or(Err(SomaError::InvalidRepositoryPathError))?;
+        let parsed_url = Url::parse(repo_location).or(Err(SomaError::RepositoryNotFoundError))?;
         let last_name = parsed_url
             .path_segments()
-            .ok_or(SomaError::InvalidRepositoryPathError)?
+            .ok_or(SomaError::RepositoryNotFoundError)?
             .last()
-            .ok_or(SomaError::InvalidRepositoryPathError)?;
+            .ok_or(SomaError::FileNameNotFoundError)?;
         let repo_name = if last_name.ends_with(".git") {
             &last_name[..last_name.len() - 4]
         } else {
@@ -89,7 +88,7 @@ pub fn fetch(
             let file_path = repo_path.join(file_entry.path());
             let file_name = file_path
                 .file_name()
-                .ok_or(SomaError::InvalidRepositoryPathError)?;
+                .ok_or(SomaError::FileNameNotFoundError)?;
 
             env.printer()
                 .write_line(&format!("Fetching '{}'", file_name.to_string_lossy()));
