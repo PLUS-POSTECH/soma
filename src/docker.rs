@@ -3,8 +3,8 @@ use std::path::Path;
 use std::process::Command;
 
 use bollard::container::{
-    APIContainers, Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
-    StartContainerOptions, StopContainerOptions,
+    APIContainers, Config, CreateContainerOptions, HostConfig, ListContainersOptions, PortBinding,
+    RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{
     APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions, RemoveImageOptions,
@@ -221,12 +221,28 @@ pub fn create<'a>(
     labels.insert(LABEL_KEY_VERSION, VERSION);
     labels.insert(LABEL_KEY_USERNAME, &env.username());
     labels.insert(LABEL_KEY_REPOSITORY, repo_name);
+
+    let mut port_bindings = HashMap::new();
+    port_bindings.insert(
+        "1024/tcp",
+        vec![PortBinding {
+            host_ip: "localhost",
+            host_port: "1024",
+        }],
+    );
+
+    let host_config = HostConfig {
+        port_bindings: Some(port_bindings),
+        ..Default::default()
+    };
+
     env.docker
         .create_container(
             None::<CreateContainerOptions<String>>,
             Config {
                 image: Some(image_name),
                 labels: Some(labels),
+                host_config: Some(host_config),
                 ..Default::default()
             },
         )
