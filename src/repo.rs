@@ -56,11 +56,21 @@ impl Repository {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct Manifest {
     name: String,
+    work_dir: Option<PathBuf>,
     executable: Vec<FileEntry>,
     readonly: Vec<FileEntry>,
+    binary: BinaryConfig,
+}
+
+#[derive(Serialize)]
+pub struct SolidManifest {
+    name: String,
+    work_dir: PathBuf,
+    executable: Vec<SolidFileEntry>,
+    readonly: Vec<SolidFileEntry>,
     binary: BinaryConfig,
 }
 
@@ -77,42 +87,45 @@ impl Manifest {
         &self.readonly
     }
 
-    pub fn convert_to_docker_entry(&self, default_path: impl AsRef<Path>) -> SomaResult<Manifest> {
-        let executable = self.executable().iter();
-        let readonly = self.readonly().iter();
-        let map_file_entry = |file_entry: &FileEntry| -> SomaResult<FileEntry> {
-            let file_name = file_entry
-                .path
-                .file_name()
-                .ok_or(SomaError::InvalidManifestError)?;
-            let new_file_entry = file_entry
-                .target_path
-                .as_ref()
-                .unwrap_or(&default_path.as_ref().join(file_name))
-                .clone();
-            Ok(FileEntry {
-                path: file_entry.path.clone(),
-                public: file_entry.public,
-                target_path: Some(new_file_entry),
-            })
+    pub fn solidify(&self) -> SomaResult<SolidManifest> {
+        let work_dir = match &self.work_dir {
+            Some(path) => path.clone(),
+            None => PathBuf::from(format!("/home/{}", self.name)),
         };
-        let new_executable: SomaResult<Vec<FileEntry>> = executable.map(map_file_entry).collect();
-        let new_readonly: SomaResult<Vec<FileEntry>> = readonly.map(map_file_entry).collect();
+        let executable = self
+            .executable
+            .iter()
+            .map(|file| file.solidify(&work_dir))
+            .collect::<SomaResult<Vec<_>>>()?;
+        let readonly = self
+            .readonly
+            .iter()
+            .map(|file| file.solidify(&work_dir))
+            .collect::<SomaResult<Vec<_>>>()?;
 
-        Ok(Manifest {
-            name: self.name().clone(),
-            executable: new_executable?,
-            readonly: new_readonly?,
+        Ok(SolidManifest {
+            name: self.name.clone(),
+            work_dir,
+            executable,
+            readonly,
             binary: self.binary.clone(),
         })
     }
 }
 
-#[derive(Deserialize, Serialize)]
+// target_path is defined as String instead of PathBuf to support Windows
+#[derive(Deserialize)]
 pub struct FileEntry {
     path: PathBuf,
     public: Option<bool>,
-    target_path: Option<PathBuf>,
+    target_path: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct SolidFileEntry {
+    path: PathBuf,
+    public: bool,
+    target_path: String,
 }
 
 impl FileEntry {
@@ -124,8 +137,33 @@ impl FileEntry {
         self.public.unwrap_or(false)
     }
 
-    pub fn target_path(&self) -> &Option<PathBuf> {
+    pub fn target_path(&self) -> &Option<String> {
         &self.target_path
+    }
+
+    pub fn solidify(&self, work_dir: impl AsRef<Path>) -> SomaResult<SolidFileEntry> {
+        let target_path = match &self.target_path {
+            Some(path) => path.clone(),
+            None => {
+                let work_dir = work_dir
+                    .as_ref()
+                    .to_str()
+                    .ok_or(SomaError::InvalidUnicodeError)?;
+                let file_name = self
+                    .path
+                    .file_name()
+                    .ok_or(SomaError::FileNameNotFoundError)?
+                    .to_str()
+                    .ok_or(SomaError::InvalidUnicodeError)?;
+                // manual string concatenation to support Windows
+                format!("{}/{}", work_dir, file_name)
+            }
+        };
+        Ok(SolidFileEntry {
+            path: self.path.clone(),
+            public: self.public.unwrap_or(false),
+            target_path,
+        })
     }
 }
 

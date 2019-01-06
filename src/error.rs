@@ -10,10 +10,12 @@ pub enum Error {
     DockerBuildFailError,
     #[fail(display = "a repository with the same name already exists")]
     DuplicateRepositoryError,
-    #[fail(display = "the specified repository path is invalid")]
-    InvalidRepositoryPathError,
+    #[fail(display = "failed to detect filename from the path")]
+    FileNameNotFoundError,
     #[fail(display = "some entry in the manifest is invalid")]
     InvalidManifestError,
+    #[fail(display = "the specified file's path contains unsupported characters")]
+    InvalidUnicodeError,
     #[fail(display = "the specified repository is not found")]
     RepositoryNotFoundError,
 }

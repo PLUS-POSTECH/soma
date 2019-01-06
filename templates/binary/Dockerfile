@@ -13,13 +13,13 @@ ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
 {{ #each executable }}
-COPY "{{ this.path }}" "{{ this.target_path }}"
-RUN chmod +x "{{ this.target_path }}"
+COPY "{{ path }}" "{{ target_path }}"
+RUN chmod +x "{{ target_path }}"
 {{ /each }}
 
 {{ #each readonly }}
-COPY "{{ this.path }}" "{{ this.target_path }}"
-RUN chmod -w "{{ this.target_path }}"
+COPY "{{ path }}" "{{ target_path }}"
+RUN chmod -w "{{ target_path }}"
 {{ /each }}
 
 RUN chown -R root:$PROB /home/$PROB
