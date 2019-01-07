@@ -216,6 +216,7 @@ pub fn create<'a>(
     env: &'a Environment<impl Connect + 'static, impl Printer>,
     repo_name: &'a str,
     image_name: &'a str,
+    port_str: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
     let mut labels = HashMap::new();
     labels.insert(LABEL_KEY_VERSION, VERSION);
@@ -224,10 +225,10 @@ pub fn create<'a>(
 
     let mut port_bindings = HashMap::new();
     port_bindings.insert(
-        "1024/tcp",
+        "1337/tcp",
         vec![PortBinding {
             host_ip: "localhost",
-            host_port: "1024",
+            host_port: port_str,
         }],
     );
 

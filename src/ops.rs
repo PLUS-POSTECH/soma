@@ -144,11 +144,14 @@ fn build_image(
 fn run_container(
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
+    port: u32,
     runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let image_name = format!("soma/{}", problem_name);
     let repo_name = problem_name;
-    let container_run = docker::create(env, repo_name, &image_name)
+    let port_str = port.to_string();
+
+    let container_run = docker::create(env, repo_name, &image_name, &port_str)
         .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
     runtime.block_on(container_run)
 }
@@ -156,6 +159,7 @@ fn run_container(
 pub fn run(
     env: &Environment<impl Connect + 'static, impl Printer>,
     problem_name: &str,
+    port: u32,
     mut runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let repo_name = problem_name;
@@ -170,7 +174,7 @@ pub fn run(
         &repo_name
     ));
 
-    let container_name = run_container(&env, repo_name, &mut runtime)?;
+    let container_name = run_container(&env, repo_name, port, &mut runtime)?;
     env.printer().write_line(&format!(
         "successfully started container: '{}'",
         &container_name

@@ -32,7 +32,7 @@ WORKDIR /home/$PROB
 CMD ["/start.sh"]
 
 # TODO: Container internal port settings may be implemented afterwards
-EXPOSE 1024
+EXPOSE 1337
 {{ /with }}
 
 #RUN apt install -y tzdata

@@ -1,5 +1,5 @@
 #!/bin/sh
 export TERM=xterm
 # TODO: Container internal port settings may be implemented afterwards
-socat TCP-LISTEN:1024,pktinfo,reuseaddr,fork EXEC:"stdbuf -i 0 -o 0 {{ manifest.binary.entry }}",stderr
+socat tcp-listen:1337,pktinfo,reuseaddr,fork exec:"{{ manifest.binary.entry }}",pty,ctty,raw,echo=0,stderr
 sleep infinity;
