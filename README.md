@@ -17,7 +17,7 @@ Downloading and running the problem is as easy as running three commands.
 ```
 soma add https://github.com/PLUS-POSTECH/simple-bof.git
 soma pull simple-bof
-soma run simple-bof --port 7000
+soma run simple-bof 31337
 ```
 
 CTF problems often contain public files. You can also fetch them easily with soma.
