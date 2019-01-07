@@ -38,7 +38,7 @@ impl SomaCommand for RunCommand {
         env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        let port = value_t!(matches, "port", u32).unwrap_or_else(|e| e.exit());
+        let port = value_t!(matches, "port", u32)?;
 
         run(
             &env,

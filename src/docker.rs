@@ -227,7 +227,7 @@ pub fn create<'a>(
     port_bindings.insert(
         "1337/tcp",
         vec![PortBinding {
-            host_ip: "localhost",
+            host_ip: "0.0.0.0",
             host_port: port_str,
         }],
     );
