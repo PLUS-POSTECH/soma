@@ -1,5 +1,5 @@
 use soma::docker;
-use soma::ops::{add, pull, run};
+use soma::ops::{add, build, run};
 
 pub use self::common::*;
 
@@ -18,13 +18,14 @@ fn test_run() {
         let mut runtime = default_runtime();
 
         assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
-        assert!(pull(&env, repo_name).is_ok());
-        let container_id = run(&env, repo_name, 31337, &mut runtime).unwrap();
 
+        assert!(build(&env, repo_name).is_ok());
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
-        let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
         assert!(image_exists(&images, &expected_image_name));
         assert!(image_from_repo_exists(&images, repo_name));
+
+        let container_id = run(&env, repo_name, 31337, &mut runtime).unwrap();
+        let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
         assert!(container_exists(&containers, &container_id));
         assert!(container_from_repo_exists(&containers, repo_name));
 

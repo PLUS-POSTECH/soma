@@ -49,6 +49,25 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
     );
 }
 
+pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) -> bool {
+    let dir_set: HashSet<OsString> = fs::read_dir(directory)
+        .expect("failed to read the directory")
+        .into_iter()
+        .filter_map(|dir| match dir {
+            Ok(entry) => {
+                println!("{:?}", entry.file_name());
+                Some(entry.file_name())
+            }
+            Err(_) => None,
+        })
+        .collect();
+    file_names
+        .iter()
+        .map(|ostr| ostr.as_ref().to_owned())
+        .collect::<HashSet<OsString>>()
+        .is_subset(&dir_set)
+}
+
 pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
     images.iter().any(|image| match &image.image().repo_tags {
         Some(tags) => tags
