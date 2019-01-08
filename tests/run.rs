@@ -19,7 +19,7 @@ fn test_run() {
 
         assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
         assert!(pull(&env, repo_name).is_ok());
-        let container_id = run(&env, repo_name, &mut runtime).unwrap();
+        let container_id = run(&env, repo_name, 31337, &mut runtime).unwrap();
 
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
         let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
