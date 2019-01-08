@@ -109,15 +109,15 @@ impl DataDirectory {
         Ok(())
     }
 
-    pub fn add_repo(&self, repo_name: String, backend: Backend) -> SomaResult<()> {
+    pub fn add_repo(&self, repo_name: String, backend: Backend) -> SomaResult<Repository> {
         let mut repo_index = self.read_repo_index()?;
         let local_path = self.init_repo(&repo_name)?;
         let repository = Repository::new(repo_name.clone(), local_path, backend);
-        repo_index.unique_insert(repo_name, repository)?;
+        repo_index.unique_insert(repo_name, repository.clone())?;
 
         self.write_repo_index(repo_index)?;
 
-        Ok(())
+        Ok(repository)
     }
 }
 

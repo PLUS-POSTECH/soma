@@ -28,7 +28,7 @@ impl BTreeMapExt<String, Repository> for RepositoryIndex {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Repository {
     name: String,
     local_path: PathBuf,

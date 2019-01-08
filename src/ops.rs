@@ -65,7 +65,11 @@ pub fn add(
         },
         None => resolved_repo_name,
     };
-    env.data_dir().add_repo(repo_name.clone(), backend)?;
+    let repository = env.data_dir().add_repo(repo_name.clone(), backend)?;
+    let backend = repository.backend();
+    let local_path = repository.local_path();
+    backend.update(local_path)?;
+
     env.printer().write_line(&format!(
         "Successfully added a repository '{}'.",
         &repo_name
