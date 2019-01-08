@@ -16,7 +16,7 @@ Downloading and running the problem is as easy as running three commands.
 
 ```
 soma add https://github.com/PLUS-POSTECH/simple-bof.git
-soma pull simple-bof
+soma build simple-bof
 soma run simple-bof 31337
 ```
 
@@ -58,19 +58,19 @@ Of course they can be manually configured if needed :)
 
 Soma is in **pre-alpha** stage. Currently, Soma does not have any stable release, and everything is subject to change.
 
-The initial 0.1.0 release will contain the features listed in the [issue #4](https://github.com/PLUS-POSTECH/soma/issues/4).
-Issues related to 0.1.0 release are marked with `0.1.0` milestone.
+The initial 0.1.0 release will contain the features listed in the [issue #4] and [issue #66].
+Issues related to 0.1.0 release are marked with [`0.1.0` milestone].
 
 Soma team is hoping to ship it in the first quarter of 2019.
 
 ### Roadmap
 
-* Implement core commands. (priority: high)
-* Write tests. (priority: high)
-* Better documentation of features. (priority: medium)
-* Support multiple problems in a single repository. (priority: medium)
-* Support multiple containers for a single problem. (priority: medium)
-* Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
+- [ ] Implement core commands. ([#4][issue #4] and [#66][issue #66]) (priority: high)
+- [x] ~~Write tests. (priority: high)~~
+- [ ] Better documentation of features. (priority: medium)
+- [ ] Support multiple problems in a single repository. (priority: medium)
+- [ ] Support multiple containers for a single problem. (priority: medium)
+- [ ] Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
 
 
 ## Development
@@ -107,3 +107,8 @@ at your option.
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
+
+
+[issue #4]: https://github.com/PLUS-POSTECH/soma/issues/4
+[issue #66]: https://github.com/PLUS-POSTECH/soma/issues/66
+[`0.1.0` milestone]: https://github.com/PLUS-POSTECH/soma/milestone/1
