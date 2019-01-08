@@ -20,7 +20,7 @@ impl SomaCommand for RunCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("runs problem daemon container")
+            .about("Runs problem daemon container")
             .arg(
                 Arg::with_name("problem")
                     .required(true)

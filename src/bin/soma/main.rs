@@ -28,7 +28,7 @@ fn main_result() -> SomaResult<()> {
     let add_command = AddCommand::new();
     let fetch_command = FetchCommand::new();
     let list_command = ListCommand::new();
-    let pull_command = PullCommand::new();
+    let build_command = BuildCommand::new();
     let run_command = RunCommand::new();
 
     let matches = App::new("soma")
@@ -38,7 +38,7 @@ fn main_result() -> SomaResult<()> {
         .subcommand(add_command.app())
         .subcommand(fetch_command.app())
         .subcommand(list_command.app())
-        .subcommand(pull_command.app())
+        .subcommand(build_command.app())
         .subcommand(run_command.app())
         .get_matches();
 
@@ -49,7 +49,7 @@ fn main_result() -> SomaResult<()> {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
         (FetchCommand::NAME, Some(matches)) => fetch_command.handle_match(env, matches),
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
-        (PullCommand::NAME, Some(matches)) => pull_command.handle_match(env, matches),
+        (BuildCommand::NAME, Some(matches)) => build_command.handle_match(env, matches),
         (RunCommand::NAME, Some(matches)) => run_command.handle_match(env, matches),
         _ => unreachable!(),
     }

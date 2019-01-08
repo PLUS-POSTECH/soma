@@ -66,8 +66,10 @@ pub fn add(
         None => resolved_repo_name,
     };
     env.data_dir().add_repo(repo_name.clone(), backend)?;
-    env.printer()
-        .write_line(&format!("successfully added a repository '{}'", &repo_name));
+    env.printer().write_line(&format!(
+        "Successfully added a repository '{}'.",
+        &repo_name
+    ));
     Ok(())
 }
 
@@ -91,16 +93,17 @@ pub fn fetch(
                 .ok_or(SomaError::FileNameNotFoundError)?;
 
             env.printer()
-                .write_line(&format!("Fetching '{}'", file_name.to_string_lossy()));
+                .write_line(&format!("Fetching '{}'...", file_name.to_string_lossy()));
             fs::copy(&file_path, cwd.as_ref().join(file_name))?;
             Ok(())
         })
 }
 
-pub fn pull(
+pub fn build(
     env: &Environment<impl Connect + 'static, impl Printer>,
-    repo_name: &str,
+    problem_name: &str,
 ) -> SomaResult<()> {
+    let repo_name = problem_name;
     let repo_index = env.data_dir().read_repo_index()?;
     let repository = repo_index
         .get(repo_name)
@@ -109,7 +112,13 @@ pub fn pull(
     let local_path = repository.local_path();
     backend.update(local_path)?;
     env.printer().write_line(&format!(
-        "successfully updated repository: '{}'",
+        "Successfully updated repository: '{}'.",
+        &repo_name
+    ));
+
+    build_image(&repository, &env, repo_name)?;
+    env.printer().write_line(&format!(
+        "Successfully built image for problem: '{}'.",
         &repo_name
     ));
     Ok(())
@@ -162,21 +171,9 @@ pub fn run(
     port: u32,
     mut runtime: &mut Runtime,
 ) -> SomaResult<String> {
-    let repo_name = problem_name;
-    let repo_index = env.data_dir().read_repo_index()?;
-    let repository = repo_index
-        .get(repo_name)
-        .ok_or(SomaError::RepositoryNotFoundError)?;
-
-    build_image(&repository, &env, repo_name)?;
+    let container_name = run_container(&env, problem_name, port, &mut runtime)?;
     env.printer().write_line(&format!(
-        "successfully built image for problem: '{}'",
-        &repo_name
-    ));
-
-    let container_name = run_container(&env, repo_name, port, &mut runtime)?;
-    env.printer().write_line(&format!(
-        "successfully started container: '{}'",
+        "Successfully started container: '{}'.",
         &container_name
     ));
     Ok(container_name)

@@ -5,26 +5,26 @@ use soma::error::Result as SomaResult;
 use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};
-use soma::ops::pull;
+use soma::ops::build;
 
-pub struct PullCommand;
+pub struct BuildCommand;
 
-impl PullCommand {
-    pub fn new() -> PullCommand {
-        PullCommand {}
+impl BuildCommand {
+    pub fn new() -> BuildCommand {
+        BuildCommand {}
     }
 }
 
-impl SomaCommand for PullCommand {
-    const NAME: &'static str = "pull";
+impl SomaCommand for BuildCommand {
+    const NAME: &'static str = "build";
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("Updates a Soma repository")
+            .about("Builds Soma image")
             .arg(
-                Arg::with_name("repository")
+                Arg::with_name("problem")
                     .required(true)
-                    .help("name of a repository"),
+                    .help("name of the problem"),
             )
     }
 
@@ -33,6 +33,6 @@ impl SomaCommand for PullCommand {
         env: Environment<impl Connect + 'static, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        pull(&env, matches.value_of("repository").unwrap())
+        build(&env, matches.value_of("problem").unwrap())
     }
 }
