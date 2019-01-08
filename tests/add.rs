@@ -18,6 +18,10 @@ fn test_add() {
         .read_repo_index()
         .expect("failed to read repository index");
     assert!(repo_index.contains_key(repo_name));
+
+    let repository = repo_index.get(repo_name).unwrap();
+    let local_path = repository.local_path();
+    assert!(dir_contents_exists(local_path, &vec![".git"]))
 }
 
 #[test]
@@ -39,4 +43,8 @@ fn test_add_with_name() {
         .read_repo_index()
         .expect("failed to read repository index");
     assert!(repo_index.contains_key(repo_name));
+
+    let repository = repo_index.get(repo_name).unwrap();
+    let local_path = repository.local_path();
+    assert!(dir_contents_exists(local_path, &vec![".git"]))
 }

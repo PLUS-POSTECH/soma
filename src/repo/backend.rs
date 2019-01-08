@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Result as SomaResult;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Backend {
     GitBackend(String),
     // On Windows, this path corresponds to extended length path

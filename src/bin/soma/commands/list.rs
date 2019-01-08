@@ -30,7 +30,7 @@ impl SomaCommand for ListCommand {
         let repo_index = env.data_dir().read_repo_index()?;
 
         if repo_index.is_empty() {
-            env.printer().write_line("no repository was added");
+            env.printer().write_line("No repository was added.");
         } else {
             env.printer()
                 .write_line(&format!("{:<20}{:<40}", "Name", "Origin"));
