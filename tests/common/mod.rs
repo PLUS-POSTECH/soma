@@ -33,10 +33,7 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
         .expect("failed to read the directory")
         .into_iter()
         .filter_map(|dir| match dir {
-            Ok(entry) => {
-                println!("{:?}", entry.file_name());
-                Some(entry.file_name())
-            }
+            Ok(entry) => Some(entry.file_name()),
             Err(_) => None,
         })
         .collect();
@@ -54,10 +51,7 @@ pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef
         .expect("failed to read the directory")
         .into_iter()
         .filter_map(|dir| match dir {
-            Ok(entry) => {
-                println!("{:?}", entry.file_name());
-                Some(entry.file_name())
-            }
+            Ok(entry) => Some(entry.file_name()),
             Err(_) => None,
         })
         .collect();
