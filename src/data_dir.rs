@@ -101,7 +101,7 @@ impl DataDirectory {
         }
     }
 
-    fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
+    pub fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
         fs::create_dir_all(self.repo_root_path())?;
         let path = self.repo_index_path();
         let mut file = File::create(path)?;

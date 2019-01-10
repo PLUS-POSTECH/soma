@@ -43,6 +43,7 @@ impl Repository {
             backend,
         }
     }
+
     pub fn name(&self) -> &String {
         &self.name
     }

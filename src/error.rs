@@ -16,6 +16,8 @@ pub enum Error {
     InvalidManifestError,
     #[fail(display = "the specified file's path contains unsupported characters")]
     InvalidUnicodeError,
+    #[fail(display = "there is an image from the repository")]
+    RepositoryInUseError,
     #[fail(display = "the specified repository is not found")]
     RepositoryNotFoundError,
 }

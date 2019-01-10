@@ -1,4 +1,7 @@
 use soma::docker;
+use soma::docker::{
+    container_exists, container_from_repo_exists, image_exists, image_from_repo_exists,
+};
 use soma::ops::{add, build, run};
 
 pub use self::common::*;
@@ -14,14 +17,14 @@ fn test_run() {
         let env = test_env(&temp_data_dir);
 
         let repo_name = "simple-bof";
-        let expected_image_name = format!("soma/{}", repo_name);
+        let image_name = docker::image_name(repo_name);
         let mut runtime = default_runtime();
 
         assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
 
         assert!(build(&env, repo_name).is_ok());
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
-        assert!(image_exists(&images, &expected_image_name));
+        assert!(image_exists(&images, &image_name));
         assert!(image_from_repo_exists(&images, repo_name));
 
         let container_id = run(&env, repo_name, 31337, &mut runtime).unwrap();
@@ -39,10 +42,10 @@ fn test_run() {
         assert!(!container_from_repo_exists(&containers, repo_name));
 
         assert!(runtime
-            .block_on(docker::remove_image(&env, &expected_image_name))
+            .block_on(docker::remove_image(&env, &image_name))
             .is_ok());
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
-        assert!(!image_exists(&images, &expected_image_name));
+        assert!(!image_exists(&images, &image_name));
         assert!(!image_from_repo_exists(&images, repo_name));
     }
 }
