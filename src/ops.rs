@@ -23,13 +23,11 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)>
     if path.is_dir() {
         // local backend
         Ok((
-            format!(
-                "#{}",
-                path.file_name()
-                    .ok_or(SomaError::FileNameNotFoundError)?
-                    .to_str()
-                    .ok_or(SomaError::InvalidUnicodeError)?
-            ),
+            path.file_name()
+                .ok_or(SomaError::FileNameNotFoundError)?
+                .to_str()
+                .ok_or(SomaError::InvalidUnicodeError)?
+                .to_owned(),
             Backend::LocalBackend(path.canonicalize()?.to_owned()),
         ))
     } else {
@@ -59,10 +57,7 @@ pub fn add(
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = location_to_backend(repo_location)?;
     let repo_name = match repo_name {
-        Some(repo_name) => match backend {
-            Backend::LocalBackend(_) => format!("#{}", repo_name),
-            Backend::GitBackend(_) => repo_name.to_string(),
-        },
+        Some(repo_name) => repo_name.to_owned(),
         None => resolved_repo_name,
     };
     let repository = env.data_dir().add_repo(repo_name.clone(), backend)?;
