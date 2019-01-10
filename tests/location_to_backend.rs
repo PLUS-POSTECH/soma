@@ -39,7 +39,7 @@ fn location_to_backend_success() {
     );
     // TODO: git through other protocols
     // test_parse_git("git@github.com:PLUS-POSTECH/simple-bof.git", "simple-bof");
-    test_parse_local("hooks", "#hooks");
+    test_parse_local("hooks", "hooks");
 }
 
 #[test]
