@@ -1,11 +1,11 @@
 use std::fs;
-use std::fs::remove_dir_all;
 use std::path::Path;
 
 use fs_extra::dir::{copy, CopyOptions};
 use futures::future::Future;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
+use remove_dir_all::remove_dir_all;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
 use url::Url;
@@ -131,7 +131,7 @@ fn build_image(
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
     let repo_path = repository.local_path();
-    let image_name = format!("soma/{}", problem_name);
+    let image_name = docker::image_name(problem_name);
 
     remove_dir_all(&work_dir)?;
     let mut copy_options = CopyOptions::new();
@@ -155,7 +155,7 @@ fn run_container(
     port: u32,
     runtime: &mut Runtime,
 ) -> SomaResult<String> {
-    let image_name = format!("soma/{}", problem_name);
+    let image_name = docker::image_name(problem_name);
     let repo_name = problem_name;
     let port_str = port.to_string();
 
@@ -176,4 +176,31 @@ pub fn run(
         &container_name
     ));
     Ok(container_name)
+}
+
+pub fn remove(
+    env: &Environment<impl Connect + 'static, impl Printer>,
+    repo_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
+    let mut repo_index = env.data_dir().read_repo_index()?;
+
+    let image_list = runtime.block_on(docker::list_images(env))?;
+    if docker::image_from_repo_exists(&image_list, repo_name) {
+        Err(SomaError::RepositoryInUseError)?;
+    }
+
+    let repository = repo_index
+        .remove(repo_name)
+        .ok_or(SomaError::RepositoryNotFoundError)?;
+    env.data_dir().write_repo_index(repo_index)?;
+
+    remove_dir_all(repository.local_path())?;
+
+    env.printer().write_line(&format!(
+        "Successfully removed repository: '{}'.",
+        &repo_name
+    ));
+
+    Ok(())
 }
