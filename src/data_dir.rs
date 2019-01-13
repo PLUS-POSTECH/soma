@@ -119,6 +119,11 @@ impl DataDirectory {
 
         Ok(repository)
     }
+
+    pub fn repo_exists(&self, repo_name: impl AsRef<Path>) -> bool {
+        let repo_path = self.repo_path(repo_name);
+        repo_path.is_dir()
+    }
 }
 
 impl Drop for DataDirectory {
