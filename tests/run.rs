@@ -16,11 +16,16 @@ fn test_run() {
 
         let env = test_env(&temp_data_dir);
 
-        let repo_name = "simple-bof";
+        let repo_name = "test-simple-bof";
         let image_name = docker::image_name(repo_name);
         let mut runtime = default_runtime();
 
-        assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
+        assert!(add(
+            &env,
+            "https://github.com/PLUS-POSTECH/simple-bof.git",
+            Some(repo_name)
+        )
+        .is_ok());
 
         assert!(build(&env, repo_name).is_ok());
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
