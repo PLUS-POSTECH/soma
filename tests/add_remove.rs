@@ -22,7 +22,7 @@ fn test_add_remove() {
     let local_path = env
         .repo_manager()
         .get_repo(repo_name)
-        .expect("added repository does not exist")
+        .expect("Added repository does not exist")
         .local_path();
     assert!(dir_contents_exists(local_path, &vec![".git"]));
 
@@ -47,7 +47,7 @@ fn test_add_with_name() {
     let local_path = env
         .repo_manager()
         .get_repo(repo_name)
-        .expect("added repository does not exist")
+        .expect("Added repository does not exist")
         .local_path();
     assert!(dir_contents_exists(local_path, &vec![".git"]));
 }

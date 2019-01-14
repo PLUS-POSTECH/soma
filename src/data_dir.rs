@@ -35,7 +35,7 @@ impl DataDirectory {
 
         if !path.exists() {
             if let Answer::NO = Question::new(&format!(
-                "It seems that you use Soma for the first time. The data directory will be initialized at {:?}. [y/n]\n",
+                "It seems that you use Soma for the first time\nThe data directory will be initialized at {:?} [y/n]\n",
                 path.as_os_str(),
             ))
                 .confirm()
@@ -70,7 +70,7 @@ impl DataDirectory {
         T: DirectoryManager<'a>,
     {
         if !self.manager_set.insert(T::DIR) {
-            panic!("a manager should be registered only once");
+            panic!("A manager should be registered only once");
         }
 
         let manager_root = self.root_path.join(T::DIR);
@@ -82,7 +82,7 @@ impl DataDirectory {
 impl Drop for DataDirectory {
     fn drop(&mut self) {
         if self.lock.unlock().is_err() {
-            eprintln!("failed to unlock the data directory lock");
+            eprintln!("Failed to unlock the data directory lock");
         }
     }
 }

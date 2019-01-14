@@ -31,5 +31,5 @@ pub trait SomaCommand {
 }
 
 fn default_runtime() -> Runtime {
-    Runtime::new().expect("failed to initialize tokio runtime")
+    Runtime::new().expect("Failed to initialize tokio runtime")
 }

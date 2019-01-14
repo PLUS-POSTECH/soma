@@ -20,7 +20,7 @@ impl SomaCommand for RemoveCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("Unregisters a Soma repository")
+            .about("Unregisters a repository")
             .arg(
                 Arg::with_name("repository")
                     .required(true)

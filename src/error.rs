@@ -2,23 +2,23 @@ use failure::Fail;
 
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "failed to access the data directory")]
+    #[fail(display = "Failed to access the data directory")]
     DataDirectoryAccessError,
-    #[fail(display = "another Soma instance is using the data directory")]
+    #[fail(display = "Another Soma instance is using the data directory")]
     DataDirectoryLockError,
-    #[fail(display = "image build process exited with non-zero status code")]
+    #[fail(display = "Image build process exited with non-zero status code")]
     DockerBuildFailError,
-    #[fail(display = "a repository with the same name already exists")]
+    #[fail(display = "A repository with the same name already exists")]
     DuplicateRepositoryError,
-    #[fail(display = "failed to detect filename from the path")]
+    #[fail(display = "Failed to detect filename from the path")]
     FileNameNotFoundError,
-    #[fail(display = "some entry in the manifest is invalid")]
+    #[fail(display = "Some entry in the manifest is invalid")]
     InvalidManifestError,
-    #[fail(display = "the specified file's path contains unsupported characters")]
+    #[fail(display = "The specified file's path contains unsupported characters")]
     InvalidUnicodeError,
-    #[fail(display = "there is an image from the repository")]
+    #[fail(display = "There is an image from the repository")]
     RepositoryInUseError,
-    #[fail(display = "the specified repository is not found")]
+    #[fail(display = "The specified repository is not found")]
     RepositoryNotFoundError,
 }
 

@@ -24,7 +24,7 @@ impl SomaCommand for RunCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    .help("name of a problem"),
+                    .help("the name of the problem"),
             )
             .arg(
                 Arg::with_name("port")
