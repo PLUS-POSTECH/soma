@@ -12,18 +12,17 @@ mod common;
 fn test_run() {
     // disabled for Windows CI
     if option_env!("WINDOWSCI").is_none() {
-        let temp_data_dir = tempdir();
-
-        let env = test_env(&temp_data_dir);
+        let (_, mut data_dir) = temp_data_dir();
+        let mut env = test_env(&mut data_dir);
 
         let repo_name = "test-simple-bof";
         let image_name = docker::image_name(repo_name);
         let mut runtime = default_runtime();
 
         assert!(add(
-            &env,
+            &mut env,
             "https://github.com/PLUS-POSTECH/simple-bof.git",
-            Some(repo_name)
+            Some(repo_name),
         )
         .is_ok());
 

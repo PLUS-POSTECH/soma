@@ -1,8 +1,8 @@
 use clap::{value_t, Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
-use soma::error::Result as SomaResult;
 use soma::ops::run;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 use crate::commands::{default_runtime, App, SomaCommand};
@@ -24,7 +24,7 @@ impl SomaCommand for RunCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    .help("name of a problem"),
+                    .help("the name of the problem"),
             )
             .arg(
                 Arg::with_name("port")
@@ -35,7 +35,7 @@ impl SomaCommand for RunCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         let port = value_t!(matches, "port", u32)?;

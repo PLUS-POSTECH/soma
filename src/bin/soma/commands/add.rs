@@ -1,8 +1,8 @@
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
-use soma::error::Result as SomaResult;
 use soma::ops::add;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};
@@ -20,7 +20,7 @@ impl SomaCommand for AddCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("Registers a Soma repository")
+            .about("Registers a repository")
             .arg(
                 Arg::with_name("repository")
                     .required(true)
@@ -37,11 +37,11 @@ impl SomaCommand for AddCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        mut env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         add(
-            &env,
+            &mut env,
             matches.value_of("repository").unwrap(),
             matches.value_of("name"),
         )

@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
 
-use soma::error::Result as SomaResult;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 pub use self::{
@@ -25,11 +25,11 @@ pub trait SomaCommand {
     fn app(&self) -> App;
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()>;
 }
 
 fn default_runtime() -> Runtime {
-    Runtime::new().expect("failed to initialize tokio runtime")
+    Runtime::new().expect("Failed to initialize tokio runtime")
 }

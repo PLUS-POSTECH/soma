@@ -1,5 +1,5 @@
 use soma::ops::location_to_backend;
-use soma::repo::backend::Backend;
+use soma::repo::Backend;
 
 fn test_parse_git(location: &str, expected_repo_name: &str) {
     assert!(

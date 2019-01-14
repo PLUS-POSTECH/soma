@@ -6,62 +6,48 @@ mod common;
 
 #[test]
 fn test_add_remove() {
-    let temp_dir = tempdir();
-    let env = test_env(&temp_dir);
+    let (_, mut data_dir) = temp_data_dir();
+    let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
     let repo_name = "simple-bof";
-    assert!(add(&env, "https://github.com/PLUS-POSTECH/simple-bof.git", None).is_ok());
-    {
-        let repo_index = env
-            .data_dir()
-            .read_repo_index()
-            .expect("failed to read repository index");
-        assert!(repo_index.contains_key(repo_name));
+    assert!(add(
+        &mut env,
+        "https://github.com/PLUS-POSTECH/simple-bof.git",
+        None
+    )
+    .is_ok());
 
-        let repository = repo_index.get(repo_name).unwrap();
-        let local_path = repository.local_path();
-        assert!(dir_contents_exists(local_path, &vec![".git"]));
+    assert!(env.repo_manager().repo_exists(repo_name));
+    let local_path = env
+        .repo_manager()
+        .get_repo(repo_name)
+        .expect("Added repository does not exist")
+        .local_path();
+    assert!(dir_contents_exists(local_path, &vec![".git"]));
 
-        assert!(env.data_dir().repo_exists(repo_name));
-        assert_eq!(
-            &env.data_dir().repo_path(repo_name),
-            repository.local_path()
-        );
-    }
-
-    assert!(remove(&env, repo_name, &mut runtime).is_ok());
-    {
-        let repo_index = env
-            .data_dir()
-            .read_repo_index()
-            .expect("failed to read repository index");
-        assert!(!repo_index.contains_key(repo_name));
-        assert!(!env.data_dir().repo_exists(repo_name));
-    }
+    assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
+    assert!(!env.repo_manager().repo_exists(repo_name));
 }
 
 #[test]
 fn test_add_with_name() {
-    let temp_dir = tempdir();
-    let env = test_env(&temp_dir);
+    let (_, mut data_dir) = temp_data_dir();
+    let mut env = test_env(&mut data_dir);
 
     let repo_name = "complicated-bof";
     assert!(add(
-        &env,
+        &mut env,
         "https://github.com/PLUS-POSTECH/simple-bof.git",
-        Some(repo_name)
+        Some(repo_name),
     )
     .is_ok());
-    assert!(env.data_dir().repo_path(repo_name).is_dir());
 
-    let repo_index = env
-        .data_dir()
-        .read_repo_index()
-        .expect("failed to read repository index");
-    assert!(repo_index.contains_key(repo_name));
-
-    let repository = repo_index.get(repo_name).unwrap();
-    let local_path = repository.local_path();
+    assert!(env.repo_manager().repo_exists(repo_name));
+    let local_path = env
+        .repo_manager()
+        .get_repo(repo_name)
+        .expect("Added repository does not exist")
+        .local_path();
     assert!(dir_contents_exists(local_path, &vec![".git"]));
 }

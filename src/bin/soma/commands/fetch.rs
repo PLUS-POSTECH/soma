@@ -3,8 +3,8 @@ use std::env::current_dir;
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
-use soma::error::Result as SomaResult;
 use soma::ops::fetch;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};
@@ -33,7 +33,7 @@ impl SomaCommand for FetchCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         fetch(&env, matches.value_of("problem").unwrap(), current_dir()?)

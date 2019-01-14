@@ -15,7 +15,7 @@ use futures::stream::Stream;
 use futures::Future;
 use hyper::client::connect::Connect;
 
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 use crate::{Environment, Printer, VERSION};
 
 pub const LABEL_KEY_VERSION: &'static str = "soma.version";
@@ -133,7 +133,7 @@ pub fn container_from_repo_exists(containers: &Vec<SomaContainer>, repo_name: &s
 }
 
 pub fn list_containers(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaContainer>, Error = Error> {
     let username = env.username().clone();
     let mut soma_filter = HashMap::new();
@@ -174,7 +174,7 @@ pub fn list_containers(
 }
 
 pub fn list_images(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
     let username = env.username().clone();
     env.docker
@@ -206,7 +206,7 @@ pub fn list_images(
 }
 
 pub fn pull<'a>(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     image_name: &'a str,
 ) -> impl Future<Item = Vec<CreateImageResults>, Error = Error> + 'a {
     env.docker
@@ -244,7 +244,7 @@ pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
 }
 
 pub fn create<'a>(
-    env: &'a Environment<impl Connect + 'static, impl Printer>,
+    env: &'a Environment<impl Connect, impl Printer>,
     repo_name: &'a str,
     image_name: &'a str,
     port_str: &'a str,
@@ -282,7 +282,7 @@ pub fn create<'a>(
 }
 
 pub fn remove_image(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     image_name: &str,
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
@@ -291,7 +291,7 @@ pub fn remove_image(
 }
 
 pub fn start(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     container_id: &str,
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
@@ -299,7 +299,7 @@ pub fn start(
 }
 
 pub fn stop(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     container_id: &str,
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
@@ -307,7 +307,7 @@ pub fn stop(
 }
 
 pub fn remove_container(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     container_id: &str,
 ) -> impl Future<Item = (), Error = Error> {
     env.docker

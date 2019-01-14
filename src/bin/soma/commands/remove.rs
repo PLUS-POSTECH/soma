@@ -1,8 +1,8 @@
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
-use soma::error::Result as SomaResult;
 use soma::ops::remove;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 use crate::commands::{default_runtime, App, SomaCommand};
@@ -20,7 +20,7 @@ impl SomaCommand for RemoveCommand {
 
     fn app(&self) -> App {
         SubCommand::with_name(Self::NAME)
-            .about("Unregisters a Soma repository")
+            .about("Unregisters a repository")
             .arg(
                 Arg::with_name("repository")
                     .required(true)
@@ -30,11 +30,11 @@ impl SomaCommand for RemoveCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        mut env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         remove(
-            &env,
+            &mut env,
             matches.value_of("repository").unwrap(),
             &mut default_runtime(),
         )

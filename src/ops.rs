@@ -11,9 +11,8 @@ use tokio::runtime::current_thread::Runtime;
 use url::Url;
 
 use crate::docker;
-use crate::error::{Error as SomaError, Result as SomaResult};
-use crate::repo::backend::Backend;
-use crate::repo::{load_manifest, Repository, MANIFEST_FILE_NAME};
+use crate::prelude::*;
+use crate::repo::{load_manifest, Backend, Repository, MANIFEST_FILE_NAME};
 use crate::template::{HandleBarsExt, RenderingContext, Templates};
 use crate::Environment;
 use crate::Printer;
@@ -51,7 +50,7 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)>
 }
 
 pub fn add(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &mut Environment<impl Connect, impl Printer>,
     repo_location: &str,
     repo_name: Option<&str>,
 ) -> SomaResult<()> {
@@ -60,28 +59,32 @@ pub fn add(
         Some(repo_name) => repo_name.to_owned(),
         None => resolved_repo_name,
     };
-    let repository = env.data_dir().add_repo(repo_name.clone(), backend)?;
-    let backend = repository.backend();
-    let local_path = repository.local_path();
-    backend.update(local_path)?;
 
-    env.printer().write_line(&format!(
-        "Successfully added a repository '{}'.",
-        &repo_name
-    ));
+    env.repo_manager_mut()
+        .add_repo(repo_name.clone(), backend)?;
+
+    let repository = env.repo_manager().get_repo(&repo_name)?;
+    repository.update()?;
+
+    env.printer()
+        .write_line(&format!("Repository added: '{}'", &repo_name));
+
     Ok(())
 }
 
 pub fn fetch(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
     cwd: impl AsRef<Path>,
 ) -> SomaResult<()> {
-    let repo_path = env.data_dir().repo_path(problem_name);
-    let repo_manifest_path = repo_path.join(MANIFEST_FILE_NAME);
-    let manifest = load_manifest(repo_manifest_path)?;
+    let repo_name = problem_name;
+    let repository = env.repo_manager().get_repo(repo_name)?;
+    let repo_path = repository.local_path();
+
+    let manifest = load_manifest(repo_path.join(MANIFEST_FILE_NAME))?;
     let executables = manifest.executable().iter();
     let readonly = manifest.readonly().iter();
+
     executables
         .chain(readonly)
         .filter(|file_entry| file_entry.public())
@@ -98,34 +101,22 @@ pub fn fetch(
         })
 }
 
-pub fn build(
-    env: &Environment<impl Connect + 'static, impl Printer>,
-    problem_name: &str,
-) -> SomaResult<()> {
+pub fn build(env: &Environment<impl Connect, impl Printer>, problem_name: &str) -> SomaResult<()> {
     let repo_name = problem_name;
-    let repo_index = env.data_dir().read_repo_index()?;
-    let repository = repo_index
-        .get(repo_name)
-        .ok_or(SomaError::RepositoryNotFoundError)?;
-    let backend = repository.backend();
-    let local_path = repository.local_path();
-    backend.update(local_path)?;
-    env.printer().write_line(&format!(
-        "Successfully updated repository: '{}'.",
-        &repo_name
-    ));
+    let repository = env.repo_manager().get_repo(repo_name)?;
+    repository.update()?;
+    env.printer()
+        .write_line(&format!("Repository updated: '{}'", &repo_name));
 
     build_image(&repository, &env, repo_name)?;
-    env.printer().write_line(&format!(
-        "Successfully built image for problem: '{}'.",
-        &repo_name
-    ));
+    env.printer()
+        .write_line(&format!("Built image for problem: '{}'", &repo_name));
     Ok(())
 }
 
 fn build_image(
     repository: &Repository,
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
 ) -> SomaResult<()> {
     let work_dir = tempdir()?;
@@ -150,7 +141,7 @@ fn build_image(
 }
 
 fn run_container(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
     port: u32,
     runtime: &mut Runtime,
@@ -165,42 +156,30 @@ fn run_container(
 }
 
 pub fn run(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
     port: u32,
     mut runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let container_name = run_container(&env, problem_name, port, &mut runtime)?;
-    env.printer().write_line(&format!(
-        "Successfully started container: '{}'.",
-        &container_name
-    ));
+    env.printer()
+        .write_line(&format!("Container started: '{}'", &container_name));
     Ok(container_name)
 }
 
 pub fn remove(
-    env: &Environment<impl Connect + 'static, impl Printer>,
+    env: &mut Environment<impl Connect, impl Printer>,
     repo_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    let mut repo_index = env.data_dir().read_repo_index()?;
-
     let image_list = runtime.block_on(docker::list_images(env))?;
     if docker::image_from_repo_exists(&image_list, repo_name) {
         Err(SomaError::RepositoryInUseError)?;
     }
 
-    let repository = repo_index
-        .remove(repo_name)
-        .ok_or(SomaError::RepositoryNotFoundError)?;
-    env.data_dir().write_repo_index(repo_index)?;
-
-    remove_dir_all(repository.local_path())?;
-
-    env.printer().write_line(&format!(
-        "Successfully removed repository: '{}'.",
-        &repo_name
-    ));
+    env.repo_manager_mut().remove_repo(repo_name)?;
+    env.printer()
+        .write_line(&format!("Repository removed: '{}'", &repo_name));
 
     Ok(())
 }

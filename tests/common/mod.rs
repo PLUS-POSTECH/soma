@@ -15,22 +15,29 @@ pub use self::test_printer::TestPrinter;
 
 mod test_printer;
 
-pub fn test_env(temp_dir: &TempDir) -> Environment<impl Connect, TestPrinter> {
+pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
         "soma-test".to_owned(),
-        DataDirectory::at_path(temp_dir.path()).expect("failed to create data directory"),
-        connect_default().expect("failed to connect to docker"),
+        data_dir,
+        connect_default().expect("Failed to connect to docker"),
         TestPrinter::new(),
     )
+    .expect("Failed to create environment")
 }
 
 pub fn tempdir() -> TempDir {
-    tempfile::tempdir().expect("failed to create temporary directory")
+    tempfile::tempdir().expect("Failed to create temporary directory")
+}
+
+pub fn temp_data_dir() -> (TempDir, DataDirectory) {
+    let tempdir = tempdir();
+    let data_dir = DataDirectory::at_path(tempdir.path()).expect("Failed to create data directory");
+    (tempdir, data_dir)
 }
 
 pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) {
     let dir_set: HashSet<OsString> = fs::read_dir(directory)
-        .expect("failed to read the directory")
+        .expect("Failed to read the directory")
         .into_iter()
         .filter_map(|dir| match dir {
             Ok(entry) => Some(entry.file_name()),
@@ -48,7 +55,7 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
 
 pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) -> bool {
     let dir_set: HashSet<OsString> = fs::read_dir(directory)
-        .expect("failed to read the directory")
+        .expect("Failed to read the directory")
         .into_iter()
         .filter_map(|dir| match dir {
             Ok(entry) => Some(entry.file_name()),
@@ -63,5 +70,5 @@ pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef
 }
 
 pub fn default_runtime() -> Runtime {
-    Runtime::new().expect("failed to initialize tokio runtime")
+    Runtime::new().expect("Failed to initialize tokio runtime")
 }
