@@ -33,7 +33,7 @@ impl SomaCommand for FetchCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         fetch(&env, matches.value_of("problem").unwrap(), current_dir()?)

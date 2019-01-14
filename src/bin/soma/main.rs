@@ -15,13 +15,13 @@ use crate::terminal_printer::TerminalPrinter;
 mod commands;
 mod terminal_printer;
 
-fn cli_env(data_dir: DataDirectory) -> SomaResult<Environment<impl Connect, TerminalPrinter>> {
-    Ok(Environment::new(
+fn cli_env(data_dir: &mut DataDirectory) -> SomaResult<Environment<impl Connect, TerminalPrinter>> {
+    Environment::new(
         username(),
         data_dir,
         connect_default()?,
         TerminalPrinter::new(),
-    ))
+    )
 }
 
 fn main_result() -> SomaResult<()> {
@@ -44,8 +44,8 @@ fn main_result() -> SomaResult<()> {
         .subcommand(run_command.app())
         .get_matches();
 
-    let data_dir = DataDirectory::new()?;
-    let env = cli_env(data_dir)?;
+    let mut data_dir = DataDirectory::new()?;
+    let env = cli_env(&mut data_dir)?;
 
     match matches.subcommand() {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),

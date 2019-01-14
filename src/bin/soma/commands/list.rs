@@ -24,20 +24,23 @@ impl SomaCommand for ListCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         _matches: &ArgMatches,
     ) -> SomaResult<()> {
-        let repo_index = env.data_dir().read_repo_index()?;
+        let mut repo_iter = env.repo_manager().list_repo().peekable();
 
-        if repo_index.is_empty() {
+        if let None = repo_iter.peek() {
             env.printer().write_line("No repository was added.");
         } else {
             env.printer()
                 .write_line(&format!("{:<20}{:<40}", "Name", "Origin"));
 
-            for (repo_name, repository) in &repo_index {
-                env.printer()
-                    .write_line(&format!("{:<20}{:<40}", repo_name, repository.backend()));
+            for repository in repo_iter {
+                env.printer().write_line(&format!(
+                    "{:<20}{:<40}",
+                    repository.name(),
+                    repository.backend()
+                ));
             }
         }
 

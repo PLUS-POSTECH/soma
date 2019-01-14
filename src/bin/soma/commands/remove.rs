@@ -30,11 +30,11 @@ impl SomaCommand for RemoveCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        mut env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         remove(
-            &env,
+            &mut env,
             matches.value_of("repository").unwrap(),
             &mut default_runtime(),
         )

@@ -5,6 +5,8 @@ use clap::crate_version;
 use hyper::client::connect::Connect;
 
 use crate::data_dir::DataDirectory;
+use crate::error::Result as SomaResult;
+use crate::repo::RepositoryManager;
 
 pub mod data_dir;
 pub mod docker;
@@ -23,40 +25,47 @@ pub trait Printer {
     fn write_line(&mut self, message: &str);
 }
 
-pub struct Environment<C, P: Printer> {
+pub struct Environment<'a, C: 'static, P: Printer + 'static> {
     username: String,
-    data_dir: DataDirectory,
+    repo_manager: RepositoryManager<'a>,
     docker: Docker<C>,
     printer: RefCell<P>,
 }
 
-impl<C, P: Printer> Environment<C, P>
+impl<'a, C, P> Environment<'a, C, P>
 where
-    C: 'static + Connect,
+    C: Connect,
+    P: Printer,
 {
     pub fn new(
         username: String,
-        data_dir: DataDirectory,
+        data_dir: &'a mut DataDirectory,
         docker: Docker<C>,
         printer: P,
-    ) -> Environment<C, P> {
-        Environment {
+    ) -> SomaResult<Environment<'a, C, P>> {
+        let repo_manager = data_dir.register::<RepositoryManager>()?;
+
+        Ok(Environment {
             username,
-            data_dir,
+            repo_manager,
             docker,
             printer: RefCell::new(printer),
-        }
+        })
     }
 
     pub fn username(&self) -> &String {
         &self.username
     }
 
-    pub fn data_dir(&self) -> &DataDirectory {
-        &self.data_dir
-    }
-
     pub fn printer(&self) -> RefMut<P> {
         self.printer.borrow_mut()
+    }
+
+    pub fn repo_manager(&self) -> &RepositoryManager<'a> {
+        &self.repo_manager
+    }
+
+    pub fn repo_manager_mut(&mut self) -> &mut RepositoryManager<'a> {
+        &mut self.repo_manager
     }
 }

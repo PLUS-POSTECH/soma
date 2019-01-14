@@ -1,31 +1,28 @@
-use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
+use std::marker::PhantomData;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use fs2::FileExt;
 use question::{Answer, Question};
 
 use crate::error::{Error as SomaError, Result as SomaResult};
-use crate::repo::backend::Backend;
-use crate::repo::Repository;
-use crate::repo::{BTreeMapExt, RepositoryIndex};
 
 const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
 const SOMA_DATA_DIR_NAME: &str = ".soma";
 
 const LOCK_FILE_NAME: &str = "soma.lock";
 
-const REPOSITORY_DIR_NAME: &str = "repositories";
-const REPOSITORY_INDEX_FILE_NAME: &str = "index";
-
 pub struct DataDirectory {
     root_path: PathBuf,
     lock: File,
+    manager_set: HashSet<&'static str>,
 }
 
 impl DataDirectory {
-    pub fn new() -> SomaResult<DataDirectory> {
+    pub fn new() -> SomaResult<Self> {
         let path = {
             if let Some(dir) = std::env::var_os(SOMA_DATA_DIR_ENV_NAME) {
                 dir.into()
@@ -51,83 +48,80 @@ impl DataDirectory {
         DataDirectory::initialize_and_lock(path)
     }
 
-    pub fn at_path(path: impl AsRef<Path>) -> SomaResult<DataDirectory> {
+    pub fn at_path(path: impl AsRef<Path>) -> SomaResult<Self> {
         fs::create_dir_all(&path)?;
         DataDirectory::initialize_and_lock(path.as_ref().to_owned())
     }
 
-    fn initialize_and_lock(path: PathBuf) -> SomaResult<DataDirectory> {
+    fn initialize_and_lock(path: PathBuf) -> SomaResult<Self> {
         let lock = File::create(path.join(LOCK_FILE_NAME))?;
-        // TODO: use more fine-tuned lock
         lock.try_lock_exclusive()
             .or(Err(SomaError::DataDirectoryLockError))?;
 
         Ok(DataDirectory {
             root_path: path,
             lock,
+            manager_set: HashSet::new(),
         })
     }
 
-    pub fn root_path(&self) -> PathBuf {
-        self.root_path.clone()
-    }
-
-    pub fn repo_root_path(&self) -> PathBuf {
-        self.root_path.join(REPOSITORY_DIR_NAME)
-    }
-
-    pub fn repo_index_path(&self) -> PathBuf {
-        self.repo_root_path().join(REPOSITORY_INDEX_FILE_NAME)
-    }
-
-    pub fn repo_path(&self, repo_name: impl AsRef<Path>) -> PathBuf {
-        self.repo_root_path().join(repo_name)
-    }
-
-    fn init_repo(&self, repo_name: impl AsRef<Path>) -> SomaResult<PathBuf> {
-        fs::create_dir_all(self.repo_root_path())?;
-        let new_repo_path = self.repo_path(repo_name);
-        fs::create_dir(&new_repo_path).or(Err(SomaError::DuplicateRepositoryError))?;
-        Ok(new_repo_path)
-    }
-
-    pub fn read_repo_index(&self) -> SomaResult<RepositoryIndex> {
-        let path = self.repo_index_path();
-        if path.exists() {
-            let file = File::open(path.as_path())?;
-            Ok(serde_cbor::from_reader(file)?)
-        } else {
-            Ok(BTreeMap::new())
+    pub fn register<'a, T>(&'a mut self) -> SomaResult<T>
+    where
+        T: DirectoryManager<'a>,
+    {
+        if !self.manager_set.insert(T::DIR) {
+            panic!("a manager should be registered only once");
         }
-    }
 
-    pub fn write_repo_index(&self, repository_list: RepositoryIndex) -> SomaResult<()> {
-        fs::create_dir_all(self.repo_root_path())?;
-        let path = self.repo_index_path();
-        let mut file = File::create(path)?;
-        serde_cbor::to_writer(&mut file, &repository_list)?;
-        Ok(())
-    }
-
-    pub fn add_repo(&self, repo_name: String, backend: Backend) -> SomaResult<Repository> {
-        let mut repo_index = self.read_repo_index()?;
-        let local_path = self.init_repo(&repo_name)?;
-        let repository = Repository::new(repo_name.clone(), local_path, backend);
-        repo_index.unique_insert(repo_name, repository.clone())?;
-
-        self.write_repo_index(repo_index)?;
-
-        Ok(repository)
-    }
-
-    pub fn repo_exists(&self, repo_name: impl AsRef<Path>) -> bool {
-        let repo_path = self.repo_path(repo_name);
-        repo_path.is_dir()
+        let manager_root = self.root_path.join(T::DIR);
+        fs::create_dir_all(&manager_root)?;
+        Ok(T::new(Registration::new(self, manager_root))?)
     }
 }
 
 impl Drop for DataDirectory {
     fn drop(&mut self) {
-        self.lock.unlock().expect("failed to unlock the lockfile");
+        if self.lock.unlock().is_err() {
+            eprintln!("failed to unlock the data directory lock");
+        }
     }
+}
+
+pub struct Registration<'a, T>
+where
+    T: DirectoryManager<'a>,
+{
+    data_dir: &'a DataDirectory,
+    root_path: PathBuf,
+    phantom: PhantomData<*const T>,
+}
+
+impl<'a, T> Registration<'a, T>
+where
+    T: DirectoryManager<'a>,
+{
+    fn new(data_dir: &'a DataDirectory, root_path: PathBuf) -> Self {
+        Registration {
+            data_dir,
+            root_path,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn data_dir(&self) -> &'a DataDirectory {
+        self.data_dir
+    }
+
+    pub fn root_path(&self) -> &PathBuf {
+        &self.root_path
+    }
+}
+
+pub trait DirectoryManager<'a>: Deref<Target = Registration<'a, Self>>
+where
+    Self: Sized + 'a,
+{
+    const DIR: &'static str;
+
+    fn new(registration: Registration<'a, Self>) -> SomaResult<Self>;
 }

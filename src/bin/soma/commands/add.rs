@@ -37,11 +37,11 @@ impl SomaCommand for AddCommand {
 
     fn handle_match(
         &self,
-        env: Environment<impl Connect + 'static, impl Printer>,
+        mut env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         add(
-            &env,
+            &mut env,
             matches.value_of("repository").unwrap(),
             matches.value_of("name"),
         )

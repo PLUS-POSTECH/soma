@@ -15,17 +15,24 @@ pub use self::test_printer::TestPrinter;
 
 mod test_printer;
 
-pub fn test_env(temp_dir: &TempDir) -> Environment<impl Connect, TestPrinter> {
+pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
         "soma-test".to_owned(),
-        DataDirectory::at_path(temp_dir.path()).expect("failed to create data directory"),
+        data_dir,
         connect_default().expect("failed to connect to docker"),
         TestPrinter::new(),
     )
+    .expect("failed to create environment")
 }
 
 pub fn tempdir() -> TempDir {
     tempfile::tempdir().expect("failed to create temporary directory")
+}
+
+pub fn temp_data_dir() -> (TempDir, DataDirectory) {
+    let tempdir = tempdir();
+    let data_dir = DataDirectory::at_path(tempdir.path()).expect("failed to create data directory");
+    (tempdir, data_dir)
 }
 
 pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) {
