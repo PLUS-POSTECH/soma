@@ -8,7 +8,7 @@ use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
 use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 
 pub use self::repo_manager::RepositoryManager;
 

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use fs2::FileExt;
 use question::{Answer, Question};
 
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 
 const SOMA_DATA_DIR_ENV_NAME: &str = "SOMA_DATA_DIR";
 const SOMA_DATA_DIR_NAME: &str = ".soma";

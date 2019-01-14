@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use hyper::client::connect::Connect;
 use tokio::runtime::current_thread::Runtime;
 
-use soma::error::Result as SomaResult;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 pub use self::{

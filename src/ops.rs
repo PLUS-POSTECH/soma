@@ -11,7 +11,7 @@ use tokio::runtime::current_thread::Runtime;
 use url::Url;
 
 use crate::docker;
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 use crate::repo::{load_manifest, Backend, Repository, MANIFEST_FILE_NAME};
 use crate::template::{HandleBarsExt, RenderingContext, Templates};
 use crate::Environment;

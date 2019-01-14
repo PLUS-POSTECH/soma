@@ -5,13 +5,14 @@ use clap::crate_version;
 use hyper::client::connect::Connect;
 
 use crate::data_dir::DataDirectory;
-use crate::error::Result as SomaResult;
+use crate::prelude::*;
 use crate::repo::RepositoryManager;
 
 pub mod data_dir;
 pub mod docker;
 pub mod error;
 pub mod ops;
+pub mod prelude;
 pub mod repo;
 pub mod template;
 

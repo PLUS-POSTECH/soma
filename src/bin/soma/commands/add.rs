@@ -1,8 +1,8 @@
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
-use soma::error::Result as SomaResult;
 use soma::ops::add;
+use soma::prelude::*;
 use soma::{Environment, Printer};
 
 use crate::commands::{App, SomaCommand};

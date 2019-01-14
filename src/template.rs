@@ -4,7 +4,7 @@ use std::path::Path;
 use handlebars::Handlebars;
 use serde::Serialize;
 
-use crate::error::Result as SomaResult;
+use crate::prelude::*;
 use crate::repo::SolidManifest;
 use crate::VERSION;
 

@@ -15,7 +15,7 @@ use futures::stream::Stream;
 use futures::Future;
 use hyper::client::connect::Connect;
 
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 use crate::{Environment, Printer, VERSION};
 
 pub const LABEL_KEY_VERSION: &'static str = "soma.version";

@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use remove_dir_all::remove_dir_all;
 
 use crate::data_dir::{DirectoryManager, Registration};
-use crate::error::{Error as SomaError, Result as SomaResult};
+use crate::prelude::*;
 use crate::repo::{Backend, Repository};
 
 const INDEX_FILE_NAME: &'static str = "index";

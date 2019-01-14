@@ -6,7 +6,7 @@ use whoami::username;
 
 use soma::data_dir::DataDirectory;
 use soma::docker::connect_default;
-use soma::error::Result as SomaResult;
+use soma::prelude::*;
 use soma::{Environment, VERSION};
 
 use crate::commands::*;
