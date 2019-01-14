@@ -104,10 +104,10 @@ impl<'a> Drop for RepositoryManager<'a> {
             let path = index_path(&self);
             if let Ok(mut file) = File::create(path) {
                 if serde_cbor::to_writer(&mut file, &self.index).is_err() {
-                    eprintln!("Failed to write the repository index to the file");
+                    eprintln!("Failed to save the repository index");
                 }
             } else {
-                eprintln!("Failed to create the repository index file");
+                eprintln!("Failed to open the repository index file");
             }
         }
     }

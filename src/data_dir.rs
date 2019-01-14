@@ -82,7 +82,7 @@ impl DataDirectory {
 impl Drop for DataDirectory {
     fn drop(&mut self) {
         if self.lock.unlock().is_err() {
-            eprintln!("Failed to unlock the data directory lock");
+            eprintln!("Failed to unlock the data directory");
         }
     }
 }
