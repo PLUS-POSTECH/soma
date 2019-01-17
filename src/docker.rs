@@ -132,6 +132,13 @@ pub fn container_from_repo_exists(containers: &Vec<SomaContainer>, repo_name: &s
         .any(|container| container.repository_name() == repo_name)
 }
 
+pub fn containers_from_repo(containers: Vec<SomaContainer>, repo_name: &str) -> Vec<SomaContainer> {
+    containers
+        .into_iter()
+        .filter(|container| container.repository_name() == repo_name)
+        .collect()
+}
+
 pub fn list_containers(
     env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaContainer>, Error = Error> {

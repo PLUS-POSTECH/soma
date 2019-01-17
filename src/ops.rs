@@ -201,3 +201,34 @@ pub fn clean(
 
     Ok(())
 }
+
+pub fn stop(
+    env: &mut Environment<impl Connect, impl Printer>,
+    problem_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
+    let container_list = runtime.block_on(docker::list_containers(env))?;
+    if !docker::container_from_repo_exists(&container_list, problem_name) {
+        Err(SomaError::ProblemNotRunningError)?;
+    }
+
+    let container_list = docker::containers_from_repo(container_list, problem_name);
+    let stop_required_states: Vec<&str> = vec!["paused", "restarting", "running"];
+
+    let stop_required_containers = container_list
+        .iter()
+        .filter(|container| stop_required_states.contains(&container.container().state.as_str()));
+
+    for container in stop_required_containers {
+        runtime.block_on(docker::stop(env, &container.container().id))?;
+    }
+
+    for container in container_list {
+        runtime.block_on(docker::remove_container(env, &container.container().id))?;
+    }
+
+    env.printer()
+        .write_line(&format!("Problem stopped: '{}'", &problem_name));
+
+    Ok(())
+}

@@ -32,6 +32,7 @@ fn main_result() -> SomaResult<()> {
     let list_command = ListCommand::new();
     let remove_command = RemoveCommand::new();
     let run_command = RunCommand::new();
+    let stop_command = StopCommand::new();
 
     let matches = App::new("soma")
         .version(VERSION)
@@ -44,6 +45,7 @@ fn main_result() -> SomaResult<()> {
         .subcommand(list_command.app())
         .subcommand(remove_command.app())
         .subcommand(run_command.app())
+        .subcommand(stop_command.app())
         .get_matches();
 
     let mut data_dir = DataDirectory::new()?;
@@ -57,6 +59,7 @@ fn main_result() -> SomaResult<()> {
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
         (RemoveCommand::NAME, Some(matches)) => remove_command.handle_match(env, matches),
         (RunCommand::NAME, Some(matches)) => run_command.handle_match(env, matches),
+        (StopCommand::NAME, Some(matches)) => stop_command.handle_match(env, matches),
         _ => unreachable!(),
     }
 }
