@@ -185,7 +185,7 @@ pub fn remove(
 }
 
 pub fn clean(
-    env: &mut Environment<impl Connect, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
@@ -203,7 +203,7 @@ pub fn clean(
 }
 
 pub fn stop(
-    env: &mut Environment<impl Connect, impl Printer>,
+    env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
