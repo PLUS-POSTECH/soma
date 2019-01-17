@@ -27,6 +27,7 @@ fn cli_env(data_dir: &mut DataDirectory) -> SomaResult<Environment<impl Connect,
 fn main_result() -> SomaResult<()> {
     let add_command = AddCommand::new();
     let build_command = BuildCommand::new();
+    let clean_command = CleanCommand::new();
     let fetch_command = FetchCommand::new();
     let list_command = ListCommand::new();
     let remove_command = RemoveCommand::new();
@@ -38,6 +39,7 @@ fn main_result() -> SomaResult<()> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(add_command.app())
         .subcommand(build_command.app())
+        .subcommand(clean_command.app())
         .subcommand(fetch_command.app())
         .subcommand(list_command.app())
         .subcommand(remove_command.app())
@@ -50,6 +52,7 @@ fn main_result() -> SomaResult<()> {
     match matches.subcommand() {
         (AddCommand::NAME, Some(matches)) => add_command.handle_match(env, matches),
         (BuildCommand::NAME, Some(matches)) => build_command.handle_match(env, matches),
+        (CleanCommand::NAME, Some(matches)) => clean_command.handle_match(env, matches),
         (FetchCommand::NAME, Some(matches)) => fetch_command.handle_match(env, matches),
         (ListCommand::NAME, Some(matches)) => list_command.handle_match(env, matches),
         (RemoveCommand::NAME, Some(matches)) => remove_command.handle_match(env, matches),

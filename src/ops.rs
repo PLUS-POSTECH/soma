@@ -183,3 +183,21 @@ pub fn remove(
 
     Ok(())
 }
+
+pub fn clean(
+    env: &mut Environment<impl Connect, impl Printer>,
+    problem_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
+    let container_list = runtime.block_on(docker::list_containers(env))?;
+    if docker::container_from_repo_exists(&container_list, problem_name) {
+        Err(SomaError::RepositoryInUseError)?;
+    }
+
+    let image_name = docker::image_name(problem_name);
+    runtime.block_on(docker::remove_image(env, &image_name))?;
+    env.printer()
+        .write_line(&format!("Problem image cleaned: '{}'", &problem_name));
+
+    Ok(())
+}
