@@ -213,13 +213,13 @@ pub fn stop(
     }
 
     let container_list = docker::containers_from_repo(container_list, problem_name);
-    let stop_required_states: Vec<&str> = vec!["paused", "restarting", "running"];
+    let states_to_stop = vec!["paused", "restarting", "running"];
 
-    let stop_required_containers = container_list
+    let containers_to_stop = container_list
         .iter()
-        .filter(|container| stop_required_states.contains(&container.container().state.as_str()));
+        .filter(|container| states_to_stop.contains(&container.container().state.as_str()));
 
-    for container in stop_required_containers {
+    for container in containers_to_stop {
         runtime.block_on(docker::stop(env, &container.container().id))?;
     }
 
