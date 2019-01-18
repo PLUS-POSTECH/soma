@@ -5,8 +5,7 @@ LABEL soma.username="{{ username }}"
 LABEL soma.version="{{ version }}"
 LABEL soma.repository="{{ repository_name }}"
 
-RUN apt-get -qq update && apt-get -yqq upgrade
-RUN apt-get install -yqq socat
+RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
 
 {{ #with manifest }}
 ENV PROB "{{ name }}"

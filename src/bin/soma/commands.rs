@@ -6,16 +6,18 @@ use soma::prelude::*;
 use soma::{Environment, Printer};
 
 pub use self::{
-    add::AddCommand, build::BuildCommand, fetch::FetchCommand, list::ListCommand,
-    remove::RemoveCommand, run::RunCommand,
+    add::AddCommand, build::BuildCommand, clean::CleanCommand, fetch::FetchCommand,
+    list::ListCommand, remove::RemoveCommand, run::RunCommand, stop::StopCommand,
 };
 
 pub mod add;
 pub mod build;
+pub mod clean;
 pub mod fetch;
 pub mod list;
 pub mod remove;
 pub mod run;
+pub mod stop;
 
 type App = clap::App<'static, 'static>;
 
