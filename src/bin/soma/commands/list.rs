@@ -30,17 +30,17 @@ impl SomaCommand for ListCommand {
         let mut repo_iter = env.repo_manager().list_repo().peekable();
 
         if let None = repo_iter.peek() {
-            env.printer().write_line("No repository was added.")?;
+            env.printer().write_line("No repository was added.");
         } else {
             env.printer()
-                .write_line(&format!("{:<20}{:<40}", "Name", "Origin"))?;
+                .write_line(&format!("{:<20}{:<40}", "Name", "Origin"));
 
             for repository in repo_iter {
                 env.printer().write_line(&format!(
                     "{:<20}{:<40}",
                     repository.name(),
                     repository.backend()
-                ))?;
+                ));
             }
         }
 

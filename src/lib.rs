@@ -22,8 +22,8 @@ pub trait Printer {
     type Handle;
 
     fn get_current_handle(&self) -> Self::Handle;
-    fn write_line_at(&mut self, handle: &Self::Handle, message: &str) -> SomaResult<()>;
-    fn write_line(&mut self, message: &str) -> SomaResult<()>;
+    fn write_line_at(&mut self, handle: &Self::Handle, message: &str);
+    fn write_line(&mut self, message: &str);
 }
 
 pub struct Environment<'a, C: 'static, P: Printer + 'static> {
