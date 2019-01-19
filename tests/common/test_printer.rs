@@ -1,3 +1,4 @@
+use soma::prelude::*;
 use soma::Printer;
 
 pub struct TestPrinter {
@@ -26,12 +27,13 @@ impl Printer for TestPrinter {
         ()
     }
 
-    fn write_line_at(&mut self, _handle: &Self::Handle, message: &str) {
+    fn write_line_at(&mut self, _handle: &Self::Handle, message: &str) -> SomaResult<()> {
         self.write_line(message)
     }
 
-    fn write_line(&mut self, message: &str) {
+    fn write_line(&mut self, message: &str) -> SomaResult<()> {
         self.output.push_str(message);
         self.output.push('\n');
+        Ok(())
     }
 }

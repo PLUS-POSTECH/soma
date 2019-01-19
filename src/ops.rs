@@ -67,7 +67,7 @@ pub fn add(
     repository.update()?;
 
     env.printer()
-        .write_line(&format!("Repository added: '{}'", &repo_name));
+        .write_line(&format!("Repository added: '{}'", &repo_name))?;
 
     Ok(())
 }
@@ -95,7 +95,7 @@ pub fn fetch(
                 .ok_or(SomaError::FileNameNotFoundError)?;
 
             env.printer()
-                .write_line(&format!("Fetching '{}'...", file_name.to_string_lossy()));
+                .write_line(&format!("Fetching '{}'...", file_name.to_string_lossy()))?;
             fs::copy(&file_path, cwd.as_ref().join(file_name))?;
             Ok(())
         })
@@ -106,11 +106,11 @@ pub fn build(env: &Environment<impl Connect, impl Printer>, problem_name: &str) 
     let repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
     env.printer()
-        .write_line(&format!("Repository updated: '{}'", &repo_name));
+        .write_line(&format!("Repository updated: '{}'", &repo_name))?;
 
     build_image(&repository, &env, repo_name)?;
     env.printer()
-        .write_line(&format!("Built image for problem: '{}'", &repo_name));
+        .write_line(&format!("Built image for problem: '{}'", &repo_name))?;
     Ok(())
 }
 
@@ -163,7 +163,7 @@ pub fn run(
 ) -> SomaResult<String> {
     let container_name = run_container(&env, problem_name, port, &mut runtime)?;
     env.printer()
-        .write_line(&format!("Container started: '{}'", &container_name));
+        .write_line(&format!("Container started: '{}'", &container_name))?;
     Ok(container_name)
 }
 
@@ -179,7 +179,7 @@ pub fn remove(
 
     env.repo_manager_mut().remove_repo(repo_name)?;
     env.printer()
-        .write_line(&format!("Repository removed: '{}'", &repo_name));
+        .write_line(&format!("Repository removed: '{}'", &repo_name))?;
 
     Ok(())
 }
@@ -197,7 +197,7 @@ pub fn clean(
     let image_name = docker::image_name(problem_name);
     runtime.block_on(docker::remove_image(env, &image_name))?;
     env.printer()
-        .write_line(&format!("Problem image cleaned: '{}'", &problem_name));
+        .write_line(&format!("Problem image cleaned: '{}'", &problem_name))?;
 
     Ok(())
 }
@@ -228,7 +228,7 @@ pub fn stop(
     }
 
     env.printer()
-        .write_line(&format!("Problem stopped: '{}'", &problem_name));
+        .write_line(&format!("Problem stopped: '{}'", &problem_name))?;
 
     Ok(())
 }
