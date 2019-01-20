@@ -161,7 +161,7 @@ pub fn list_containers(
         .map(move |containers| -> Vec<SomaContainer> {
             containers
                 .into_iter()
-                .filter_map(|container| {
+                .map(|container| {
                     let labels = &container.labels;
                     let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
                         Some(name) => name.clone(),
@@ -174,7 +174,7 @@ pub fn list_containers(
                         },
                         None => VersionStatus::NoVersionFound,
                     };
-                    Some(SomaContainer::new(repository_name, container, status))
+                    SomaContainer::new(repository_name, container, status)
                 })
                 .collect()
         })
@@ -184,29 +184,38 @@ pub fn list_images(
     env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
     let username = env.username().clone();
+    let mut soma_filter = HashMap::new();
+    soma_filter.insert(
+        "label".to_string(),
+        vec![format!(
+            "{}={}",
+            LABEL_KEY_USERNAME.to_string(),
+            username.clone()
+        )],
+    );
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
+            filters: soma_filter,
             ..Default::default()
         }))
         .map(move |images| -> Vec<SomaImage> {
             images
                 .into_iter()
-                .filter_map(|image| match &image.labels {
-                    Some(labels) if labels.get(LABEL_KEY_USERNAME) == Some(&username) => {
-                        let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
-                            Some(name) => name.clone(),
-                            None => "**NONAME**".to_string(),
-                        };
-                        let status = match labels.get(LABEL_KEY_VERSION) {
-                            Some(image_version) => match image_version.as_str() {
-                                VERSION => VersionStatus::Normal,
-                                _ => VersionStatus::VersionMismatch,
-                            },
-                            None => VersionStatus::NoVersionFound,
-                        };
-                        Some(SomaImage::new(repository_name, image, status))
-                    }
-                    _ => None,
+                .map(|image| {
+                    // Label existence guaranteed by soma_filter.
+                    let labels = image.labels.as_ref().unwrap();
+                    let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
+                        Some(name) => name.clone(),
+                        None => "**NONAME**".to_string(),
+                    };
+                    let status = match labels.get(LABEL_KEY_VERSION) {
+                        Some(image_version) => match image_version.as_str() {
+                            VERSION => VersionStatus::Normal,
+                            _ => VersionStatus::VersionMismatch,
+                        },
+                        None => VersionStatus::NoVersionFound,
+                    };
+                    SomaImage::new(repository_name, image, status)
                 })
                 .collect()
         })
