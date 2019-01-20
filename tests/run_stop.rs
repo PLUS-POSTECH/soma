@@ -26,7 +26,7 @@ fn test_run_stop() {
         )
         .is_ok());
 
-        assert!(build(&env, repo_name).is_ok());
+        assert!(build(&env, repo_name, &mut runtime).is_ok());
         let images = runtime.block_on(docker::list_images(&env)).unwrap();
         assert!(image_exists(&images, &image_name));
         assert!(image_from_repo_exists(&images, repo_name));

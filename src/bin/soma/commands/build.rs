@@ -4,7 +4,7 @@ use hyper::client::connect::Connect;
 use soma::prelude::*;
 use soma::{Environment, Printer};
 
-use crate::commands::{App, SomaCommand};
+use crate::commands::{default_runtime, App, SomaCommand};
 use soma::ops::build;
 
 pub struct BuildCommand;
@@ -33,6 +33,10 @@ impl SomaCommand for BuildCommand {
         env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        build(&env, matches.value_of("problem").unwrap())
+        build(
+            &env,
+            matches.value_of("problem").unwrap(),
+            &mut default_runtime(),
+        )
     }
 }

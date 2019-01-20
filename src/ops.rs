@@ -101,13 +101,18 @@ pub fn fetch(
         })
 }
 
-pub fn build(env: &Environment<impl Connect, impl Printer>, problem_name: &str) -> SomaResult<()> {
+pub fn build(
+    env: &Environment<impl Connect, impl Printer>,
+    problem_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
     let repo_name = problem_name;
     let repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
     env.printer()
         .write_line(&format!("Repository updated: '{}'", &repo_name));
 
+    runtime.block_on(docker::prune_images_from_repo(&env, repo_name))?;
     build_image(&repository, &env, repo_name)?;
     env.printer()
         .write_line(&format!("Built image for problem: '{}'", &repo_name));
