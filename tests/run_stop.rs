@@ -36,6 +36,9 @@ fn test_run_stop() {
         assert!(container_exists(&containers, &container_id));
         assert!(container_from_repo_exists(&containers, repo_name));
 
+        // Problem container should be running exclusively
+        assert!(run(&env, repo_name, 31337, &mut runtime).is_err());
+
         // Cleanup
         assert!(stop(&env, repo_name, &mut runtime).is_ok());
         let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
