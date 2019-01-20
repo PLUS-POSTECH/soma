@@ -4,10 +4,11 @@ use std::process::Command;
 
 use bollard::container::{
     APIContainers, Config, CreateContainerOptions, HostConfig, ListContainersOptions, PortBinding,
-    RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
+    PruneContainersOptions, RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{
-    APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions, RemoveImageOptions,
+    APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions, PruneImagesOptions,
+    RemoveImageOptions,
 };
 use bollard::Docker;
 use failure::Error;
@@ -65,6 +66,44 @@ impl SomaImage {
 
     pub fn status(&self) -> VersionStatus {
         self.status
+    }
+}
+
+type SomaFilter = HashMap<String, Vec<String>>;
+
+struct SomaFilterBuilder {
+    label_filter: Vec<String>,
+}
+
+impl SomaFilterBuilder {
+    fn new() -> SomaFilterBuilder {
+        SomaFilterBuilder {
+            label_filter: vec![],
+        }
+    }
+
+    fn append_filter(mut self, key: String, value: String) -> SomaFilterBuilder {
+        self.label_filter.push(format!("{}={}", key, value));
+        self
+    }
+
+    pub fn append_user(self, env: &Environment<impl Connect, impl Printer>) -> SomaFilterBuilder {
+        let username = env.username().clone();
+        self.append_filter(LABEL_KEY_USERNAME.to_string(), username)
+    }
+
+    pub fn append_repo(self, repo_name: &str) -> SomaFilterBuilder {
+        self.append_filter(LABEL_KEY_REPOSITORY.to_string(), repo_name.to_string())
+    }
+
+    pub fn append_version(self) -> SomaFilterBuilder {
+        self.append_filter(LABEL_KEY_VERSION.to_string(), VERSION.to_string())
+    }
+
+    pub fn build(self) -> SomaFilter {
+        let mut filter = SomaFilter::new();
+        filter.insert("label".to_string(), self.label_filter);
+        filter
     }
 }
 
@@ -142,16 +181,7 @@ pub fn containers_from_repo(containers: Vec<SomaContainer>, repo_name: &str) -> 
 pub fn list_containers(
     env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaContainer>, Error = Error> {
-    let username = env.username().clone();
-    let mut soma_filter = HashMap::new();
-    soma_filter.insert(
-        "label".to_string(),
-        vec![format!(
-            "{}={}",
-            LABEL_KEY_USERNAME.to_string(),
-            username.clone()
-        )],
-    );
+    let soma_filter = SomaFilterBuilder::new().append_user(&env).build();
     env.docker
         .list_containers(Some(ListContainersOptions::<String> {
             all: true,
@@ -183,16 +213,7 @@ pub fn list_containers(
 pub fn list_images(
     env: &Environment<impl Connect, impl Printer>,
 ) -> impl Future<Item = Vec<SomaImage>, Error = Error> {
-    let username = env.username().clone();
-    let mut soma_filter = HashMap::new();
-    soma_filter.insert(
-        "label".to_string(),
-        vec![format!(
-            "{}={}",
-            LABEL_KEY_USERNAME.to_string(),
-            username.clone()
-        )],
-    );
+    let soma_filter = SomaFilterBuilder::new().append_user(&env).build();
     env.docker
         .list_images(Some(ListImagesOptions::<String> {
             filters: soma_filter,
@@ -306,6 +327,44 @@ pub fn remove_image(
         .map(|_| ())
 }
 
+pub fn remove_container(
+    env: &Environment<impl Connect, impl Printer>,
+    container_id: &str,
+) -> impl Future<Item = (), Error = Error> {
+    env.docker
+        .remove_container(container_id, None::<RemoveContainerOptions>)
+}
+
+pub fn prune_images_from_repo(
+    env: &Environment<impl Connect, impl Printer>,
+    repo_name: &str,
+) -> impl Future<Item = (), Error = Error> {
+    let soma_filter = SomaFilterBuilder::new()
+        .append_user(env)
+        .append_repo(repo_name)
+        .build();
+    env.docker
+        .prune_images(Some(PruneImagesOptions {
+            filters: soma_filter,
+        }))
+        .map(|_| ())
+}
+
+pub fn prune_containers_from_repo(
+    env: &Environment<impl Connect, impl Printer>,
+    repo_name: &str,
+) -> impl Future<Item = (), Error = Error> {
+    let soma_filter = SomaFilterBuilder::new()
+        .append_user(env)
+        .append_repo(repo_name)
+        .build();
+    env.docker
+        .prune_containers(Some(PruneContainersOptions {
+            filters: soma_filter,
+        }))
+        .map(|_| ())
+}
+
 pub fn start(
     env: &Environment<impl Connect, impl Printer>,
     container_id: &str,
@@ -320,12 +379,4 @@ pub fn stop(
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
         .stop_container(container_id, None::<StopContainerOptions>)
-}
-
-pub fn remove_container(
-    env: &Environment<impl Connect, impl Printer>,
-    container_id: &str,
-) -> impl Future<Item = (), Error = Error> {
-    env.docker
-        .remove_container(container_id, None::<RemoveContainerOptions>)
 }
