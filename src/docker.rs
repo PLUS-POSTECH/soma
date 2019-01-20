@@ -1,19 +1,16 @@
 use std::collections::HashMap;
-use std::path::Path;
-use std::process::Command;
 
 use bollard::container::{
     APIContainers, Config, CreateContainerOptions, HostConfig, ListContainersOptions, PortBinding,
     PruneContainersOptions, RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{
-    APIImages, CreateImageOptions, CreateImageResults, ListImagesOptions, PruneImagesOptions,
-    RemoveImageOptions,
+    APIImages, BuildImageOptions, BuildImageResults, CreateImageOptions, CreateImageResults,
+    ListImagesOptions, PruneImagesOptions, RemoveImageOptions,
 };
 use bollard::Docker;
 use failure::Error;
-use futures::stream::Stream;
-use futures::Future;
+use futures::{Future, Stream};
 use hyper::client::connect::Connect;
 
 use crate::prelude::*;
@@ -265,25 +262,21 @@ pub fn pull<'a>(
         .collect()
 }
 
-// Bollard doesn't support image build yet :(
-// We are building images by executing docker client manually
-pub fn build(image_name: &str, build_path: impl AsRef<Path>) -> SomaResult<()> {
-    let status = Command::new("docker")
-        .args(&[
-            "build",
-            "--pull",
-            "--force-rm",
-            "-t",
-            image_name,
-            &build_path.as_ref().to_string_lossy(),
-        ])
-        .status()?;
+pub fn build<'a>(
+    env: &'a Environment<impl Connect, impl Printer>,
+    image_name: &'a str,
+    build_context: Vec<u8>,
+) -> impl Stream<Item = BuildImageResults, Error = Error> + 'a {
+    let build_options = BuildImageOptions {
+        t: image_name,
+        q: true,
+        pull: true,
+        forcerm: true,
+        ..Default::default()
+    };
 
-    if status.success() {
-        Ok(())
-    } else {
-        Err(SomaError::DockerBuildFailError.into())
-    }
+    env.docker
+        .build_image(build_options, None, Some(build_context.into()))
 }
 
 pub fn create<'a>(
