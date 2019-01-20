@@ -171,6 +171,12 @@ pub fn container_from_repo_exists(containers: &Vec<SomaContainer>, repo_name: &s
         .any(|container| container.repository_name() == repo_name)
 }
 
+pub fn container_from_repo_running(containers: &Vec<SomaContainer>, repo_name: &str) -> bool {
+    containers.iter().any(|container| {
+        container.repository_name() == repo_name && container.container().state == "running"
+    })
+}
+
 pub fn containers_from_repo(containers: Vec<SomaContainer>, repo_name: &str) -> Vec<SomaContainer> {
     containers
         .into_iter()

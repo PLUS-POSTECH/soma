@@ -150,6 +150,12 @@ fn run_container(
     let repo_name = problem_name;
     let port_str = port.to_string();
 
+    let containers = runtime.block_on(docker::list_containers(&env))?;
+    if docker::container_from_repo_running(&containers, repo_name) {
+        Err(SomaError::ProblemAlreadyRunningError)?
+    }
+
+    runtime.block_on(docker::prune_containers_from_repo(&env, repo_name))?;
     let container_run = docker::create(env, repo_name, &image_name, &port_str)
         .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
     runtime.block_on(container_run)
