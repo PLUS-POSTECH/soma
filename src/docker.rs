@@ -93,10 +93,6 @@ impl SomaFilterBuilder {
         self.append_filter(LABEL_KEY_REPOSITORY.to_string(), repo_name.to_string())
     }
 
-    pub fn append_version(self) -> SomaFilterBuilder {
-        self.append_filter(LABEL_KEY_VERSION.to_string(), VERSION.to_string())
-    }
-
     pub fn build(self) -> SomaFilter {
         let mut filter = SomaFilter::new();
         filter.insert("label".to_string(), self.label_filter);
