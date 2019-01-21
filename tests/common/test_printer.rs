@@ -22,7 +22,7 @@ impl Printer for TestPrinter {
     // TestPrinter does not support write_line_at
     type Handle = ();
 
-    fn get_current_handle(&self) -> Self::Handle {
+    fn get_current_handle(&mut self) -> Self::Handle {
         ()
     }
 

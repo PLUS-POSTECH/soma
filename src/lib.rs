@@ -21,7 +21,7 @@ pub const VERSION: &'static str = crate_version!();
 pub trait Printer {
     type Handle;
 
-    fn get_current_handle(&self) -> Self::Handle;
+    fn get_current_handle(&mut self) -> Self::Handle;
     fn write_line_at(&mut self, handle: &Self::Handle, message: &str);
     fn write_line(&mut self, message: &str);
 }
