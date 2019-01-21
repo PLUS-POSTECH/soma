@@ -127,7 +127,7 @@ fn build_image(
     problem_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    env.printer().write_line("Preparing build context...")?;
+    env.printer().write_line("Preparing build context...");
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
     let repo_path = repository.local_path();
@@ -138,13 +138,13 @@ fn build_image(
     copy_options.copy_inside = true;
     copy(&repo_path, &work_dir, &copy_options)?;
 
-    env.printer().write_line("Rendering build files...")?;
+    env.printer().write_line("Rendering build files...");
     let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?.solidify()?;
 
     let context = RenderingContext::new(env.username(), repository.name(), manifest);
     Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
 
-    env.printer().write_line("Loading build context...")?;
+    env.printer().write_line("Loading build context...");
     let build_context = Vec::new();
     let compressor = GzEncoder::new(build_context, Compression::default());
     let mut tar = tar::Builder::new(compressor);
@@ -154,7 +154,7 @@ fn build_image(
     let build_context = compressor.finish()?;
 
     work_dir.close()?;
-    env.printer().write_line("Building image...")?;
+    env.printer().write_line("Building image...");
     runtime.block_on(docker::build(&env, &image_name, build_context).collect())?;
     Ok(())
 }
