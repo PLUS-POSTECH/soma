@@ -86,16 +86,16 @@ impl SomaFilterBuilder {
 
     pub fn append_user(self, env: &Environment<impl Connect, impl Printer>) -> SomaFilterBuilder {
         let username = env.username().clone();
-        self.append_filter(LABEL_KEY_USERNAME.to_string(), username)
+        self.append_filter(LABEL_KEY_USERNAME.to_owned(), username)
     }
 
     pub fn append_repo(self, repo_name: &str) -> SomaFilterBuilder {
-        self.append_filter(LABEL_KEY_REPOSITORY.to_string(), repo_name.to_string())
+        self.append_filter(LABEL_KEY_REPOSITORY.to_owned(), repo_name.to_owned())
     }
 
     pub fn build(self) -> SomaFilter {
         let mut filter = SomaFilter::new();
-        filter.insert("label".to_string(), self.label_filter);
+        filter.insert("label".to_owned(), self.label_filter);
         filter
     }
 }
@@ -194,7 +194,7 @@ pub fn list_containers(
                     let labels = &container.labels;
                     let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
                         Some(name) => name.clone(),
-                        None => "**NONAME**".to_string(),
+                        None => "**NONAME**".to_owned(),
                     };
                     let status = match labels.get(LABEL_KEY_VERSION) {
                         Some(container_version) => match container_version.as_str() {
@@ -226,7 +226,7 @@ pub fn list_images(
                     let labels = image.labels.as_ref().unwrap();
                     let repository_name = match labels.get(LABEL_KEY_REPOSITORY) {
                         Some(name) => name.clone(),
-                        None => "**NONAME**".to_string(),
+                        None => "**NONAME**".to_owned(),
                     };
                     let status = match labels.get(LABEL_KEY_VERSION) {
                         Some(image_version) => match image_version.as_str() {
