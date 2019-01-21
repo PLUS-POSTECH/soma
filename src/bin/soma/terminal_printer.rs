@@ -21,10 +21,9 @@ impl TerminalPrinter {
 impl Printer for TerminalPrinter {
     type Handle = (u16, u16);
 
-    fn get_current_handle(&self) -> Self::Handle {
+    fn get_current_handle(&mut self) -> Self::Handle {
         let handle = self.cursor.pos();
-        // TODO: Try using write_line instead
-        println!();
+        self.write_line("");
         handle
     }
 
