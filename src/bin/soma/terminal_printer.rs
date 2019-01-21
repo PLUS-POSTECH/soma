@@ -1,6 +1,7 @@
 use crossterm::terminal::ClearType;
 use crossterm::{cursor, terminal, Terminal, TerminalCursor};
 
+use soma::prelude::*;
 use soma::Printer;
 
 pub struct TerminalPrinter {
@@ -22,19 +23,37 @@ impl Printer for TerminalPrinter {
 
     fn get_current_handle(&self) -> Self::Handle {
         let handle = self.cursor.pos();
+        // TODO: Try using write_line instead
         println!();
         handle
     }
 
     fn write_line_at(&mut self, handle: &Self::Handle, message: &str) {
-        self.cursor.save_position();
-        self.cursor.goto(handle.0, handle.1);
-        self.terminal.clear(ClearType::CurrentLine);
-        println!("{}", message);
-        self.cursor.reset_position();
+        match || -> SomaResult<()> {
+            self.cursor.save_position()?;
+            self.cursor.goto(handle.0, handle.1)?;
+            self.terminal.clear(ClearType::CurrentLine)?;
+            self.write_line(message);
+            self.cursor.reset_position()?;
+            Ok(())
+        }() {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("Error on TerminalPrinter: {}", e);
+            }
+        }
     }
 
     fn write_line(&mut self, message: &str) {
-        println!("{}", message);
+        match || -> SomaResult<()> {
+            self.terminal.write(message)?;
+            self.terminal.write("\n")?;
+            Ok(())
+        }() {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("Error on TerminalPrinter: {}", e);
+            }
+        }
     }
 }
