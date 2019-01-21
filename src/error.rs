@@ -16,6 +16,8 @@ pub enum Error {
     InvalidManifestError,
     #[fail(display = "The specified file's path contains unsupported characters")]
     InvalidUnicodeError,
+    #[fail(display = "There is a container already running for the specified problem")]
+    ProblemAlreadyRunningError,
     #[fail(display = "There is no container running for the specified problem")]
     ProblemNotRunningError,
     #[fail(display = "There is an image or an container from the repository")]

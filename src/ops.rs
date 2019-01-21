@@ -1,8 +1,10 @@
 use std::fs;
 use std::path::Path;
 
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use fs_extra::dir::{copy, CopyOptions};
-use futures::future::Future;
+use futures::{Future, Stream};
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
 use remove_dir_all::remove_dir_all;
@@ -101,14 +103,19 @@ pub fn fetch(
         })
 }
 
-pub fn build(env: &Environment<impl Connect, impl Printer>, problem_name: &str) -> SomaResult<()> {
+pub fn build(
+    env: &Environment<impl Connect, impl Printer>,
+    problem_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
     let repo_name = problem_name;
     let repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
     env.printer()
         .write_line(&format!("Repository updated: '{}'", &repo_name));
 
-    build_image(&repository, &env, repo_name)?;
+    runtime.block_on(docker::prune_images_from_repo(&env, repo_name))?;
+    build_image(&repository, &env, repo_name, runtime)?;
     env.printer()
         .write_line(&format!("Built image for problem: '{}'", &repo_name));
     Ok(())
@@ -118,7 +125,9 @@ fn build_image(
     repository: &Repository,
     env: &Environment<impl Connect, impl Printer>,
     problem_name: &str,
+    runtime: &mut Runtime,
 ) -> SomaResult<()> {
+    env.printer().write_line("Preparing build context...");
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
     let repo_path = repository.local_path();
@@ -129,14 +138,24 @@ fn build_image(
     copy_options.copy_inside = true;
     copy(&repo_path, &work_dir, &copy_options)?;
 
+    env.printer().write_line("Rendering build files...");
     let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?.solidify()?;
 
     let context = RenderingContext::new(env.username(), repository.name(), manifest);
     Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
 
-    docker::build(&image_name, work_dir_path)?;
-    work_dir.close()?;
+    env.printer().write_line("Loading build context...");
+    let build_context = Vec::new();
+    let compressor = GzEncoder::new(build_context, Compression::default());
+    let mut tar = tar::Builder::new(compressor);
+    tar.append_dir_all("", work_dir_path)?;
+    tar.finish()?;
+    let compressor = tar.into_inner()?;
+    let build_context = compressor.finish()?;
 
+    work_dir.close()?;
+    env.printer().write_line("Building image...");
+    runtime.block_on(docker::build(&env, &image_name, build_context).collect())?;
     Ok(())
 }
 
@@ -150,6 +169,12 @@ fn run_container(
     let repo_name = problem_name;
     let port_str = port.to_string();
 
+    let containers = runtime.block_on(docker::list_containers(&env))?;
+    if docker::container_from_repo_running(&containers, repo_name) {
+        Err(SomaError::ProblemAlreadyRunningError)?
+    }
+
+    runtime.block_on(docker::prune_containers_from_repo(&env, repo_name))?;
     let container_run = docker::create(env, repo_name, &image_name, &port_str)
         .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
     runtime.block_on(container_run)
