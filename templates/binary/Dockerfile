@@ -13,12 +13,12 @@ RUN useradd -m $PROB
 
 {{ #each executable }}
 COPY "{{ path }}" "{{ target_path }}"
-RUN chmod +x "{{ target_path }}"
+RUN chmod 550 "{{ target_path }}"
 {{ /each }}
 
 {{ #each readonly }}
 COPY "{{ path }}" "{{ target_path }}"
-RUN chmod -w "{{ target_path }}"
+RUN chmod 440 "{{ target_path }}"
 {{ /each }}
 
 RUN chown -R root:$PROB /home/$PROB

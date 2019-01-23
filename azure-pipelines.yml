@@ -26,19 +26,21 @@ jobs:
   pool:
     vmImage: 'ubuntu-16.04'
   steps:
-  - template: ci/rust-install.yml
+  - template: ci/install-prerequisites.yml
     parameters:
       os: Linux
-  - template: ci/rust-build.yml
+  - template: ci/build.yml
+    parameters:
+      os: Linux
 
 - job: windows_build
   displayName: Windows Build
   pool:
-    vmImage: 'vs2017-win2016'
-  variables:
-    windowsCI: true
+    vmImage: 'win1803'
   steps:
-  - template: ci/rust-install.yml
+  - template: ci/install-prerequisites.yml
     parameters:
       os: Windows
-  - template: ci/rust-build.yml
+  - template: ci/build.yml
+    parameters:
+      os: Windows
