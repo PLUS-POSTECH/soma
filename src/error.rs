@@ -6,7 +6,7 @@ pub enum Error {
     DataDirectoryAccessError,
     #[fail(display = "Another Soma instance is using the data directory")]
     DataDirectoryLockError,
-    #[fail(display = "Image build process exited with non-zero status code")]
+    #[fail(display = "Failed to build docker image for a problem")]
     DockerBuildFailError,
     #[fail(display = "A repository with the same name already exists")]
     DuplicateRepositoryError,

@@ -155,7 +155,30 @@ fn build_image(
 
     work_dir.close()?;
     env.printer().write_line("Building image...");
-    runtime.block_on(docker::build(&env, &image_name, build_context).collect())?;
+    runtime.block_on(
+        docker::build(&env, &image_name, build_context)
+            .map(|build_image_result| {
+                use bollard::image::BuildImageResults::*;
+                match build_image_result {
+                    BuildImageStream { stream } => {
+                        let message = stream.trim();
+                        if message != "" {
+                            env.printer().write_line(message)
+                        }
+                        Ok(())
+                    }
+                    BuildImageError {
+                        error,
+                        error_detail: _,
+                    } => {
+                        env.printer().write_line(error.trim());
+                        Err(SomaError::DockerBuildFailError)
+                    }
+                    _ => Ok(()),
+                }
+            })
+            .collect(),
+    )?;
     Ok(())
 }
 

@@ -265,7 +265,6 @@ pub fn build<'a>(
 ) -> impl Stream<Item = BuildImageResults, Error = Error> + 'a {
     let build_options = BuildImageOptions {
         t: image_name,
-        q: true,
         pull: true,
         forcerm: true,
         ..Default::default()
