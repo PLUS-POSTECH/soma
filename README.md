@@ -28,7 +28,7 @@ soma fetch simple-bof  # this will copy public files to the current working dire
 
 ### For problem setters
 
-*This section contains a few commands that are under development.*
+*This section contains some features that are under development.*
 
 Add `soma.toml` to your project root directory that describes your problem.
 The config file below shows an example of it.
@@ -36,16 +36,17 @@ The config file below shows an example of it.
 ```toml
 name = "simple-bof"
 
-[[executable]]
-path = "build/simple-bof"
-public = true
-
-[[readonly]]
-path = "flag"
-
 [binary]
 os = "ubuntu:16.04"
 entry = "./simple-bof"
+
+[[binary.executable]]
+path = "build/simple-bof"
+public = true
+
+[[binary.readonly]]
+path = "flag"
+
 ```
 
 That's all! Soma gets enough information to run your binary from these 12 lines of configuration.
@@ -65,10 +66,10 @@ Soma team is hoping to ship it in the first quarter of 2019.
 
 ### Roadmap
 
-- [ ] Implement core commands. ([#4][issue #4] and [#66][issue #66]) (priority: high)
+- [x] ~~Implement core commands. ([#4][issue #4] and [#66][issue #66]) (priority: high)~~
 - [x] ~~Write tests. (priority: high)~~
 - [ ] Better documentation of features. (priority: medium)
-- [ ] Support multiple problems in a single repository. (priority: medium)
+- [ ] Support multiple problems in a single repository. ([#36][issue #36]) (priority: medium)
 - [ ] Support multiple containers for a single problem. (priority: medium)
 - [ ] Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
 
@@ -82,6 +83,7 @@ Soma team is hoping to ship it in the first quarter of 2019.
 * Install `rustfmt`.
     * `rustup component add rustfmt`
 * Copy files in `hooks` directory to `.git/hooks`.
+
 
 ### Testing, Building, and Running
 
@@ -110,5 +112,6 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 
 [issue #4]: https://github.com/PLUS-POSTECH/soma/issues/4
+[issue #36]: https://github.com/PLUS-POSTECH/soma/issues/36
 [issue #66]: https://github.com/PLUS-POSTECH/soma/issues/66
 [`0.1.0` milestone]: https://github.com/PLUS-POSTECH/soma/milestone/1
