@@ -11,14 +11,9 @@ RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
-{{ #each executable }}
+{{ #each binary.file_entries }}
 COPY "{{ path }}" "{{ target_path }}"
-RUN chmod 550 "{{ target_path }}"
-{{ /each }}
-
-{{ #each readonly }}
-COPY "{{ path }}" "{{ target_path }}"
-RUN chmod 440 "{{ target_path }}"
+RUN chmod {{ permissions }} "{{ target_path }}"
 {{ /each }}
 
 RUN chown -R root:$PROB /home/$PROB

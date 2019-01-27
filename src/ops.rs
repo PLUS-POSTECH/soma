@@ -84,8 +84,9 @@ pub fn fetch(
     let repo_path = repository.local_path();
 
     let manifest = load_manifest(repo_path.join(MANIFEST_FILE_NAME))?;
-    let executables = manifest.executable().iter();
-    let readonly = manifest.readonly().iter();
+    let binary = manifest.binary();
+    let executables = binary.executable().iter();
+    let readonly = binary.readonly().iter();
 
     executables
         .chain(readonly)

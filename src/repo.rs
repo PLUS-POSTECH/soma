@@ -103,8 +103,6 @@ impl<'a> Repository<'a> {
 pub struct Manifest {
     name: String,
     work_dir: Option<PathBuf>,
-    executable: Vec<FileEntry>,
-    readonly: Vec<FileEntry>,
     binary: BinaryConfig,
 }
 
@@ -112,9 +110,7 @@ pub struct Manifest {
 pub struct SolidManifest {
     name: String,
     work_dir: PathBuf,
-    executable: Vec<SolidFileEntry>,
-    readonly: Vec<SolidFileEntry>,
-    binary: BinaryConfig,
+    binary: SolidBinaryConfig,
 }
 
 impl Manifest {
@@ -122,6 +118,42 @@ impl Manifest {
         &self.name
     }
 
+    pub fn binary(&self) -> &BinaryConfig {
+        &self.binary
+    }
+
+    pub fn solidify(&self) -> SomaResult<SolidManifest> {
+        let work_dir = match &self.work_dir {
+            Some(path) => path.clone(),
+            None => PathBuf::from(format!("/home/{}", self.name)),
+        };
+
+        let binary = self.binary.solidify(&work_dir)?;
+
+        Ok(SolidManifest {
+            name: self.name.clone(),
+            work_dir,
+            binary,
+        })
+    }
+}
+
+#[derive(Deserialize)]
+pub struct BinaryConfig {
+    os: String,
+    entry: String,
+    executable: Vec<FileEntry>,
+    readonly: Vec<FileEntry>,
+}
+
+#[derive(Serialize)]
+struct SolidBinaryConfig {
+    os: String,
+    entry: String,
+    file_entries: Vec<SolidFileEntry>,
+}
+
+impl BinaryConfig {
     pub fn executable(&self) -> &Vec<FileEntry> {
         &self.executable
     }
@@ -130,29 +162,37 @@ impl Manifest {
         &self.readonly
     }
 
-    pub fn solidify(&self) -> SomaResult<SolidManifest> {
-        let work_dir = match &self.work_dir {
-            Some(path) => path.clone(),
-            None => PathBuf::from(format!("/home/{}", self.name)),
-        };
+    fn solidify(&self, work_dir: impl AsRef<Path>) -> SomaResult<SolidBinaryConfig> {
         let executable = self
             .executable
             .iter()
-            .map(|file| file.solidify(&work_dir))
-            .collect::<SomaResult<Vec<_>>>()?;
+            .map(|file| file.solidify(&work_dir, PermissionOption::Executable));
         let readonly = self
             .readonly
             .iter()
-            .map(|file| file.solidify(&work_dir))
-            .collect::<SomaResult<Vec<_>>>()?;
+            .map(|file| file.solidify(&work_dir, PermissionOption::ReadOnly));
+        let file_entries = executable.chain(readonly).collect::<SomaResult<Vec<_>>>()?;
 
-        Ok(SolidManifest {
-            name: self.name.clone(),
-            work_dir,
-            executable,
-            readonly,
-            binary: self.binary.clone(),
+        Ok(SolidBinaryConfig {
+            os: self.os.clone(),
+            entry: self.entry.clone(),
+            file_entries,
         })
+    }
+}
+
+enum PermissionOption {
+    Executable,
+    ReadOnly,
+    // Reserved: FetchOnly, ReadWrite, WithPermission
+}
+
+impl PermissionOption {
+    pub fn unix_permissions(&self) -> Option<u16> {
+        match self {
+            PermissionOption::Executable => Some(550),
+            PermissionOption::ReadOnly => Some(440),
+        }
     }
 }
 
@@ -165,10 +205,11 @@ pub struct FileEntry {
 }
 
 #[derive(Serialize)]
-pub struct SolidFileEntry {
+struct SolidFileEntry {
     path: PathBuf,
     public: bool,
     target_path: String,
+    permissions: u16,
 }
 
 impl FileEntry {
@@ -180,11 +221,11 @@ impl FileEntry {
         self.public.unwrap_or(false)
     }
 
-    pub fn target_path(&self) -> &Option<String> {
-        &self.target_path
-    }
-
-    pub fn solidify(&self, work_dir: impl AsRef<Path>) -> SomaResult<SolidFileEntry> {
+    fn solidify(
+        &self,
+        work_dir: impl AsRef<Path>,
+        permission_option: PermissionOption,
+    ) -> SomaResult<SolidFileEntry> {
         let target_path = match &self.target_path {
             Some(path) => path.clone(),
             None => {
@@ -206,14 +247,9 @@ impl FileEntry {
             path: self.path.clone(),
             public: self.public.unwrap_or(false),
             target_path,
+            permissions: permission_option.unix_permissions().unwrap_or(440),
         })
     }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-struct BinaryConfig {
-    os: String,
-    entry: String,
 }
 
 fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
