@@ -6,7 +6,6 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use fs2::FileExt;
-use question::{Answer, Question};
 
 use crate::prelude::*;
 
@@ -34,15 +33,8 @@ impl DataDirectory {
         };
 
         if !path.exists() {
-            if let Answer::NO = Question::new(&format!(
-                "It seems that you use Soma for the first time\nThe data directory will be initialized at {:?} [y/n]\n",
-                path.as_os_str(),
-            ))
-                .confirm()
-            {
-                Err(SomaError::DataDirectoryAccessError)?;
-            }
             fs::create_dir_all(&path)?;
+            println!("Created Soma data directory at: {}", path.to_string_lossy());
         }
 
         DataDirectory::initialize_and_lock(path)

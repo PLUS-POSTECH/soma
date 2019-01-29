@@ -20,5 +20,5 @@ fn test_fetch() {
     .is_ok());
     assert!(fetch(&mut env, repo_name, &temp_copy_dir).is_ok());
 
-    expect_dir_contents(&temp_copy_dir, &vec!["simple-bof"]);
+    expect_dir_contents(&temp_copy_dir, &["simple-bof"]);
 }

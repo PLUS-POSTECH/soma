@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 use fs_extra::dir::{copy, CopyOptions};
 use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
 use remove_dir_all::remove_dir_all;
+use serde::de::{self, Deserializer, Unexpected, Visitor};
+use serde::ser::Serializer;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
@@ -103,8 +105,6 @@ impl<'a> Repository<'a> {
 pub struct Manifest {
     name: String,
     work_dir: Option<PathBuf>,
-    executable: Vec<FileEntry>,
-    readonly: Vec<FileEntry>,
     binary: BinaryConfig,
 }
 
@@ -112,9 +112,7 @@ pub struct Manifest {
 pub struct SolidManifest {
     name: String,
     work_dir: PathBuf,
-    executable: Vec<SolidFileEntry>,
-    readonly: Vec<SolidFileEntry>,
-    binary: BinaryConfig,
+    binary: SolidBinaryConfig,
 }
 
 impl Manifest {
@@ -122,6 +120,42 @@ impl Manifest {
         &self.name
     }
 
+    pub fn binary(&self) -> &BinaryConfig {
+        &self.binary
+    }
+
+    pub fn solidify(&self) -> SomaResult<SolidManifest> {
+        let work_dir = match &self.work_dir {
+            Some(path) => path.clone(),
+            None => PathBuf::from(format!("/home/{}", self.name)),
+        };
+
+        let binary = self.binary.solidify(&work_dir)?;
+
+        Ok(SolidManifest {
+            name: self.name.clone(),
+            work_dir,
+            binary,
+        })
+    }
+}
+
+#[derive(Deserialize)]
+pub struct BinaryConfig {
+    os: String,
+    cmd: String,
+    executable: Vec<FileEntry>,
+    readonly: Vec<FileEntry>,
+}
+
+#[derive(Serialize)]
+struct SolidBinaryConfig {
+    os: String,
+    cmd: String,
+    file_entries: Vec<SolidFileEntry>,
+}
+
+impl BinaryConfig {
     pub fn executable(&self) -> &Vec<FileEntry> {
         &self.executable
     }
@@ -130,29 +164,78 @@ impl Manifest {
         &self.readonly
     }
 
-    pub fn solidify(&self) -> SomaResult<SolidManifest> {
-        let work_dir = match &self.work_dir {
-            Some(path) => path.clone(),
-            None => PathBuf::from(format!("/home/{}", self.name)),
-        };
+    fn solidify(&self, work_dir: impl AsRef<Path>) -> SomaResult<SolidBinaryConfig> {
         let executable = self
             .executable
             .iter()
-            .map(|file| file.solidify(&work_dir))
-            .collect::<SomaResult<Vec<_>>>()?;
+            .map(|file| file.solidify(&work_dir, FilePermissions::Executable));
         let readonly = self
             .readonly
             .iter()
-            .map(|file| file.solidify(&work_dir))
-            .collect::<SomaResult<Vec<_>>>()?;
+            .map(|file| file.solidify(&work_dir, FilePermissions::ReadOnly));
+        let file_entries = executable.chain(readonly).collect::<SomaResult<Vec<_>>>()?;
 
-        Ok(SolidManifest {
-            name: self.name.clone(),
-            work_dir,
-            executable,
-            readonly,
-            binary: self.binary.clone(),
+        Ok(SolidBinaryConfig {
+            os: self.os.clone(),
+            cmd: self.cmd.clone(),
+            file_entries,
         })
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum FilePermissions {
+    Custom(u16),
+    Executable,
+    ReadOnly,
+    // Reserved: FetchOnly, ReadWrite
+}
+
+impl Serialize for FilePermissions {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let permissions_string = match self {
+            FilePermissions::Custom(permissions) => format!("{:o}", permissions),
+            FilePermissions::Executable => "550".to_owned(),
+            FilePermissions::ReadOnly => "440".to_owned(),
+        };
+        serializer.serialize_str(&permissions_string)
+    }
+}
+
+impl<'de> Deserialize<'de> for FilePermissions {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PermissionsString)
+    }
+}
+
+struct PermissionsString;
+
+impl<'de> Visitor<'de> for PermissionsString {
+    type Value = FilePermissions;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            formatter,
+            "a file permissions string in octal number format"
+        )
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let permissions = u16::from_str_radix(s, 8);
+        match permissions {
+            // Support sticky bits later
+            Ok(permissions) if permissions <= 0o777 => Ok(FilePermissions::Custom(permissions)),
+            _ => Err(de::Error::invalid_value(Unexpected::Str(s), &self)),
+        }
     }
 }
 
@@ -165,10 +248,11 @@ pub struct FileEntry {
 }
 
 #[derive(Serialize)]
-pub struct SolidFileEntry {
+struct SolidFileEntry {
     path: PathBuf,
     public: bool,
     target_path: String,
+    permissions: FilePermissions,
 }
 
 impl FileEntry {
@@ -180,11 +264,11 @@ impl FileEntry {
         self.public.unwrap_or(false)
     }
 
-    pub fn target_path(&self) -> &Option<String> {
-        &self.target_path
-    }
-
-    pub fn solidify(&self, work_dir: impl AsRef<Path>) -> SomaResult<SolidFileEntry> {
+    fn solidify(
+        &self,
+        work_dir: impl AsRef<Path>,
+        permissions: FilePermissions,
+    ) -> SomaResult<SolidFileEntry> {
         let target_path = match &self.target_path {
             Some(path) => path.clone(),
             None => {
@@ -206,14 +290,9 @@ impl FileEntry {
             path: self.path.clone(),
             public: self.public.unwrap_or(false),
             target_path,
+            permissions,
         })
     }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-struct BinaryConfig {
-    os: String,
-    entry: String,
 }
 
 fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
@@ -225,4 +304,28 @@ fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
 
 pub fn load_manifest(manifest_path: impl AsRef<Path>) -> SomaResult<Manifest> {
     Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_de_tokens, assert_de_tokens_error, assert_ser_tokens, Token};
+
+    #[test]
+    fn test_file_permissions_ser() {
+        assert_ser_tokens(&FilePermissions::Executable, &[Token::Str("550")]);
+        assert_ser_tokens(&FilePermissions::ReadOnly, &[Token::Str("440")]);
+        assert_ser_tokens(&FilePermissions::Custom(0o777), &[Token::Str("777")]);
+    }
+
+    #[test]
+    fn test_file_permissions_de() {
+        assert_de_tokens(&FilePermissions::Custom(0o550), &[Token::Str("550")]);
+        assert_de_tokens(&FilePermissions::Custom(0o440), &[Token::Str("440")]);
+        assert_de_tokens(&FilePermissions::Custom(0o777), &[Token::Str("777")]);
+        assert_de_tokens_error::<FilePermissions>(&[
+                Token::Str("1000")
+            ], "invalid value: string \"1000\", expected a file permissions string in octal number format"
+        );
+    }
 }

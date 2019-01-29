@@ -84,8 +84,9 @@ pub fn fetch(
     let repo_path = repository.local_path();
 
     let manifest = load_manifest(repo_path.join(MANIFEST_FILE_NAME))?;
-    let executables = manifest.executable().iter();
-    let readonly = manifest.readonly().iter();
+    let binary = manifest.binary();
+    let executables = binary.executable().iter();
+    let readonly = binary.readonly().iter();
 
     executables
         .chain(readonly)
@@ -261,7 +262,7 @@ pub fn stop(
     }
 
     let container_list = docker::containers_from_repo(container_list, problem_name);
-    let states_to_stop = vec!["paused", "restarting", "running"];
+    let states_to_stop = &["paused", "restarting", "running"];
 
     let containers_to_stop = container_list
         .iter()
