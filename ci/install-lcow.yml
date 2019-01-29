@@ -1,0 +1,13 @@
+steps:
+- powershell: |
+    mkdir .ci
+    $lcow = ".ci\lcow.zip"
+    $dockerd = ".ci\dockerd.exe"
+
+    wget.exe -nv https://master.dockerproject.org/windows/x86_64/dockerd.exe -O "$dockerd"
+    wget.exe -nv https://github.com/linuxkit/lcow/releases/download/v4.14.35-v0.3.9/release.zip -O "$lcow"
+
+    Stop-Service "Docker"
+    Expand-Archive "$lcow" -DestinationPath "$Env:ProgramFiles\Linux Containers\."
+    rm "$lcow"
+  displayName: 'Install LCOW'

@@ -19,15 +19,17 @@ use crate::{Environment, Printer, VERSION};
 pub const LABEL_KEY_VERSION: &'static str = "soma.version";
 pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
 pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
+pub const DEFAULT_SOCKET: &'static str = "unix:///var/run/docker.sock";
+pub const DEFAULT_NAMED_PIPE: &'static str = "npipe:////./pipe/docker_engine";
 
 #[cfg(windows)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_named_pipe_defaults()
+    Docker::connect_with_named_pipe(DEFAULT_NAMED_PIPE, 600)
 }
 
 #[cfg(unix)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_unix_defaults()
+    Docker::connect_with_unix(DEFAULT_SOCKET, 600)
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -289,7 +291,7 @@ pub fn create<'a>(
     port_bindings.insert(
         "1337/tcp",
         vec![PortBinding {
-            host_ip: "0.0.0.0",
+            host_ip: "",
             host_port: port_str,
         }],
     );

@@ -1,0 +1,13 @@
+steps:
+- script: cargo build
+  displayName: 'Build'
+
+- ${{ if eq(parameters.os, 'Windows') }}:
+  - script: |
+      START /B .ci\dockerd.exe --experimental
+      cargo test
+    displayName: 'Test'
+
+- ${{ if ne(parameters.os, 'Windows') }}:
+  - script: cargo test
+    displayName: 'Test'
