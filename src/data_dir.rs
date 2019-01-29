@@ -34,7 +34,7 @@ impl DataDirectory {
 
         if !path.exists() {
             fs::create_dir_all(&path)?;
-            println!("Created Soma data directory at: {:?}", path.as_os_str());
+            println!("Created Soma data directory at: {}", path.to_string_lossy());
         }
 
         DataDirectory::initialize_and_lock(path)

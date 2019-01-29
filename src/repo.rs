@@ -141,7 +141,7 @@ impl Manifest {
 #[derive(Deserialize)]
 pub struct BinaryConfig {
     os: String,
-    entry: String,
+    cmd: String,
     executable: Vec<FileEntry>,
     readonly: Vec<FileEntry>,
 }
@@ -149,7 +149,7 @@ pub struct BinaryConfig {
 #[derive(Serialize)]
 struct SolidBinaryConfig {
     os: String,
-    entry: String,
+    cmd: String,
     file_entries: Vec<SolidFileEntry>,
 }
 
@@ -190,8 +190,8 @@ enum PermissionOption {
 impl PermissionOption {
     pub fn unix_permissions(&self) -> Option<u16> {
         match self {
-            PermissionOption::Executable => Some(550),
-            PermissionOption::ReadOnly => Some(440),
+            PermissionOption::Executable => Some(0o550),
+            PermissionOption::ReadOnly => Some(0o440),
         }
     }
 }
