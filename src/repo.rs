@@ -183,6 +183,7 @@ impl BinaryConfig {
     }
 }
 
+#[derive(Debug, PartialEq)]
 enum FilePermissions {
     Custom(u16),
     Executable,
@@ -229,10 +230,10 @@ impl<'de> Visitor<'de> for PermissionsString {
     where
         E: de::Error,
     {
-        let permissions = s.parse::<u16>();
+        let permissions = u16::from_str_radix(s, 8);
         match permissions {
             // Support sticky bits later
-            Ok(permissions) if permissions > 0o777 => Ok(FilePermissions::Custom(permissions)),
+            Ok(permissions) if permissions <= 0o777 => Ok(FilePermissions::Custom(permissions)),
             _ => Err(de::Error::invalid_value(Unexpected::Str(s), &self)),
         }
     }
@@ -303,4 +304,28 @@ fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
 
 pub fn load_manifest(manifest_path: impl AsRef<Path>) -> SomaResult<Manifest> {
     Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_de_tokens, assert_de_tokens_error, assert_ser_tokens, Token};
+
+    #[test]
+    fn test_file_permissions_ser() {
+        assert_ser_tokens(&FilePermissions::Executable, &[Token::Str("550")]);
+        assert_ser_tokens(&FilePermissions::ReadOnly, &[Token::Str("440")]);
+        assert_ser_tokens(&FilePermissions::Custom(0o777), &[Token::Str("777")]);
+    }
+
+    #[test]
+    fn test_file_permissions_de() {
+        assert_de_tokens(&FilePermissions::Custom(0o550), &[Token::Str("550")]);
+        assert_de_tokens(&FilePermissions::Custom(0o440), &[Token::Str("440")]);
+        assert_de_tokens(&FilePermissions::Custom(0o777), &[Token::Str("777")]);
+        assert_de_tokens_error::<FilePermissions>(&[
+                Token::Str("1000")
+            ], "invalid value: string \"1000\", expected a file permissions string in octal number format"
+        );
+    }
 }

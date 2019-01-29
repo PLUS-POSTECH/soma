@@ -28,6 +28,9 @@ toml = "0.4.10"
 url = "1.7.2"
 whoami = "0.4.1"
 
+[dev-dependencies]
+serde_test = "1.0.85"
+
 [lib]
 name = "soma"
 path = "src/lib.rs"
