@@ -262,7 +262,7 @@ pub fn stop(
     }
 
     let container_list = docker::containers_from_repo(container_list, problem_name);
-    let states_to_stop = vec!["paused", "restarting", "running"];
+    let states_to_stop = &["paused", "restarting", "running"];
 
     let containers_to_stop = container_list
         .iter()

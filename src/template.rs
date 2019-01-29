@@ -13,9 +13,9 @@ pub enum Templates {
 }
 
 impl Templates {
-    fn templates(&self) -> Vec<(&'static str, &'static str)> {
+    fn templates(&self) -> &[(&str, &str)] {
         match self {
-            Templates::Binary => vec![
+            Templates::Binary => &[
                 ("Dockerfile", include_str!("../templates/binary/Dockerfile")),
                 ("start.sh", include_str!("../templates/binary/start.sh")),
             ],
