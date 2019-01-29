@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 use fs_extra::dir::{copy, CopyOptions};
 use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
 use remove_dir_all::remove_dir_all;
+use serde::de::{self, Deserializer, Unexpected, Visitor};
+use serde::ser::Serializer;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
@@ -166,32 +168,72 @@ impl BinaryConfig {
         let executable = self
             .executable
             .iter()
-            .map(|file| file.solidify(&work_dir, PermissionOption::Executable));
+            .map(|file| file.solidify(&work_dir, FilePermissions::Executable));
         let readonly = self
             .readonly
             .iter()
-            .map(|file| file.solidify(&work_dir, PermissionOption::ReadOnly));
+            .map(|file| file.solidify(&work_dir, FilePermissions::ReadOnly));
         let file_entries = executable.chain(readonly).collect::<SomaResult<Vec<_>>>()?;
 
         Ok(SolidBinaryConfig {
             os: self.os.clone(),
-            entry: self.entry.clone(),
+            cmd: self.cmd.clone(),
             file_entries,
         })
     }
 }
 
-enum PermissionOption {
+enum FilePermissions {
+    Custom(u16),
     Executable,
     ReadOnly,
-    // Reserved: FetchOnly, ReadWrite, WithPermission
+    // Reserved: FetchOnly, ReadWrite
 }
 
-impl PermissionOption {
-    pub fn unix_permissions(&self) -> Option<u16> {
-        match self {
-            PermissionOption::Executable => Some(0o550),
-            PermissionOption::ReadOnly => Some(0o440),
+impl Serialize for FilePermissions {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let permissions_string = match self {
+            FilePermissions::Custom(permissions) => format!("{:o}", permissions),
+            FilePermissions::Executable => "550".to_owned(),
+            FilePermissions::ReadOnly => "440".to_owned(),
+        };
+        serializer.serialize_str(&permissions_string)
+    }
+}
+
+impl<'de> Deserialize<'de> for FilePermissions {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PermissionsString)
+    }
+}
+
+struct PermissionsString;
+
+impl<'de> Visitor<'de> for PermissionsString {
+    type Value = FilePermissions;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            formatter,
+            "a file permissions string in octal number format"
+        )
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let permissions = s.parse::<u16>();
+        match permissions {
+            // Support sticky bits later
+            Ok(permissions) if permissions > 0o777 => Ok(FilePermissions::Custom(permissions)),
+            _ => Err(de::Error::invalid_value(Unexpected::Str(s), &self)),
         }
     }
 }
@@ -209,7 +251,7 @@ struct SolidFileEntry {
     path: PathBuf,
     public: bool,
     target_path: String,
-    permissions: u16,
+    permissions: FilePermissions,
 }
 
 impl FileEntry {
@@ -224,7 +266,7 @@ impl FileEntry {
     fn solidify(
         &self,
         work_dir: impl AsRef<Path>,
-        permission_option: PermissionOption,
+        permissions: FilePermissions,
     ) -> SomaResult<SolidFileEntry> {
         let target_path = match &self.target_path {
             Some(path) => path.clone(),
@@ -247,7 +289,7 @@ impl FileEntry {
             path: self.path.clone(),
             public: self.public.unwrap_or(false),
             target_path,
-            permissions: permission_option.unix_permissions().unwrap_or(440),
+            permissions,
         })
     }
 }
