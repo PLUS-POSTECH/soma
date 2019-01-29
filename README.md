@@ -38,7 +38,7 @@ name = "simple-bof"
 
 [binary]
 os = "ubuntu:16.04"
-entry = "./simple-bof"
+cmd = "./simple-bof"
 
 [[binary.executable]]
 path = "build/simple-bof"
