@@ -4,7 +4,7 @@ use std::path::Path;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use fs_extra::dir::{copy, CopyOptions};
-use futures::{Future, Stream};
+use futures::Future;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
 use remove_dir_all::remove_dir_all;

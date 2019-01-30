@@ -24,7 +24,7 @@ impl SomaCommand for BuildCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    .help("the name of the problem"),
+                    .help("problem name with optional repository name prefix"),
             )
     }
 

@@ -5,12 +5,11 @@ use bollard::container::{
     PruneContainersOptions, RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{
-    APIImages, BuildImageOptions, CreateImageOptions, CreateImageResults, ListImagesOptions,
-    PruneImagesOptions, RemoveImageOptions,
+    APIImages, BuildImageOptions, ListImagesOptions, PruneImagesOptions, RemoveImageOptions,
 };
 use bollard::Docker;
 use failure::Error;
-use futures::Future;
+use futures::{Future, Stream};
 use hyper::client::connect::Connect;
 
 use crate::prelude::*;
@@ -276,23 +275,6 @@ pub fn list_images(
                 })
                 .collect()
         })
-}
-
-pub fn pull<'a>(
-    env: &Environment<impl Connect, impl Printer>,
-    image_name: &'a str,
-) -> impl Future<Item = Vec<CreateImageResults>, Error = Error> + 'a {
-    env.docker
-        .create_image(Some(CreateImageOptions {
-            from_image: image_name,
-            tag: "latest",
-            ..Default::default()
-        }))
-        .then(|result| {
-            println!("{:?}", result);
-            result
-        })
-        .collect()
 }
 
 pub fn build<'a>(

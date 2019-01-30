@@ -24,7 +24,7 @@ impl SomaCommand for CleanCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    .help("the name of the problem to clean up"),
+                    .help("problem name with optional repository name prefix"),
             )
     }
 
