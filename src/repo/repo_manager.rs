@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
-use crate::repo::{Backend, Problem, Repository};
+use crate::repo::{Backend, Problem, ProblemIndex, Repository};
 
 const INDEX_FILE_NAME: &'static str = "index";
 
@@ -19,7 +19,7 @@ fn index_path<'a>(registration: &Registration<'a, RepositoryManager<'a>>) -> Pat
 #[derive(Clone, Deserialize, Serialize)]
 struct Index {
     backend: Backend,
-    prob_list: Vec<Problem>,
+    prob_list: Vec<ProblemIndex>,
 }
 
 pub struct RepositoryManager<'a> {
@@ -107,6 +107,35 @@ impl<'a> RepositoryManager<'a> {
             None => Err(SomaError::RepositoryNotFoundError)?,
         };
         Ok(repository)
+    }
+
+    pub fn search_prob(&self, query: &str) -> SomaResult<Problem> {
+        let result: Vec<_> = self
+            .repo_index
+            .iter()
+            .flat_map(|(repo_name, repo_index)| {
+                repo_index
+                    .prob_list
+                    .iter()
+                    .map(move |prob_index| (repo_name, &prob_index.name, &prob_index.path))
+            })
+            .filter(|(repo_name, prob_name, _)| {
+                query == *prob_name || query == Problem::problem_id(repo_name, prob_name)
+            })
+            .collect();
+
+        match result.len() {
+            0 => Err(SomaError::ProblemNotFoundError)?,
+            1 => {
+                let (repo_name, prob_name, prob_path) = result[0];
+                Ok(Problem {
+                    repo_name: repo_name.to_owned(),
+                    prob_name: prob_name.to_owned(),
+                    path: self.repo_path(repo_name).join(prob_path),
+                })
+            }
+            _ => Err(SomaError::MultipleProblemEntryError)?,
+        }
     }
 
     pub fn list_repo(&'a self) -> impl Iterator<Item = Repository<'a>> {

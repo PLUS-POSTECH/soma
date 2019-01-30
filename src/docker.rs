@@ -14,22 +14,22 @@ use futures::{Future, Stream};
 use hyper::client::connect::Connect;
 
 use crate::prelude::*;
+use crate::repo::Problem;
 use crate::{Environment, Printer, VERSION};
 
-pub const LABEL_KEY_VERSION: &'static str = "soma.version";
-pub const LABEL_KEY_USERNAME: &'static str = "soma.username";
-pub const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
-pub const DEFAULT_SOCKET: &'static str = "unix:///var/run/docker.sock";
-pub const DEFAULT_NAMED_PIPE: &'static str = "npipe:////./pipe/docker_engine";
+const LABEL_KEY_VERSION: &'static str = "soma.version";
+const LABEL_KEY_USERNAME: &'static str = "soma.username";
+const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
+const LABEL_KEY_PROBLEM: &'static str = "soma.problem";
 
 #[cfg(windows)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_named_pipe(DEFAULT_NAMED_PIPE, 600)
+    Docker::connect_with_named_pipe("npipe:////./pipe/docker_engine", 600)
 }
 
 #[cfg(unix)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
-    Docker::connect_with_unix(DEFAULT_SOCKET, 600)
+    Docker::connect_with_unix("unix:///var/run/docker.sock", 600)
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -100,10 +100,6 @@ impl SomaFilterBuilder {
         filter.insert("label".to_owned(), self.label_filter);
         filter
     }
-}
-
-pub fn image_name(problem_name: &str) -> String {
-    format!("soma/{}", problem_name)
 }
 
 pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
@@ -276,17 +272,26 @@ pub fn build<'a>(
         .build_image(build_options, None, Some(build_context.into()))
 }
 
+pub fn image_labels<'a>(
+    env: &'a Environment<impl Connect, impl Printer>,
+    problem: &'a Problem,
+) -> HashMap<&'static str, &'a str> {
+    vec![
+        (LABEL_KEY_VERSION, VERSION),
+        (LABEL_KEY_USERNAME, &env.username()),
+        (LABEL_KEY_REPOSITORY, problem.repo_name()),
+        (LABEL_KEY_PROBLEM, problem.prob_name()),
+    ]
+    .into_iter()
+    .collect()
+}
+
 pub fn create<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
-    repo_name: &'a str,
+    labels: HashMap<&'a str, &'a str>,
     image_name: &'a str,
     port_str: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
-    let mut labels = HashMap::new();
-    labels.insert(LABEL_KEY_VERSION, VERSION);
-    labels.insert(LABEL_KEY_USERNAME, &env.username());
-    labels.insert(LABEL_KEY_REPOSITORY, repo_name);
-
     let mut port_bindings = HashMap::new();
     port_bindings.insert(
         "1337/tcp",

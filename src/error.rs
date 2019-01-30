@@ -16,10 +16,14 @@ pub enum Error {
     InvalidManifestError,
     #[fail(display = "The specified file's path contains unsupported characters")]
     InvalidUnicodeError,
+    #[fail(display = "The provided query returned multiple problems")]
+    MultipleProblemEntryError,
     #[fail(display = "The provided repository does not contain 'soma.toml' or 'soma-list.toml'")]
     NotSomaRepositoryError,
     #[fail(display = "There is a container already running for the specified problem")]
     ProblemAlreadyRunningError,
+    #[fail(display = "The specified problem is not found")]
+    ProblemNotFoundError,
     #[fail(display = "There is no container running for the specified problem")]
     ProblemNotRunningError,
     #[fail(display = "There is an image or an container from the repository")]

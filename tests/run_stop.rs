@@ -12,39 +12,44 @@ mod common;
 fn test_run_stop() {
     let (_, mut data_dir) = temp_data_dir();
     let mut env = test_env(&mut data_dir);
-
-    let repo_name = "test-simple-bof";
-    let image_name = docker::image_name(repo_name);
     let mut runtime = default_runtime();
 
     assert!(add(
         &mut env,
         "https://github.com/PLUS-POSTECH/simple-bof.git",
-        Some(repo_name),
+        None,
     )
     .is_ok());
 
-    assert!(build(&env, repo_name, &mut runtime).is_ok());
+    let prob_query = "simple-bof";
+    let problem = env
+        .repo_manager()
+        .search_prob(prob_query)
+        .expect("Problem not found");
+    let prob_name = problem.prob_name();
+    let image_name = problem.docker_image_name();
+
+    assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
-    assert!(image_from_repo_exists(&images, repo_name));
+    assert!(image_from_repo_exists(&images, &prob_name));
 
-    let container_id = run(&env, repo_name, 31337, &mut runtime).unwrap();
+    let container_id = run(&env, prob_query, 31337, &mut runtime).unwrap();
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
     assert!(container_exists(&containers, &container_id));
-    assert!(container_from_repo_exists(&containers, repo_name));
+    assert!(container_from_repo_exists(&containers, &prob_name));
 
     // Problem container should be running exclusively
-    assert!(run(&env, repo_name, 31337, &mut runtime).is_err());
+    assert!(run(&env, prob_query, 31337, &mut runtime).is_err());
 
     // Cleanup
-    assert!(stop(&env, repo_name, &mut runtime).is_ok());
+    assert!(stop(&env, prob_query, &mut runtime).is_ok());
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
     assert!(!container_exists(&containers, &container_id));
-    assert!(!container_from_repo_exists(&containers, repo_name));
+    assert!(!container_from_repo_exists(&containers, &prob_name));
 
-    assert!(clean(&env, repo_name, &mut runtime).is_ok());
+    assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
-    assert!(!image_from_repo_exists(&images, repo_name));
+    assert!(!image_from_repo_exists(&images, &prob_name));
 }

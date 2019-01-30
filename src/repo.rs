@@ -16,11 +16,11 @@ pub use self::repo_manager::RepositoryManager;
 
 mod repo_manager;
 
-pub const LIST_FILE_NAME: &str = "soma-list.toml";
-pub const MANIFEST_FILE_NAME: &str = "soma.toml";
+const LIST_FILE_NAME: &str = "soma-list.toml";
+const MANIFEST_FILE_NAME: &str = "soma.toml";
 
 #[derive(Clone, Deserialize, Serialize)]
-struct Problem {
+struct ProblemIndex {
     name: String,
     path: PathBuf,
 }
@@ -73,10 +73,57 @@ impl fmt::Display for Backend {
     }
 }
 
+// `prob_query` is either `prob_id` or `prob_name`
+// `prob_id` is `repo_name/prob_name`
+pub struct Problem {
+    repo_name: String,
+    prob_name: String,
+    path: PathBuf,
+}
+
+impl Problem {
+    pub fn new(repo_name: String, prob_name: String, path: PathBuf) -> Self {
+        Problem {
+            repo_name,
+            prob_name,
+            path,
+        }
+    }
+
+    pub fn problem_id(repo_name: &str, prob_name: &str) -> String {
+        format!("{}/{}", repo_name, prob_name)
+    }
+
+    pub fn id(&self) -> String {
+        Problem::problem_id(&self.repo_name, &self.prob_name)
+    }
+
+    pub fn docker_image_name(&self) -> String {
+        format!("soma/{}/{}", self.repo_name, self.prob_name)
+    }
+
+    pub fn repo_name(&self) -> &String {
+        &self.repo_name
+    }
+
+    pub fn prob_name(&self) -> &String {
+        &self.prob_name
+    }
+
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    pub fn load_manifest(&self) -> SomaResult<Manifest> {
+        let manifest_path = self.path().join(MANIFEST_FILE_NAME);
+        Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
+    }
+}
+
 pub struct Repository<'a> {
     name: String,
     backend: Backend,
-    prob_list: Vec<Problem>,
+    prob_list: Vec<ProblemIndex>,
     manager: &'a RepositoryManager<'a>,
 }
 
@@ -84,7 +131,7 @@ impl<'a> Repository<'a> {
     fn new(
         name: String,
         backend: Backend,
-        prob_list: Vec<Problem>,
+        prob_list: Vec<ProblemIndex>,
         manager: &'a RepositoryManager<'a>,
     ) -> Repository<'a> {
         Repository {
@@ -107,22 +154,26 @@ impl<'a> Repository<'a> {
         &self.manager
     }
 
-    pub fn local_path(&self) -> PathBuf {
+    pub fn path(&self) -> PathBuf {
         self.manager.repo_path(&self.name)
     }
 
     pub fn update(&self) -> SomaResult<()> {
-        self.backend.update_at(self.local_path())
+        self.backend.update_at(self.path())
     }
 }
 
-fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<Problem>> {
+fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
     if path.as_ref().join(LIST_FILE_NAME).exists() {
         unimplemented!()
     } else {
-        let manifest = load_manifest(path.as_ref().join(MANIFEST_FILE_NAME))
-            .or(Err(SomaError::NotSomaRepositoryError))?;
-        Ok(vec![Problem {
+        let manifest_path = path.as_ref().join(MANIFEST_FILE_NAME);
+        if !manifest_path.exists() {
+            Err(SomaError::NotSomaRepositoryError)?;
+        }
+
+        let manifest: Manifest = toml::from_slice(&read_file_contents(manifest_path)?)?;
+        Ok(vec![ProblemIndex {
             name: manifest.name().to_owned(),
             path: PathBuf::from("./"),
         }])
@@ -328,10 +379,6 @@ fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
     let mut contents = Vec::new();
     file.read_to_end(&mut contents)?;
     Ok(contents)
-}
-
-pub fn load_manifest(manifest_path: impl AsRef<Path>) -> SomaResult<Manifest> {
-    Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
 }
 
 #[cfg(test)]

@@ -23,6 +23,7 @@ impl Templates {
     }
 }
 
+// TODO: Problem name in rendering context
 #[derive(Serialize)]
 pub struct RenderingContext<'a> {
     username: &'a str,

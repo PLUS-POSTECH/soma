@@ -23,8 +23,8 @@ fn test_add_remove() {
         .repo_manager()
         .get_repo(repo_name)
         .expect("Added repository does not exist")
-        .local_path();
-    assert!(dir_contents_exists(local_path, &[".git"]));
+        .path();
+    assert!(dir_contents_exists(local_path, &vec![".git"]));
 
     assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
     assert!(!env.repo_manager().repo_exists(repo_name));
@@ -48,6 +48,6 @@ fn test_add_with_name() {
         .repo_manager()
         .get_repo(repo_name)
         .expect("Added repository does not exist")
-        .local_path();
-    assert!(dir_contents_exists(local_path, &[".git"]));
+        .path();
+    assert!(dir_contents_exists(local_path, &vec![".git"]));
 }
