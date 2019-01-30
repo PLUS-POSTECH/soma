@@ -122,6 +122,15 @@ pub fn build(
     Ok(())
 }
 
+fn encode_context(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
+    let compressor = GzEncoder::new(Vec::new(), Compression::default());
+    let mut tar = tar::Builder::new(compressor);
+    tar.append_dir_all("", path)?;
+    tar.finish()?;
+    let compressor = tar.into_inner()?;
+    Ok(compressor.finish()?)
+}
+
 fn build_image(
     env: &Environment<impl Connect, impl Printer>,
     problem: &Problem,
@@ -145,43 +154,12 @@ fn build_image(
     let context = RenderingContext::new(env.username(), problem.repo_name(), manifest);
     Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
 
-    env.printer().write_line("Loading build context...");
-    // TODO: Separate in external function
-    let build_context = Vec::new();
-    let compressor = GzEncoder::new(build_context, Compression::default());
-    let mut tar = tar::Builder::new(compressor);
-    tar.append_dir_all("", work_dir_path)?;
-    tar.finish()?;
-    let compressor = tar.into_inner()?;
-    let build_context = compressor.finish()?;
+    env.printer().write_line("Encoding build context...");
+    let build_context = encode_context(work_dir_path)?;
 
     work_dir.close()?;
     env.printer().write_line("Building image...");
-    runtime.block_on(
-        docker::build(&env, &image_name, build_context)
-            // TODO: Separate in external function
-            .then(|build_image_result| {
-                use bollard::image::BuildImageResults::*;
-                match build_image_result {
-                    Ok(BuildImageStream { stream }) => {
-                        let message = stream.trim();
-                        if message != "" {
-                            env.printer().write_line(message)
-                        }
-                        Ok(())
-                    }
-                    Ok(BuildImageError {
-                        error,
-                        error_detail: _,
-                    }) => {
-                        env.printer().write_line(error.trim());
-                        Err(SomaError::DockerBuildFailError)
-                    }
-                    Err(_) => Err(SomaError::DockerBuildFailError),
-                    _ => Ok(()),
-                }
-            }).collect(),
-    )?;
+    runtime.block_on(docker::build(&env, &image_name, build_context))?;
     Ok(())
 }
 

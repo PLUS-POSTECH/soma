@@ -5,12 +5,12 @@ use bollard::container::{
     PruneContainersOptions, RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
 };
 use bollard::image::{
-    APIImages, BuildImageOptions, BuildImageResults, CreateImageOptions, CreateImageResults,
-    ListImagesOptions, PruneImagesOptions, RemoveImageOptions,
+    APIImages, BuildImageOptions, CreateImageOptions, CreateImageResults, ListImagesOptions,
+    PruneImagesOptions, RemoveImageOptions,
 };
 use bollard::Docker;
 use failure::Error;
-use futures::{Future, Stream};
+use futures::Future;
 use hyper::client::connect::Connect;
 
 use crate::prelude::*;
@@ -299,7 +299,7 @@ pub fn build<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
     image_name: &'a str,
     build_context: Vec<u8>,
-) -> impl Stream<Item = BuildImageResults, Error = Error> + 'a {
+) -> impl Future<Item = (), Error = Error> + 'a {
     let build_options = BuildImageOptions {
         t: image_name,
         pull: true,
@@ -309,6 +309,26 @@ pub fn build<'a>(
 
     env.docker
         .build_image(build_options, None, Some(build_context.into()))
+        .fold((), move |_, build_image_result| {
+            use bollard::image::BuildImageResults::*;
+            match build_image_result {
+                BuildImageStream { stream } => {
+                    let message = stream.trim();
+                    if message != "" {
+                        env.printer().write_line(message)
+                    }
+                    Ok(())
+                }
+                BuildImageError {
+                    error,
+                    error_detail: _,
+                } => {
+                    env.printer().write_line(error.trim());
+                    Err(SomaError::DockerBuildFailError)
+                }
+                _ => Ok(()),
+            }
+        })
 }
 
 pub fn image_labels<'a>(
