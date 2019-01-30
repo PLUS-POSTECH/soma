@@ -161,6 +161,10 @@ impl<'a> Repository<'a> {
     pub fn update(&self) -> SomaResult<()> {
         self.backend.update_at(self.path())
     }
+
+    pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a String> {
+        self.prob_list.iter().map(|prob_index| &prob_index.name)
+    }
 }
 
 fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
