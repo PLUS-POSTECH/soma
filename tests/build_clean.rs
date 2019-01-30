@@ -25,7 +25,7 @@ fn test_build_clean() {
         .search_prob(prob_query)
         .expect("Problem not found");
     let prob_name = problem.prob_name();
-    let image_name = problem.docker_image_name();
+    let image_name = problem.docker_image_name(env.username());
 
     let result = build(&env, prob_query, &mut runtime);
     assert!(result.is_ok());

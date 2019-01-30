@@ -17,7 +17,7 @@ mod terminal_printer;
 
 fn cli_env(data_dir: &mut DataDirectory) -> SomaResult<Environment<impl Connect, TerminalPrinter>> {
     Environment::new(
-        username(),
+        username().to_lowercase(),
         data_dir,
         connect_default()?,
         TerminalPrinter::new(),

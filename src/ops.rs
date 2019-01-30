@@ -136,7 +136,7 @@ fn build_image(
     problem: &Problem,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    let image_name = problem.docker_image_name();
+    let image_name = problem.docker_image_name(env.username());
 
     env.printer().write_line("Preparing build context...");
     let work_dir = tempdir()?;
@@ -170,7 +170,7 @@ pub fn run(
     runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let problem = env.repo_manager().search_prob(prob_query)?;
-    let image_name = problem.docker_image_name();
+    let image_name = problem.docker_image_name(env.username());
     let port_str = &port.to_string();
 
     let containers = runtime.block_on(docker::list_containers(&env))?;
@@ -227,7 +227,10 @@ pub fn clean(
         Err(SomaError::RepositoryInUseError)?;
     }
 
-    runtime.block_on(docker::remove_image(env, &problem.docker_image_name()))?;
+    runtime.block_on(docker::remove_image(
+        env,
+        &problem.docker_image_name(env.username()),
+    ))?;
     env.printer()
         .write_line(&format!("Problem image cleaned: '{}'", problem.id()));
 

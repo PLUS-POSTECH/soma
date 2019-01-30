@@ -27,7 +27,7 @@ fn test_run_stop() {
         .search_prob(prob_query)
         .expect("Problem not found");
     let prob_name = problem.prob_name();
-    let image_name = problem.docker_image_name();
+    let image_name = problem.docker_image_name(env.username());
 
     assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();

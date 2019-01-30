@@ -99,8 +99,8 @@ impl Problem {
         Problem::problem_id(&self.repo_name, &self.prob_name)
     }
 
-    pub fn docker_image_name(&self) -> String {
-        format!("soma/{}/{}", self.repo_name, self.prob_name)
+    pub fn docker_image_name(&self, user_name: &str) -> String {
+        format!("{}/{}", user_name, self.id())
     }
 
     pub fn repo_name(&self) -> &String {
