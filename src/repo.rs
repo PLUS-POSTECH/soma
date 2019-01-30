@@ -75,6 +75,7 @@ impl fmt::Display for Backend {
 
 // `prob_query` is either `prob_id` or `prob_name`
 // `prob_id` is `repo_name/prob_name`
+#[derive(Debug)]
 pub struct Problem {
     repo_name: String,
     prob_name: String,

@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use hyper::client::connect::Connect;
 use tempfile::TempDir;
@@ -15,9 +16,11 @@ pub use self::test_printer::TestPrinter;
 
 mod test_printer;
 
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
 pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
-        "soma-test".to_owned(),
+        format!("soma-test-{}", COUNTER.fetch_add(1, Ordering::SeqCst)),
         data_dir,
         connect_default().expect("Failed to connect to docker"),
         TestPrinter::new(),
@@ -71,4 +74,8 @@ pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef
 
 pub fn default_runtime() -> Runtime {
     Runtime::new().expect("Failed to initialize tokio runtime")
+}
+
+pub fn error_downcast(error: failure::Error) -> Result<soma::error::Error, failure::Error> {
+    error.downcast()
 }
