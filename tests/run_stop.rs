@@ -26,13 +26,13 @@ fn test_run_stop() {
         .repo_manager()
         .search_prob(prob_query)
         .expect("Problem not found");
-    let prob_name = problem.prob_name();
+    let repo_name = problem.repo_name();
     let image_name = problem.docker_image_name(env.username());
 
     assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
-    assert!(image_from_repo_exists(&images, problem.repo_name()));
+    assert!(image_from_repo_exists(&images, repo_name));
 
     let container_id = run(&env, prob_query, 31337, &mut runtime).unwrap();
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
@@ -51,5 +51,5 @@ fn test_run_stop() {
     assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
-    assert!(!image_from_repo_exists(&images, &prob_name));
+    assert!(!image_from_repo_exists(&images, repo_name));
 }
