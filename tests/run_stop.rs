@@ -1,6 +1,6 @@
 use soma::docker;
 use soma::docker::{
-    container_exists, container_from_repo_exists, image_exists, image_from_repo_exists,
+    container_exists, container_from_prob_exists, image_exists, image_from_repo_exists,
 };
 use soma::ops::{add, build, clean, run, stop};
 
@@ -32,12 +32,12 @@ fn test_run_stop() {
     assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
-    assert!(image_from_repo_exists(&images, &prob_name));
+    assert!(image_from_repo_exists(&images, problem.repo_name()));
 
     let container_id = run(&env, prob_query, 31337, &mut runtime).unwrap();
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
     assert!(container_exists(&containers, &container_id));
-    assert!(container_from_repo_exists(&containers, &prob_name));
+    assert!(container_from_prob_exists(&containers, &problem));
 
     // Problem container should be running exclusively
     assert!(run(&env, prob_query, 31337, &mut runtime).is_err());
@@ -46,7 +46,7 @@ fn test_run_stop() {
     assert!(stop(&env, prob_query, &mut runtime).is_ok());
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
     assert!(!container_exists(&containers, &container_id));
-    assert!(!container_from_repo_exists(&containers, &prob_name));
+    assert!(!container_from_prob_exists(&containers, &problem));
 
     assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();

@@ -109,15 +109,13 @@ pub fn build(
 ) -> SomaResult<()> {
     let problem = env.repo_manager().search_prob(prob_query)?;
     let repo_name = problem.repo_name();
-    let prob_name = problem.prob_name();
 
     let repository = env.repo_manager().get_repo(repo_name).unwrap();
     repository.update()?;
     env.printer()
         .write_line(&format!("Repository updated: '{}'", repo_name));
 
-    // TODO: prune images from prob
-    runtime.block_on(docker::prune_images_from_repo(&env, prob_name))?;
+    runtime.block_on(docker::prune_images_from_prob(&env, &problem))?;
     build_image(&env, &problem, runtime)?;
     env.printer()
         .write_line(&format!("Built image for problem: '{}'", problem.id()));
@@ -194,18 +192,15 @@ pub fn run(
     runtime: &mut Runtime,
 ) -> SomaResult<String> {
     let problem = env.repo_manager().search_prob(prob_query)?;
-    let prob_name = problem.prob_name();
     let image_name = problem.docker_image_name();
     let port_str = &port.to_string();
 
     let containers = runtime.block_on(docker::list_containers(&env))?;
-    // TODO: container from prob running
-    if docker::container_from_repo_running(&containers, prob_name) {
+    if docker::container_from_prob_running(&containers, &problem) {
         Err(SomaError::ProblemAlreadyRunningError)?
     }
 
-    // TODO: prune containers from prob
-    runtime.block_on(docker::prune_containers_from_repo(&env, prob_name))?;
+    runtime.block_on(docker::prune_containers_from_prob(&env, &problem))?;
 
     let labels = docker::image_labels(env, &problem);
     let container_run =
@@ -248,11 +243,9 @@ pub fn clean(
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let problem = env.repo_manager().search_prob(prob_query)?;
-    let prob_name = problem.prob_name();
 
     let container_list = runtime.block_on(docker::list_containers(env))?;
-    // TODO: container from prob exists
-    if docker::container_from_repo_exists(&container_list, prob_name) {
+    if docker::container_from_prob_exists(&container_list, &problem) {
         Err(SomaError::RepositoryInUseError)?;
     }
 
@@ -269,16 +262,13 @@ pub fn stop(
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let problem = env.repo_manager().search_prob(prob_query)?;
-    let prob_name = problem.prob_name();
 
     let container_list = runtime.block_on(docker::list_containers(env))?;
-    // TODO: container from prob exists
-    if !docker::container_from_repo_exists(&container_list, prob_name) {
+    if !docker::container_from_prob_exists(&container_list, &problem) {
         Err(SomaError::ProblemNotRunningError)?;
     }
 
-    // TODO: container from prob
-    let container_list = docker::containers_from_repo(container_list, prob_name);
+    let container_list = docker::containers_from_prob(container_list, &problem);
     let states_to_stop = &["paused", "restarting", "running"];
 
     let containers_to_stop = container_list
