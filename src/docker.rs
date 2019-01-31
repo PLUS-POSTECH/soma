@@ -369,7 +369,7 @@ pub fn remove_image(
     image_name: &str,
 ) -> impl Future<Item = (), Error = Error> {
     env.docker
-        .remove_image(image_name, None::<RemoveImageOptions>)
+        .remove_image(image_name, None::<RemoveImageOptions>, None)
         .map(|_| ())
 }
 
