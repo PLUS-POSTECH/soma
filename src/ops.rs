@@ -117,8 +117,10 @@ pub fn build(
 
     runtime.block_on(docker::prune_images_from_prob(&env, &problem))?;
     build_image(&env, &problem, runtime)?;
-    env.printer()
-        .write_line(&format!("Built image for problem: '{}'", problem.id()));
+    env.printer().write_line(&format!(
+        "Built image for problem: '{}'",
+        problem.fully_qualified_name()
+    ));
     Ok(())
 }
 
@@ -142,8 +144,9 @@ fn build_image(
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
 
-    // remove the parent directory
+    // prevent nested directory structure while copying
     remove_dir_all(&work_dir)?;
+
     let mut copy_options = CopyOptions::new();
     copy_options.copy_inside = true;
     copy(problem.path(), &work_dir, &copy_options)?;
@@ -180,7 +183,7 @@ pub fn run(
 
     runtime.block_on(docker::prune_containers_from_prob(&env, &problem))?;
 
-    let labels = docker::image_labels(env, &problem);
+    let labels = docker::docker_labels(env, &problem);
     let container_run =
         docker::create(env, labels, &image_name, port_str).and_then(|container_name| {
             env.printer().write_line(&format!("Starting container..."));
@@ -189,7 +192,7 @@ pub fn run(
 
     env.printer().write_line(&format!(
         "Creating container for problem: '{}'",
-        problem.id()
+        problem.fully_qualified_name()
     ));
     let container_name = runtime.block_on(container_run)?;
     env.printer()
@@ -231,8 +234,10 @@ pub fn clean(
         env,
         &problem.docker_image_name(env.username()),
     ))?;
-    env.printer()
-        .write_line(&format!("Problem image cleaned: '{}'", problem.id()));
+    env.printer().write_line(&format!(
+        "Problem image cleaned: '{}'",
+        problem.fully_qualified_name()
+    ));
 
     Ok(())
 }
@@ -264,8 +269,10 @@ pub fn stop(
         runtime.block_on(docker::remove_container(env, &container.container().id))?;
     }
 
-    env.printer()
-        .write_line(&format!("Problem stopped: '{}'", problem.id()));
+    env.printer().write_line(&format!(
+        "Problem stopped: '{}'",
+        problem.fully_qualified_name()
+    ));
 
     Ok(())
 }

@@ -128,6 +128,12 @@ pub fn image_from_repo_exists(images: &Vec<SomaImage>, repo_name: &str) -> bool 
     images.iter().any(|image| image.repo_name() == repo_name)
 }
 
+pub fn image_from_prob_exists(images: &Vec<SomaImage>, problem: &Problem) -> bool {
+    images.iter().any(|image| {
+        image.repo_name() == problem.repo_name() && image.prob_name() == problem.prob_name()
+    })
+}
+
 #[derive(Debug)]
 pub struct SomaContainer {
     repo_name: String,
@@ -301,10 +307,7 @@ pub fn build<'a>(
                     }
                     Ok(())
                 }
-                BuildImageError {
-                    error,
-                    error_detail: _,
-                } => {
+                BuildImageError { error, .. } => {
                     env.printer().write_line(error.trim());
                     Err(SomaError::DockerBuildFailError)
                 }
@@ -313,7 +316,7 @@ pub fn build<'a>(
         })
 }
 
-pub fn image_labels<'a>(
+pub fn docker_labels<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
     problem: &'a Problem,
 ) -> HashMap<&'static str, &'a str> {

@@ -109,31 +109,18 @@ impl<'a> RepositoryManager<'a> {
         Ok(repository)
     }
 
+    // problem query is either a prob_name or a fully qualified name
     pub fn search_prob(&self, query: &str) -> SomaResult<Problem> {
-        let result: Vec<_> = self
-            .repo_index
-            .iter()
-            .flat_map(|(repo_name, repo_index)| {
-                repo_index
-                    .prob_list
-                    .iter()
-                    .map(move |prob_index| (repo_name, &prob_index.name, &prob_index.path))
-            })
-            .filter(|(repo_name, prob_name, _)| {
-                query == *prob_name || query == Problem::problem_id(repo_name, prob_name)
+        let mut result: Vec<_> = self
+            .list_prob()
+            .filter(|problem| {
+                query == problem.prob_name() || query == problem.fully_qualified_name()
             })
             .collect();
 
         match result.len() {
             0 => Err(SomaError::ProblemNotFoundError)?,
-            1 => {
-                let (repo_name, prob_name, prob_path) = result[0];
-                Ok(Problem {
-                    repo_name: repo_name.to_owned(),
-                    prob_name: prob_name.to_owned(),
-                    path: self.repo_path(repo_name).join(prob_path),
-                })
-            }
+            1 => Ok(result.swap_remove(0)),
             _ => Err(SomaError::MultipleProblemEntryError)?,
         }
     }
@@ -146,6 +133,18 @@ impl<'a> RepositoryManager<'a> {
                 index.prob_list.clone(),
                 self,
             )
+        })
+    }
+
+    pub fn list_prob(&self) -> impl Iterator<Item = Problem> + '_ {
+        self.repo_index.iter().flat_map(move |(repo_name, index)| {
+            index.prob_list.iter().map(move |prob_index| {
+                Problem::new(
+                    repo_name.to_owned(),
+                    prob_index.name.to_owned(),
+                    self.repo_path(repo_name).join(&prob_index.path),
+                )
+            })
         })
     }
 

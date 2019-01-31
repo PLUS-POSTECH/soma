@@ -73,8 +73,6 @@ impl fmt::Display for Backend {
     }
 }
 
-// `prob_query` is either `prob_id` or `prob_name`
-// `prob_id` is `repo_name/prob_name`
 #[derive(Debug)]
 pub struct Problem {
     repo_name: String,
@@ -91,16 +89,12 @@ impl Problem {
         }
     }
 
-    pub fn problem_id(repo_name: &str, prob_name: &str) -> String {
-        format!("{}/{}", repo_name, prob_name)
-    }
-
-    pub fn id(&self) -> String {
-        Problem::problem_id(&self.repo_name, &self.prob_name)
+    pub fn fully_qualified_name(&self) -> String {
+        format!("{}.{}", &self.repo_name, &self.prob_name)
     }
 
     pub fn docker_image_name(&self, user_name: &str) -> String {
-        format!("{}/{}", user_name, self.id())
+        format!("soma.{}/{}", user_name, self.fully_qualified_name())
     }
 
     pub fn repo_name(&self) -> &String {

@@ -1,5 +1,5 @@
 use soma::docker;
-use soma::docker::{image_exists, image_from_repo_exists};
+use soma::docker::{image_exists, image_from_prob_exists, image_from_repo_exists};
 use soma::ops::{add, build, clean};
 
 pub use self::common::*;
@@ -32,9 +32,11 @@ fn test_build_clean() {
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
     assert!(image_from_repo_exists(&images, repo_name));
+    assert!(image_from_prob_exists(&images, &problem));
 
     assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
     assert!(!image_from_repo_exists(&images, repo_name));
+    assert!(!image_from_prob_exists(&images, &problem));
 }

@@ -1,6 +1,7 @@
 use soma::docker;
 use soma::docker::{
-    container_exists, container_from_prob_exists, image_exists, image_from_repo_exists,
+    container_exists, container_from_prob_exists, image_exists, image_from_prob_exists,
+    image_from_repo_exists,
 };
 use soma::ops::{add, build, clean, run, stop};
 
@@ -33,6 +34,7 @@ fn test_run_stop() {
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
     assert!(image_from_repo_exists(&images, repo_name));
+    assert!(image_from_prob_exists(&images, &problem));
 
     let container_id = run(&env, prob_query, 31337, &mut runtime).unwrap();
     let containers = runtime.block_on(docker::list_containers(&env)).unwrap();
@@ -52,4 +54,5 @@ fn test_run_stop() {
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
     assert!(!image_from_repo_exists(&images, repo_name));
+    assert!(!image_from_prob_exists(&images, &problem));
 }
