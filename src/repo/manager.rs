@@ -6,9 +6,10 @@ use std::path::{Path, PathBuf};
 use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 
+use super::{Backend, ProblemIndex, Repository};
 use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
-use crate::repo::{Backend, Problem, ProblemIndex, Repository};
+use crate::problem::Problem;
 
 const INDEX_FILE_NAME: &str = "index";
 

@@ -13,6 +13,7 @@ pub mod docker;
 pub mod error;
 pub mod ops;
 pub mod prelude;
+pub mod problem;
 pub mod repo;
 pub mod template;
 

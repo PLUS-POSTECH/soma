@@ -5,7 +5,7 @@ use handlebars::Handlebars;
 use serde::Serialize;
 
 use crate::prelude::*;
-use crate::repo::SolidManifest;
+use crate::problem::SolidManifest;
 use crate::VERSION;
 
 pub enum Templates {

@@ -14,7 +14,8 @@ use url::Url;
 
 use crate::docker;
 use crate::prelude::*;
-use crate::repo::{Backend, Problem};
+use crate::problem::Problem;
+use crate::repo::Backend;
 use crate::template::{HandleBarsExt, RenderingContext, Templates};
 use crate::Environment;
 use crate::Printer;
@@ -82,15 +83,11 @@ pub fn fetch(
     let problem = env.repo_manager().search_prob(prob_query)?;
     let manifest = problem.load_manifest()?;
 
-    let binary = manifest.binary();
-    let executables = binary.executable().iter();
-    let readonly = binary.readonly().iter();
-
-    executables
-        .chain(readonly)
-        .filter(|file_entry| file_entry.public())
-        .try_for_each(|file_entry| {
-            let file_path = problem.path().join(file_entry.path());
+    manifest
+        .public_files()
+        .into_iter()
+        .try_for_each(|public_file_path| {
+            let file_path = problem.path().join(public_file_path);
             let file_name = file_path.file_name().ok_or(SomaError::FileNameNotFound)?;
 
             env.printer()

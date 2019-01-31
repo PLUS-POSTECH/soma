@@ -13,7 +13,7 @@ use futures::{Future, Stream};
 use hyper::client::connect::Connect;
 
 use crate::prelude::*;
-use crate::repo::Problem;
+use crate::problem::Problem;
 use crate::{Environment, Printer, VERSION};
 
 const LABEL_KEY_VERSION: &str = "soma.version";
