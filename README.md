@@ -80,8 +80,8 @@ Soma team is hoping to ship it in the first quarter of 2019.
 
 * Install Rust stable toolchain.
 * Install `openssl` (Required by `openssl-sys` crate).
-* Install `rustfmt`.
-    * `rustup component add rustfmt`
+* Install `clippy` and `rustfmt`.
+    * `rustup component add clippy rustfmt`
 * Copy files in `hooks` directory to `.git/hooks`.
 
 
