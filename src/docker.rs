@@ -1,3 +1,4 @@
+use std::collections::hash_map;
 use std::collections::HashMap;
 
 use bollard::container::{
@@ -330,10 +331,9 @@ pub fn docker_labels<'a>(
     .collect()
 }
 
-#[allow(clippy::implicit_hasher)]
 pub fn create<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
-    labels: HashMap<&'a str, &'a str>,
+    labels: HashMap<&'a str, &'a str, hash_map::RandomState>,
     image_name: &'a str,
     port_str: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
