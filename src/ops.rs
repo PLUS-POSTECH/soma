@@ -186,7 +186,7 @@ pub fn run(
     let labels = docker::docker_labels(env, &problem);
     let container_run =
         docker::create(env, labels, &image_name, port_str).and_then(|container_name| {
-            env.printer().write_line(&format!("Starting container..."));
+            env.printer().write_line("Starting container...");
             docker::start(env, &container_name).map(|_| container_name)
         });
 

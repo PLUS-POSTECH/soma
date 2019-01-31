@@ -10,7 +10,7 @@ use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
 use crate::repo::{Backend, Problem, ProblemIndex, Repository};
 
-const INDEX_FILE_NAME: &'static str = "index";
+const INDEX_FILE_NAME: &str = "index";
 
 fn index_path<'a>(registration: &Registration<'a, RepositoryManager<'a>>) -> PathBuf {
     registration.root_path().join(INDEX_FILE_NAME)

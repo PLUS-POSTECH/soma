@@ -16,10 +16,10 @@ use crate::prelude::*;
 use crate::repo::Problem;
 use crate::{Environment, Printer, VERSION};
 
-const LABEL_KEY_VERSION: &'static str = "soma.version";
-const LABEL_KEY_USERNAME: &'static str = "soma.username";
-const LABEL_KEY_REPOSITORY: &'static str = "soma.repository";
-const LABEL_KEY_PROBLEM: &'static str = "soma.problem";
+const LABEL_KEY_VERSION: &str = "soma.version";
+const LABEL_KEY_USERNAME: &str = "soma.username";
+const LABEL_KEY_REPOSITORY: &str = "soma.repository";
+const LABEL_KEY_PROBLEM: &str = "soma.problem";
 
 #[cfg(windows)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
@@ -115,7 +115,7 @@ impl SomaFilterBuilder {
     }
 }
 
-pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
+pub fn image_exists(images: &[SomaImage], image_name: &str) -> bool {
     images.iter().any(|image| match &image.image().repo_tags {
         Some(tags) => tags
             .iter()
@@ -124,11 +124,11 @@ pub fn image_exists(images: &Vec<SomaImage>, image_name: &str) -> bool {
     })
 }
 
-pub fn image_from_repo_exists(images: &Vec<SomaImage>, repo_name: &str) -> bool {
+pub fn image_from_repo_exists(images: &[SomaImage], repo_name: &str) -> bool {
     images.iter().any(|image| image.repo_name() == repo_name)
 }
 
-pub fn image_from_prob_exists(images: &Vec<SomaImage>, problem: &Problem) -> bool {
+pub fn image_from_prob_exists(images: &[SomaImage], problem: &Problem) -> bool {
     images.iter().any(|image| {
         image.repo_name() == problem.repo_name() && image.prob_name() == problem.prob_name()
     })
@@ -174,19 +174,19 @@ impl SomaContainer {
     }
 }
 
-pub fn container_exists(containers: &Vec<SomaContainer>, container_id: &str) -> bool {
+pub fn container_exists(containers: &[SomaContainer], container_id: &str) -> bool {
     containers
         .iter()
         .any(|container| container.container().id == container_id)
 }
 
-pub fn container_from_prob_exists(containers: &Vec<SomaContainer>, problem: &Problem) -> bool {
+pub fn container_from_prob_exists(containers: &[SomaContainer], problem: &Problem) -> bool {
     containers.iter().any(|container| {
         container.repo_name() == problem.repo_name() && container.prob_name() == problem.prob_name()
     })
 }
 
-pub fn container_from_prob_running(containers: &Vec<SomaContainer>, problem: &Problem) -> bool {
+pub fn container_from_prob_running(containers: &[SomaContainer], problem: &Problem) -> bool {
     containers.iter().any(|container| {
         container.repo_name() == problem.repo_name()
             && container.prob_name() == problem.prob_name()
@@ -330,6 +330,7 @@ pub fn docker_labels<'a>(
     .collect()
 }
 
+#[allow(clippy::implicit_hasher)]
 pub fn create<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
     labels: HashMap<&'a str, &'a str>,

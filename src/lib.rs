@@ -16,7 +16,7 @@ pub mod prelude;
 pub mod repo;
 pub mod template;
 
-pub const VERSION: &'static str = crate_version!();
+pub const VERSION: &str = crate_version!();
 
 pub trait Printer {
     type Handle;

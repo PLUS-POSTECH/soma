@@ -33,7 +33,7 @@ pub struct RenderingContext<'a> {
 
 impl<'a> RenderingContext<'a> {
     pub fn new(
-        username: &'a String,
+        username: &'a str,
         repo_name: &'a str,
         manifest: SolidManifest,
     ) -> RenderingContext<'a> {

@@ -30,11 +30,11 @@ impl SomaCommand for StopCommand {
 
     fn handle_match(
         &self,
-        mut env: Environment<impl Connect, impl Printer>,
+        env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
         stop(
-            &mut env,
+            &env,
             matches.value_of("problem").unwrap(),
             &mut default_runtime(),
         )

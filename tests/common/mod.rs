@@ -41,7 +41,6 @@ pub fn temp_data_dir() -> (TempDir, DataDirectory) {
 pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) {
     let dir_set: HashSet<OsString> = fs::read_dir(directory)
         .expect("Failed to read the directory")
-        .into_iter()
         .filter_map(|dir| match dir {
             Ok(entry) => Some(entry.file_name()),
             Err(_) => None,
@@ -59,7 +58,6 @@ pub fn expect_dir_contents(directory: impl AsRef<Path>, file_names: &[impl AsRef
 pub fn dir_contents_exists(directory: impl AsRef<Path>, file_names: &[impl AsRef<OsStr>]) -> bool {
     let dir_set: HashSet<OsString> = fs::read_dir(directory)
         .expect("Failed to read the directory")
-        .into_iter()
         .filter_map(|dir| match dir {
             Ok(entry) => Some(entry.file_name()),
             Err(_) => None,
