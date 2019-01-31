@@ -19,9 +19,9 @@ jobs:
   - script: rustup component add clippy rustfmt
     displayName: 'Install Prerequisites'
   - script: cargo fmt --all -- --check
-    displayname: 'Check Formatting'
+    displayName: 'Check Formatting'
   - script: cargo clippy --all-targets --all-features -- -D warnings
-    displayname: 'Run Lint'
+    displayName: 'Run Lint'
 
 - job: linux_build
   displayName: Linux Build
