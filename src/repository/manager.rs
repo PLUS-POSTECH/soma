@@ -122,7 +122,7 @@ impl<'a> RepositoryManager<'a> {
         match result.len() {
             0 => Err(SomaError::ProblemNotFound)?,
             1 => Ok(result.swap_remove(0)),
-            _ => Err(SomaError::ProblemNameNotUnique)?,
+            _ => Err(SomaError::ProblemQueryAmbiguous)?,
         }
     }
 

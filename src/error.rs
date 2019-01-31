@@ -20,12 +20,12 @@ pub enum Error {
     InvalidUnicode,
     #[fail(display = "There is a container already running for the specified problem")]
     ProblemAlreadyRunning,
-    #[fail(display = "The provided query returned multiple problems")]
-    ProblemNameNotUnique,
     #[fail(display = "The specified problem is not found")]
     ProblemNotFound,
     #[fail(display = "There is no container running for the specified problem")]
     ProblemNotRunning,
+    #[fail(display = "The provided query returned multiple problems")]
+    ProblemQueryAmbiguous,
     #[fail(display = "There is an image or an container from the repository")]
     RepositoryInUse,
     #[fail(display = "The specified repository is not found")]

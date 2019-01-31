@@ -6,7 +6,7 @@ use hyper::client::connect::Connect;
 
 use crate::data_dir::DataDirectory;
 use crate::prelude::*;
-use crate::repo::RepositoryManager;
+use crate::repository::RepositoryManager;
 
 pub mod data_dir;
 pub mod docker;
@@ -14,7 +14,7 @@ pub mod error;
 pub mod ops;
 pub mod prelude;
 pub mod problem;
-pub mod repo;
+pub mod repository;
 pub mod template;
 
 pub const VERSION: &str = crate_version!();

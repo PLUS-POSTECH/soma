@@ -15,7 +15,7 @@ use url::Url;
 use crate::docker;
 use crate::prelude::*;
 use crate::problem::Problem;
-use crate::repo::Backend;
+use crate::repository::Backend;
 use crate::template::{HandleBarsExt, RenderingContext, Templates};
 use crate::Environment;
 use crate::Printer;

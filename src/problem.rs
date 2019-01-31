@@ -4,11 +4,10 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use self::binary_config::{BinaryConfig, SolidBinaryConfig};
+use self::configs::*;
 use crate::prelude::*;
 
-mod binary_config;
-mod file;
+mod configs;
 
 pub const MANIFEST_FILE_NAME: &str = "soma.toml";
 

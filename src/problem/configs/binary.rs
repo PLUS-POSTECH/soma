@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use super::file::{FileEntry, FilePermissions, SolidFileEntry};
+use super::common::{FileEntry, FilePermissions, SolidFileEntry};
 use crate::prelude::*;
 
 #[derive(Deserialize)]
