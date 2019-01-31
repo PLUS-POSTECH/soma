@@ -25,20 +25,20 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)>
         // local backend
         Ok((
             path.file_name()
-                .ok_or(SomaError::FileNameNotFoundError)?
+                .ok_or(SomaError::FileNameNotFound)?
                 .to_str()
-                .ok_or(SomaError::InvalidUnicodeError)?
+                .ok_or(SomaError::InvalidUnicode)?
                 .to_owned(),
             Backend::LocalBackend(path.canonicalize()?.to_owned()),
         ))
     } else {
         // git backend
-        let parsed_url = Url::parse(repo_location).or(Err(SomaError::RepositoryNotFoundError))?;
+        let parsed_url = Url::parse(repo_location).or(Err(SomaError::RepositoryNotFound))?;
         let last_name = parsed_url
             .path_segments()
-            .ok_or(SomaError::RepositoryNotFoundError)?
+            .ok_or(SomaError::RepositoryNotFound)?
             .last()
-            .ok_or(SomaError::FileNameNotFoundError)?;
+            .ok_or(SomaError::FileNameNotFound)?;
         let repo_name = if last_name.ends_with(".git") {
             &last_name[..last_name.len() - 4]
         } else {
@@ -91,9 +91,7 @@ pub fn fetch(
         .filter(|file_entry| file_entry.public())
         .try_for_each(|file_entry| {
             let file_path = problem.path().join(file_entry.path());
-            let file_name = file_path
-                .file_name()
-                .ok_or(SomaError::FileNameNotFoundError)?;
+            let file_name = file_path.file_name().ok_or(SomaError::FileNameNotFound)?;
 
             env.printer()
                 .write_line(&format!("Fetching '{}'...", file_name.to_string_lossy()));
@@ -178,7 +176,7 @@ pub fn run(
 
     let containers = runtime.block_on(docker::list_containers(&env))?;
     if docker::container_from_prob_running(&containers, &problem) {
-        Err(SomaError::ProblemAlreadyRunningError)?
+        Err(SomaError::ProblemAlreadyRunning)?
     }
 
     runtime.block_on(docker::prune_containers_from_prob(&env, &problem))?;
@@ -208,7 +206,7 @@ pub fn remove(
 ) -> SomaResult<()> {
     let image_list = runtime.block_on(docker::list_images(env))?;
     if docker::image_from_repo_exists(&image_list, repo_name) {
-        Err(SomaError::RepositoryInUseError)?;
+        Err(SomaError::RepositoryInUse)?;
     }
 
     env.repo_manager_mut().remove_repo(repo_name)?;
@@ -227,7 +225,7 @@ pub fn clean(
 
     let container_list = runtime.block_on(docker::list_containers(env))?;
     if docker::container_from_prob_exists(&container_list, &problem) {
-        Err(SomaError::RepositoryInUseError)?;
+        Err(SomaError::RepositoryInUse)?;
     }
 
     runtime.block_on(docker::remove_image(
@@ -251,7 +249,7 @@ pub fn stop(
 
     let container_list = runtime.block_on(docker::list_containers(env))?;
     if !docker::container_from_prob_exists(&container_list, &problem) {
-        Err(SomaError::ProblemNotRunningError)?;
+        Err(SomaError::ProblemNotRunning)?;
     }
 
     let container_list = docker::containers_from_prob(container_list, &problem);

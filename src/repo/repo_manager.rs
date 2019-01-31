@@ -63,7 +63,7 @@ impl<'a> RepositoryManager<'a> {
 
     pub fn add_repo(&mut self, repo_name: String, backend: Backend) -> SomaResult<()> {
         if self.repo_exists(&repo_name) {
-            Err(SomaError::DuplicateRepositoryError)?;
+            Err(SomaError::DuplicateRepository)?;
         } else {
             let temp_dir = tempfile::tempdir()?;
             backend.update_at(temp_dir.path())?;
@@ -90,7 +90,7 @@ impl<'a> RepositoryManager<'a> {
 
         self.repo_index
             .remove(repo_name)
-            .ok_or(SomaError::RepositoryNotFoundError)?;
+            .ok_or(SomaError::RepositoryNotFound)?;
         self.dirty = true;
 
         Ok(())
@@ -104,7 +104,7 @@ impl<'a> RepositoryManager<'a> {
                 index.prob_list.clone(),
                 self,
             ),
-            None => Err(SomaError::RepositoryNotFoundError)?,
+            None => Err(SomaError::RepositoryNotFound)?,
         };
         Ok(repository)
     }
@@ -119,9 +119,9 @@ impl<'a> RepositoryManager<'a> {
             .collect();
 
         match result.len() {
-            0 => Err(SomaError::ProblemNotFoundError)?,
+            0 => Err(SomaError::ProblemNotFound)?,
             1 => Ok(result.swap_remove(0)),
-            _ => Err(SomaError::MultipleProblemEntryError)?,
+            _ => Err(SomaError::ProblemNameNotUnique)?,
         }
     }
 

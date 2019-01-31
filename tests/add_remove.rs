@@ -82,7 +82,7 @@ fn test_prob_search() {
         env.repo_manager()
             .search_prob("simple-bof")
             .map_err(error_downcast),
-        Err(Ok(SomaError::MultipleProblemEntryError))
+        Err(Ok(SomaError::ProblemNameNotUnique))
     );
     assert!(remove(&mut env, repo_name_1, &mut runtime).is_ok());
 
@@ -93,6 +93,6 @@ fn test_prob_search() {
         env.repo_manager()
             .search_prob("simple-bof")
             .map_err(error_downcast),
-        Err(Ok(SomaError::ProblemNotFoundError))
+        Err(Ok(SomaError::ProblemNotFound))
     );
 }

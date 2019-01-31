@@ -309,7 +309,7 @@ pub fn build<'a>(
                 }
                 BuildImageError { error, .. } => {
                     env.printer().write_line(error.trim());
-                    Err(SomaError::DockerBuildFailError)
+                    Err(SomaError::DockerBuildFailed)
                 }
                 _ => Ok(()),
             }

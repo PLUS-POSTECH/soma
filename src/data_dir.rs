@@ -26,7 +26,7 @@ impl DataDirectory {
             if let Some(dir) = std::env::var_os(SOMA_DATA_DIR_ENV_NAME) {
                 dir.into()
             } else {
-                let mut home = dirs::home_dir().ok_or(SomaError::DataDirectoryAccessError)?;
+                let mut home = dirs::home_dir().ok_or(SomaError::DataDirectoryAccessDenied)?;
                 home.push(SOMA_DATA_DIR_NAME);
                 home
             }
@@ -48,7 +48,7 @@ impl DataDirectory {
     fn initialize_and_lock(path: PathBuf) -> SomaResult<Self> {
         let lock = File::create(path.join(LOCK_FILE_NAME))?;
         lock.try_lock_exclusive()
-            .or(Err(SomaError::DataDirectoryLockError))?;
+            .or(Err(SomaError::DataDirectoryLockFailed))?;
 
         Ok(DataDirectory {
             root_path: path,

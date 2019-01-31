@@ -168,7 +168,7 @@ fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
     } else {
         let manifest_path = path.as_ref().join(MANIFEST_FILE_NAME);
         if !manifest_path.exists() {
-            Err(SomaError::NotSomaRepositoryError)?;
+            Err(SomaError::InvalidRepository)?;
         }
 
         let manifest: Manifest = toml::from_slice(&read_file_contents(manifest_path)?)?;
@@ -353,13 +353,13 @@ impl FileEntry {
                 let work_dir = work_dir
                     .as_ref()
                     .to_str()
-                    .ok_or(SomaError::InvalidUnicodeError)?;
+                    .ok_or(SomaError::InvalidUnicode)?;
                 let file_name = self
                     .path
                     .file_name()
-                    .ok_or(SomaError::FileNameNotFoundError)?
+                    .ok_or(SomaError::FileNameNotFound)?
                     .to_str()
-                    .ok_or(SomaError::InvalidUnicodeError)?;
+                    .ok_or(SomaError::InvalidUnicode)?;
                 // manual string concatenation to support Windows
                 format!("{}/{}", work_dir, file_name)
             }
