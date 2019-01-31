@@ -26,7 +26,6 @@ impl SomaCommand for FetchCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    // TODO: Separate problem name from repository name.
                     .help("problem name with optional repository name prefix"),
             )
     }

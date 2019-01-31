@@ -4,7 +4,7 @@ use std::path::Path;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use fs_extra::dir::{copy, CopyOptions};
-use futures::{Future, Stream};
+use futures::Future;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
 use remove_dir_all::remove_dir_all;
@@ -14,7 +14,7 @@ use url::Url;
 
 use crate::docker;
 use crate::prelude::*;
-use crate::repo::{load_manifest, Backend, Repository, MANIFEST_FILE_NAME};
+use crate::repo::{Backend, Problem};
 use crate::template::{HandleBarsExt, RenderingContext, Templates};
 use crate::Environment;
 use crate::Printer;
@@ -76,14 +76,12 @@ pub fn add(
 
 pub fn fetch(
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    prob_query: &str,
     cwd: impl AsRef<Path>,
 ) -> SomaResult<()> {
-    let repo_name = problem_name;
-    let repository = env.repo_manager().get_repo(repo_name)?;
-    let repo_path = repository.local_path();
+    let problem = env.repo_manager().search_prob(prob_query)?;
+    let manifest = problem.load_manifest()?;
 
-    let manifest = load_manifest(repo_path.join(MANIFEST_FILE_NAME))?;
     let binary = manifest.binary();
     let executables = binary.executable().iter();
     let readonly = binary.readonly().iter();
@@ -92,7 +90,7 @@ pub fn fetch(
         .chain(readonly)
         .filter(|file_entry| file_entry.public())
         .try_for_each(|file_entry| {
-            let file_path = repo_path.join(file_entry.path());
+            let file_path = problem.path().join(file_entry.path());
             let file_name = file_path
                 .file_name()
                 .ok_or(SomaError::FileNameNotFoundError)?;
@@ -106,113 +104,100 @@ pub fn fetch(
 
 pub fn build(
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    prob_query: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    let repo_name = problem_name;
-    let repository = env.repo_manager().get_repo(repo_name)?;
+    let problem = env.repo_manager().search_prob(prob_query)?;
+    let repo_name = problem.repo_name();
+
+    let repository = env.repo_manager().get_repo(repo_name).unwrap();
     repository.update()?;
     env.printer()
-        .write_line(&format!("Repository updated: '{}'", &repo_name));
+        .write_line(&format!("Repository updated: '{}'", repo_name));
 
-    runtime.block_on(docker::prune_images_from_repo(&env, repo_name))?;
-    build_image(&repository, &env, repo_name, runtime)?;
-    env.printer()
-        .write_line(&format!("Built image for problem: '{}'", &repo_name));
+    runtime.block_on(docker::prune_images_from_prob(&env, &problem))?;
+    build_image(&env, &problem, runtime)?;
+    env.printer().write_line(&format!(
+        "Built image for problem: '{}'",
+        problem.fully_qualified_name()
+    ));
     Ok(())
+}
+
+fn encode_context(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
+    let compressor = GzEncoder::new(Vec::new(), Compression::default());
+    let mut tar = tar::Builder::new(compressor);
+    tar.append_dir_all("", path)?;
+    tar.finish()?;
+    let compressor = tar.into_inner()?;
+    Ok(compressor.finish()?)
 }
 
 fn build_image(
-    repository: &Repository,
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    problem: &Problem,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
+    let image_name = problem.docker_image_name(env.username());
+
     env.printer().write_line("Preparing build context...");
     let work_dir = tempdir()?;
     let work_dir_path = work_dir.path();
-    let repo_path = repository.local_path();
-    let image_name = docker::image_name(problem_name);
 
+    // prevent nested directory structure while copying
     remove_dir_all(&work_dir)?;
+
     let mut copy_options = CopyOptions::new();
     copy_options.copy_inside = true;
-    copy(&repo_path, &work_dir, &copy_options)?;
+    copy(problem.path(), &work_dir, &copy_options)?;
 
     env.printer().write_line("Rendering build files...");
-    let manifest = load_manifest(work_dir_path.join(MANIFEST_FILE_NAME))?.solidify()?;
+    let manifest = problem.load_manifest()?.solidify()?;
 
-    let context = RenderingContext::new(env.username(), repository.name(), manifest);
+    let context = RenderingContext::new(env.username(), problem.repo_name(), manifest);
     Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
 
-    env.printer().write_line("Loading build context...");
-    let build_context = Vec::new();
-    let compressor = GzEncoder::new(build_context, Compression::default());
-    let mut tar = tar::Builder::new(compressor);
-    tar.append_dir_all("", work_dir_path)?;
-    tar.finish()?;
-    let compressor = tar.into_inner()?;
-    let build_context = compressor.finish()?;
+    env.printer().write_line("Encoding build context...");
+    let build_context = encode_context(work_dir_path)?;
 
     work_dir.close()?;
     env.printer().write_line("Building image...");
-    runtime.block_on(
-        docker::build(&env, &image_name, build_context)
-            .map(|build_image_result| {
-                use bollard::image::BuildImageResults::*;
-                match build_image_result {
-                    BuildImageStream { stream } => {
-                        let message = stream.trim();
-                        if message != "" {
-                            env.printer().write_line(message)
-                        }
-                        Ok(())
-                    }
-                    BuildImageError {
-                        error,
-                        error_detail: _,
-                    } => {
-                        env.printer().write_line(error.trim());
-                        Err(SomaError::DockerBuildFailError)
-                    }
-                    _ => Ok(()),
-                }
-            })
-            .collect(),
-    )?;
+    runtime.block_on(docker::build(&env, &image_name, build_context))?;
     Ok(())
-}
-
-fn run_container(
-    env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
-    port: u32,
-    runtime: &mut Runtime,
-) -> SomaResult<String> {
-    let image_name = docker::image_name(problem_name);
-    let repo_name = problem_name;
-    let port_str = port.to_string();
-
-    let containers = runtime.block_on(docker::list_containers(&env))?;
-    if docker::container_from_repo_running(&containers, repo_name) {
-        Err(SomaError::ProblemAlreadyRunningError)?
-    }
-
-    runtime.block_on(docker::prune_containers_from_repo(&env, repo_name))?;
-    let container_run = docker::create(env, repo_name, &image_name, &port_str)
-        .and_then(|container_name| docker::start(env, &container_name).map(|_| container_name));
-    runtime.block_on(container_run)
 }
 
 pub fn run(
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    prob_query: &str,
     port: u32,
-    mut runtime: &mut Runtime,
+    runtime: &mut Runtime,
 ) -> SomaResult<String> {
-    let container_name = run_container(&env, problem_name, port, &mut runtime)?;
+    let problem = env.repo_manager().search_prob(prob_query)?;
+    let image_name = problem.docker_image_name(env.username());
+    let port_str = &port.to_string();
+
+    let containers = runtime.block_on(docker::list_containers(&env))?;
+    if docker::container_from_prob_running(&containers, &problem) {
+        Err(SomaError::ProblemAlreadyRunningError)?
+    }
+
+    runtime.block_on(docker::prune_containers_from_prob(&env, &problem))?;
+
+    let labels = docker::docker_labels(env, &problem);
+    let container_run =
+        docker::create(env, labels, &image_name, port_str).and_then(|container_name| {
+            env.printer().write_line(&format!("Starting container..."));
+            docker::start(env, &container_name).map(|_| container_name)
+        });
+
+    env.printer().write_line(&format!(
+        "Creating container for problem: '{}'",
+        problem.fully_qualified_name()
+    ));
+    let container_name = runtime.block_on(container_run)?;
     env.printer()
         .write_line(&format!("Container started: '{}'", &container_name));
+
     Ok(container_name)
 }
 
@@ -235,33 +220,41 @@ pub fn remove(
 
 pub fn clean(
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    prob_query: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
+    let problem = env.repo_manager().search_prob(prob_query)?;
+
     let container_list = runtime.block_on(docker::list_containers(env))?;
-    if docker::container_from_repo_exists(&container_list, problem_name) {
+    if docker::container_from_prob_exists(&container_list, &problem) {
         Err(SomaError::RepositoryInUseError)?;
     }
 
-    let image_name = docker::image_name(problem_name);
-    runtime.block_on(docker::remove_image(env, &image_name))?;
-    env.printer()
-        .write_line(&format!("Problem image cleaned: '{}'", &problem_name));
+    runtime.block_on(docker::remove_image(
+        env,
+        &problem.docker_image_name(env.username()),
+    ))?;
+    env.printer().write_line(&format!(
+        "Problem image cleaned: '{}'",
+        problem.fully_qualified_name()
+    ));
 
     Ok(())
 }
 
 pub fn stop(
     env: &Environment<impl Connect, impl Printer>,
-    problem_name: &str,
+    prob_query: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
+    let problem = env.repo_manager().search_prob(prob_query)?;
+
     let container_list = runtime.block_on(docker::list_containers(env))?;
-    if !docker::container_from_repo_exists(&container_list, problem_name) {
+    if !docker::container_from_prob_exists(&container_list, &problem) {
         Err(SomaError::ProblemNotRunningError)?;
     }
 
-    let container_list = docker::containers_from_repo(container_list, problem_name);
+    let container_list = docker::containers_from_prob(container_list, &problem);
     let states_to_stop = &["paused", "restarting", "running"];
 
     let containers_to_stop = container_list
@@ -276,8 +269,10 @@ pub fn stop(
         runtime.block_on(docker::remove_container(env, &container.container().id))?;
     }
 
-    env.printer()
-        .write_line(&format!("Problem stopped: '{}'", &problem_name));
+    env.printer().write_line(&format!(
+        "Problem stopped: '{}'",
+        problem.fully_qualified_name()
+    ));
 
     Ok(())
 }

@@ -29,6 +29,7 @@ url = "1.7.2"
 whoami = "0.4.1"
 
 [dev-dependencies]
+matches = "0.1.8"
 serde_test = "1.0.85"
 
 [lib]

@@ -16,7 +16,14 @@ pub use self::repo_manager::RepositoryManager;
 
 mod repo_manager;
 
-pub const MANIFEST_FILE_NAME: &str = "soma.toml";
+const LIST_FILE_NAME: &str = "soma-list.toml";
+const MANIFEST_FILE_NAME: &str = "soma.toml";
+
+#[derive(Clone, Deserialize, Serialize)]
+struct ProblemIndex {
+    name: String,
+    path: PathBuf,
+}
 
 #[derive(Clone, Deserialize, Serialize)]
 pub enum Backend {
@@ -26,7 +33,36 @@ pub enum Backend {
     LocalBackend(PathBuf),
 }
 
-impl Backend {}
+impl Backend {
+    fn update_at(&self, local_path: impl AsRef<Path>) -> SomaResult<()> {
+        match &self {
+            Backend::GitBackend(url) => {
+                let git_repo = GitRepository::open(&local_path)
+                    .or_else(|_| GitRepository::clone(url, &local_path))?;
+                git_repo
+                    .find_remote("origin")?
+                    .fetch(&["master"], None, None)?;
+
+                let origin_master = git_repo.find_branch("origin/master", BranchType::Remote)?;
+                let head_commit = origin_master.get().peel(ObjectType::Commit)?;
+                git_repo.reset(&head_commit, ResetType::Hard, None)?;
+
+                Ok(())
+            }
+            Backend::LocalBackend(path) => {
+                if local_path.as_ref().exists() {
+                    remove_dir_all(&local_path)?;
+                }
+
+                let mut copy_options = CopyOptions::new();
+                copy_options.copy_inside = true;
+                copy(&path, &local_path, &copy_options)?;
+
+                Ok(())
+            }
+        }
+    }
+}
 
 impl fmt::Display for Backend {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -37,17 +73,66 @@ impl fmt::Display for Backend {
     }
 }
 
+#[derive(Debug)]
+pub struct Problem {
+    repo_name: String,
+    prob_name: String,
+    path: PathBuf,
+}
+
+impl Problem {
+    pub fn new(repo_name: String, prob_name: String, path: PathBuf) -> Self {
+        Problem {
+            repo_name,
+            prob_name,
+            path,
+        }
+    }
+
+    pub fn fully_qualified_name(&self) -> String {
+        format!("{}.{}", &self.repo_name, &self.prob_name)
+    }
+
+    pub fn docker_image_name(&self, user_name: &str) -> String {
+        format!("soma.{}/{}", user_name, self.fully_qualified_name())
+    }
+
+    pub fn repo_name(&self) -> &String {
+        &self.repo_name
+    }
+
+    pub fn prob_name(&self) -> &String {
+        &self.prob_name
+    }
+
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    pub fn load_manifest(&self) -> SomaResult<Manifest> {
+        let manifest_path = self.path().join(MANIFEST_FILE_NAME);
+        Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
+    }
+}
+
 pub struct Repository<'a> {
     name: String,
     backend: Backend,
+    prob_list: Vec<ProblemIndex>,
     manager: &'a RepositoryManager<'a>,
 }
 
 impl<'a> Repository<'a> {
-    fn new(name: String, backend: Backend, manager: &'a RepositoryManager<'a>) -> Repository<'a> {
+    fn new(
+        name: String,
+        backend: Backend,
+        prob_list: Vec<ProblemIndex>,
+        manager: &'a RepositoryManager<'a>,
+    ) -> Repository<'a> {
         Repository {
             name,
             backend,
+            prob_list,
             manager,
         }
     }
@@ -64,40 +149,33 @@ impl<'a> Repository<'a> {
         &self.manager
     }
 
-    pub fn local_path(&self) -> PathBuf {
+    pub fn path(&self) -> PathBuf {
         self.manager.repo_path(&self.name)
     }
 
     pub fn update(&self) -> SomaResult<()> {
-        let local_path = self.local_path();
+        self.backend.update_at(self.path())
+    }
 
-        match &self.backend {
-            Backend::GitBackend(url) => {
-                let git_repo = GitRepository::open(&local_path)
-                    .or_else(|_| GitRepository::clone(url, &local_path))?;
-                git_repo
-                    .find_remote("origin")?
-                    .fetch(&["master"], None, None)?;
+    pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a String> {
+        self.prob_list.iter().map(|prob_index| &prob_index.name)
+    }
+}
 
-                let origin_master = git_repo.find_branch("origin/master", BranchType::Remote)?;
-                let head_commit = origin_master.get().peel(ObjectType::Commit)?;
-                git_repo.reset(&head_commit, ResetType::Hard, None)?;
-
-                Ok(())
-            }
-
-            Backend::LocalBackend(path) => {
-                if local_path.exists() {
-                    remove_dir_all(&local_path)?;
-                }
-
-                let mut copy_options = CopyOptions::new();
-                copy_options.copy_inside = true;
-                copy(&path, &local_path, &copy_options)?;
-
-                Ok(())
-            }
+fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
+    if path.as_ref().join(LIST_FILE_NAME).exists() {
+        unimplemented!()
+    } else {
+        let manifest_path = path.as_ref().join(MANIFEST_FILE_NAME);
+        if !manifest_path.exists() {
+            Err(SomaError::NotSomaRepositoryError)?;
         }
+
+        let manifest: Manifest = toml::from_slice(&read_file_contents(manifest_path)?)?;
+        Ok(vec![ProblemIndex {
+            name: manifest.name().to_owned(),
+            path: PathBuf::from("./"),
+        }])
     }
 }
 
@@ -300,10 +378,6 @@ fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
     let mut contents = Vec::new();
     file.read_to_end(&mut contents)?;
     Ok(contents)
-}
-
-pub fn load_manifest(manifest_path: impl AsRef<Path>) -> SomaResult<Manifest> {
-    Ok(toml::from_slice(&read_file_contents(manifest_path)?)?)
 }
 
 #[cfg(test)]

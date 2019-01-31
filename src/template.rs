@@ -27,20 +27,20 @@ impl Templates {
 pub struct RenderingContext<'a> {
     username: &'a str,
     version: &'a str,
-    repository_name: &'a str,
+    repo_name: &'a str,
     manifest: SolidManifest,
 }
 
 impl<'a> RenderingContext<'a> {
     pub fn new(
         username: &'a String,
-        repository_name: &'a str,
+        repo_name: &'a str,
         manifest: SolidManifest,
     ) -> RenderingContext<'a> {
         RenderingContext {
             username,
             version: VERSION,
-            repository_name,
+            repo_name,
             manifest,
         }
     }

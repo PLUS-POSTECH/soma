@@ -32,15 +32,25 @@ impl SomaCommand for ListCommand {
         if let None = repo_iter.peek() {
             env.printer().write_line("No repository was added.");
         } else {
-            env.printer()
-                .write_line(&format!("{:<20}{:<40}", "Name", "Origin"));
-
             for repository in repo_iter {
                 env.printer().write_line(&format!(
-                    "{:<20}{:<40}",
+                    "{} ({})",
                     repository.name(),
                     repository.backend()
                 ));
+
+                let mut peekable = repository.prob_name_iter().peekable();
+                while let Some(name) = peekable.next() {
+                    env.printer().write_line(&format!(
+                        "{}─ {}",
+                        if peekable.peek().is_none() {
+                            "└"
+                        } else {
+                            "├"
+                        },
+                        name
+                    ))
+                }
             }
         }
 

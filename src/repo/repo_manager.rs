@@ -4,10 +4,11 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use remove_dir_all::remove_dir_all;
+use serde::{Deserialize, Serialize};
 
 use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
-use crate::repo::{Backend, Repository};
+use crate::repo::{Backend, Problem, ProblemIndex, Repository};
 
 const INDEX_FILE_NAME: &'static str = "index";
 
@@ -15,9 +16,15 @@ fn index_path<'a>(registration: &Registration<'a, RepositoryManager<'a>>) -> Pat
     registration.root_path().join(INDEX_FILE_NAME)
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+struct Index {
+    backend: Backend,
+    prob_list: Vec<ProblemIndex>,
+}
+
 pub struct RepositoryManager<'a> {
     registration: Registration<'a, RepositoryManager<'a>>,
-    index: BTreeMap<String, Backend>,
+    repo_index: BTreeMap<String, Index>,
     dirty: bool,
 }
 
@@ -34,7 +41,7 @@ impl<'a> DirectoryManager<'a> for RepositoryManager<'a> {
 
     fn new(registration: Registration<'a, Self>) -> SomaResult<Self> {
         let index_path = index_path(&registration);
-        let index = if index_path.exists() {
+        let repo_index = if index_path.exists() {
             let file = File::open(index_path.as_path())?;
             serde_cbor::from_reader(file)?
         } else {
@@ -43,7 +50,7 @@ impl<'a> DirectoryManager<'a> for RepositoryManager<'a> {
 
         Ok(RepositoryManager {
             registration,
-            index,
+            repo_index,
             dirty: false,
         })
     }
@@ -58,7 +65,17 @@ impl<'a> RepositoryManager<'a> {
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepositoryError)?;
         } else {
-            self.index.insert(repo_name.clone(), backend.clone());
+            let temp_dir = tempfile::tempdir()?;
+            backend.update_at(temp_dir.path())?;
+            let prob_list = super::read_prob_list(temp_dir.path())?;
+
+            self.repo_index.insert(
+                repo_name.clone(),
+                Index {
+                    backend: backend.clone(),
+                    prob_list,
+                },
+            );
             self.dirty = true;
         }
 
@@ -71,7 +88,7 @@ impl<'a> RepositoryManager<'a> {
             remove_dir_all(local_path)?;
         }
 
-        self.index
+        self.repo_index
             .remove(repo_name)
             .ok_or(SomaError::RepositoryNotFoundError)?;
         self.dirty = true;
@@ -80,21 +97,59 @@ impl<'a> RepositoryManager<'a> {
     }
 
     pub fn get_repo(&self, repo_name: &str) -> SomaResult<Repository> {
-        let repository = match self.index.get(repo_name) {
-            Some(backend) => Repository::new(repo_name.to_owned(), backend.clone(), self),
+        let repository = match self.repo_index.get(repo_name) {
+            Some(index) => Repository::new(
+                repo_name.to_owned(),
+                index.backend.clone(),
+                index.prob_list.clone(),
+                self,
+            ),
             None => Err(SomaError::RepositoryNotFoundError)?,
         };
         Ok(repository)
     }
 
+    // problem query is either a prob_name or a fully qualified name
+    pub fn search_prob(&self, query: &str) -> SomaResult<Problem> {
+        let mut result: Vec<_> = self
+            .list_prob()
+            .filter(|problem| {
+                query == problem.prob_name() || query == problem.fully_qualified_name()
+            })
+            .collect();
+
+        match result.len() {
+            0 => Err(SomaError::ProblemNotFoundError)?,
+            1 => Ok(result.swap_remove(0)),
+            _ => Err(SomaError::MultipleProblemEntryError)?,
+        }
+    }
+
     pub fn list_repo(&'a self) -> impl Iterator<Item = Repository<'a>> {
-        self.index
-            .iter()
-            .map(move |(name, backend)| Repository::new(name.clone(), backend.clone(), self))
+        self.repo_index.iter().map(move |(name, index)| {
+            Repository::new(
+                name.clone(),
+                index.backend.clone(),
+                index.prob_list.clone(),
+                self,
+            )
+        })
+    }
+
+    pub fn list_prob(&self) -> impl Iterator<Item = Problem> + '_ {
+        self.repo_index.iter().flat_map(move |(repo_name, index)| {
+            index.prob_list.iter().map(move |prob_index| {
+                Problem::new(
+                    repo_name.to_owned(),
+                    prob_index.name.to_owned(),
+                    self.repo_path(repo_name).join(&prob_index.path),
+                )
+            })
+        })
     }
 
     pub fn repo_exists(&self, repo_name: &str) -> bool {
-        self.index.contains_key(repo_name)
+        self.repo_index.contains_key(repo_name)
     }
 }
 
@@ -103,7 +158,7 @@ impl<'a> Drop for RepositoryManager<'a> {
         if self.dirty {
             let path = index_path(&self);
             if let Ok(mut file) = File::create(path) {
-                if serde_cbor::to_writer(&mut file, &self.index).is_err() {
+                if serde_cbor::to_writer(&mut file, &self.repo_index).is_err() {
                     eprintln!("Failed to save the repository index");
                 }
             } else {

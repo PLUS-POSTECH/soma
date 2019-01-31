@@ -24,7 +24,7 @@ impl SomaCommand for StopCommand {
             .arg(
                 Arg::with_name("problem")
                     .required(true)
-                    .help("the name of the problem to stop"),
+                    .help("problem name with optional repository name prefix"),
             )
     }
 

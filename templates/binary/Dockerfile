@@ -1,11 +1,12 @@
 FROM {{ manifest.binary.os }}
 
+RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
+
 LABEL maintainer="soma_{{ username }}"
 LABEL soma.username="{{ username }}"
 LABEL soma.version="{{ version }}"
-LABEL soma.repository="{{ repository_name }}"
-
-RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
+LABEL soma.repository="{{ repo_name }}"
+LABEL soma.problem="{{ manifest.name }}"
 
 {{ #with manifest }}
 ENV PROB "{{ name }}"

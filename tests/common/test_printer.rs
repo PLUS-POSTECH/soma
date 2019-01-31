@@ -31,6 +31,7 @@ impl Printer for TestPrinter {
     }
 
     fn write_line(&mut self, message: &str) {
+        println!("{}", message);
         self.output.push_str(message);
         self.output.push('\n');
     }
