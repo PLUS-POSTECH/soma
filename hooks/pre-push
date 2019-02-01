@@ -25,14 +25,6 @@ WARNING="${RED}[WARNING]${NC}"
 SKIPPED="${YELLOW}SKIPPED${NC}"
 SUCCESS="${GREEN}ok${NC}"
 
-if git rev-parse --verify HEAD &>/dev/null
-then
-    against=HEAD
-else
-    # Initial commit: diff against an empty tree object
-    against=faa886c532f82e7fa0df02ee893cc0c7702ae337
-fi
-
 FAILED=0
 
 printf "${PREFIX} Checking for clippy ... "
