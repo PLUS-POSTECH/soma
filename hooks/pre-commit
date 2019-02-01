@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Copyright 2016 Google Inc. All Rights Reserved.
-# Modified by PLUS Owl team
+# Modified by PLUS Soma team
 #
 # Licensed under the MIT License, <LICENSE or http://opensource.org/licenses/MIT>.
 # This file may not be copied, modified, or distributed except according to those terms.
 
 #
-# Pre-commit hook for the tarpc repository. To use this hook, copy it to .git/hooks in your
+# Pre-commit hook for the Soma repository. To use this hook, copy it to .git/hooks in your
 # repository root.
 #
 # This precommit checks the following:
@@ -59,25 +59,20 @@ else
 fi
 
 printf "${PREFIX} Checking for rustfmt ... "
-command -v cargo fmt &>/dev/null
-if [ $? == 0 ]; then
-    printf "${SUCCESS}\n"
-else
+command -v cargo-fmt &>/dev/null
+if [ $? != 0 ]; then
     printf "${FAILURE}\n"
     exit 1
+else
+    printf "${SUCCESS}\n"
 fi
 
 # Just check that running rustfmt doesn't do anything to the file. I do this instead of
 # modifying the file because I don't want to mess with the developer's index, which may
 # not only contain discrete files.
 printf "${PREFIX} Checking formatting ... "
-FMTRESULT=0
 diff="$(cargo fmt --all -- --check)"
-if grep --quiet "at line" <<< "$diff"; then
-    FMTRESULT=1
-fi
-
-if [ ${FMTRESULT} != 0 ]; then
+if [ $? != 0 ]; then
     FAILED=1
     printf "${FAILURE}\n"
     echo "$diff"

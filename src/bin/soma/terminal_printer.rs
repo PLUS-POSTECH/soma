@@ -1,5 +1,4 @@
-use crossterm::terminal::ClearType;
-use crossterm::{cursor, terminal, Terminal, TerminalCursor};
+use crossterm::{cursor, terminal, ClearType, Terminal, TerminalCursor};
 
 use soma::prelude::*;
 use soma::Printer;

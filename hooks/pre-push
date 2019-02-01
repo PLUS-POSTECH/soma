@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Copyright 2016 Google Inc. All Rights Reserved.
+# Modified by PLUS Soma team
+#
+# Licensed under the MIT License, <LICENSE or http://opensource.org/licenses/MIT>.
+# This file may not be copied, modified, or distributed except according to those terms.
+
+#
+# Pre-push hook for the Soma repository. To use this hook, copy it to .git/hooks in your
+# repository root.
+#
+# This prepush checks the following:
+# 1. clippy is installed
+# 2. clippy suggests nothing on code
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+PREFIX="${GREEN}[PREPUSH]${NC}"
+FAILURE="${RED}FAILED${NC}"
+WARNING="${RED}[WARNING]${NC}"
+SKIPPED="${YELLOW}SKIPPED${NC}"
+SUCCESS="${GREEN}ok${NC}"
+
+FAILED=0
+
+printf "${PREFIX} Checking for clippy ... "
+command -v cargo-clippy &>/dev/null
+if [ $? != 0 ]; then
+    printf "${FAILURE}\n"
+    exit 1
+else
+    printf "${SUCCESS}\n"
+fi
+
+printf "${PREFIX} Check lint ... "
+lint_output="$(cargo clippy --all-targets --all-features -- -D warnings)"
+if [ $? != 0 ]; then
+    FAILED=1
+    printf "${FAILURE}\n"
+    echo "${lint_output}"
+else
+    printf "${SUCCESS}\n"
+fi
+
+exit ${FAILED}

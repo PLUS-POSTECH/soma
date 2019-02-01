@@ -1,14 +1,20 @@
 [package]
 name = "soma"
 version = "0.1.0"
-authors = ["Yechan Bae <qwazpia@gmail.com>", "Kangsu Kim <pica744@gmail.com>"]
 edition = "2018"
+authors = ["Yechan Bae <qwazpia@gmail.com>", "Kangsu Kim <pica744@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "Your one-stop CTF problem management tool"
+repository = "https://github.com/PLUS-POSTECH/soma"
+keywords = ["ctf", "hacking"]
+categories = ["command-line-utilities", "config"]
+readme = "README.md"
 
 
 [dependencies]
-bollard = "0.1.3"
+bollard = "0.2.0"
 clap = "~2.32.0"
-crossterm = "0.5.5"
+crossterm = "0.6.0"
 dirs = "1.0.4"
 failure = "0.1.5"
 flate2 = "1.0.6"

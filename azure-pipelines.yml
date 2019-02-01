@@ -10,16 +10,18 @@ resources:
     image: rust:latest
 
 jobs:
-- job: style_check
-  displayName: Code Style Check
+- job: quality_check
+  displayName: Code Quality Check
   pool:
     vmImage: 'ubuntu-16.04'
   container: rust
   steps:
-  - script: rustup component add rustfmt
-    displayName: 'Install rustfmt'
+  - script: rustup component add clippy rustfmt
+    displayName: 'Install Prerequisites'
   - script: cargo fmt --all -- --check
-    displayName: 'Check code style'
+    displayName: 'Check Formatting'
+  - script: cargo clippy --all-targets --all-features -- -D warnings
+    displayName: 'Run Lint'
 
 - job: linux_build
   displayName: Linux Build

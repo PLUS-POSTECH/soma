@@ -29,7 +29,7 @@ impl SomaCommand for ListCommand {
     ) -> SomaResult<()> {
         let mut repo_iter = env.repo_manager().list_repo().peekable();
 
-        if let None = repo_iter.peek() {
+        if repo_iter.peek().is_none() {
             env.printer().write_line("No repository was added.");
         } else {
             for repository in repo_iter {
