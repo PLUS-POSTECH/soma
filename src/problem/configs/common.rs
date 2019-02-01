@@ -1,6 +1,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+use path_slash::PathBufExt;
 use serde::de::{self, Deserializer, Unexpected, Visitor};
 use serde::ser::Serializer;
 use serde::{Deserialize, Serialize};
@@ -94,26 +95,16 @@ impl FileEntry {
         permissions: FilePermissions,
     ) -> SomaResult<SolidFileEntry> {
         let target_path = match &self.target_path {
-            Some(path) => path.clone(),
+            Some(path) => PathBuf::from_slash(path),
             None => {
-                let work_dir = work_dir
-                    .as_ref()
-                    .to_str()
-                    .ok_or(SomaError::InvalidUnicode)?;
-                let file_name = self
-                    .path
-                    .file_name()
-                    .ok_or(SomaError::FileNameNotFound)?
-                    .to_str()
-                    .ok_or(SomaError::InvalidUnicode)?;
-                // manual string concatenation to support Windows
-                format!("{}/{}", work_dir, file_name)
+                let file_name = self.path.file_name().ok_or(SomaError::FileNameNotFound)?;
+                work_dir.as_ref().join(file_name)
             }
         };
         Ok(SolidFileEntry {
             path: self.path.clone(),
             public: self.public.unwrap_or(false),
-            target_path,
+            target_path: target_path.to_slash().ok_or(SomaError::InvalidUnicode)?,
             permissions,
         })
     }

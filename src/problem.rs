@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+use path_slash::PathBufExt;
 use serde::{Deserialize, Serialize};
 
 use self::configs::*;
@@ -56,14 +57,14 @@ impl Problem {
 #[derive(Deserialize)]
 pub struct Manifest {
     name: String,
-    work_dir: Option<PathBuf>,
+    work_dir: Option<String>,
     binary: BinaryConfig,
 }
 
 #[derive(Serialize)]
 pub struct SolidManifest {
     name: String,
-    work_dir: PathBuf,
+    work_dir: String,
     binary: SolidBinaryConfig,
 }
 
@@ -86,15 +87,15 @@ impl Manifest {
 
     pub fn solidify(&self) -> SomaResult<SolidManifest> {
         let work_dir = match &self.work_dir {
-            Some(path) => path.clone(),
-            None => PathBuf::from(format!("/home/{}", self.name)),
+            Some(path) => PathBuf::from_slash(path),
+            None => PathBuf::from_slash(format!("/home/{}", self.name)),
         };
 
         let binary = self.binary.solidify(&work_dir)?;
 
         Ok(SolidManifest {
             name: self.name.clone(),
-            work_dir,
+            work_dir: work_dir.to_slash().ok_or(SomaError::InvalidUnicode)?,
             binary,
         })
     }
