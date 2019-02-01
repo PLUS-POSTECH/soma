@@ -1,8 +1,7 @@
-FROM {{ manifest.binary.os }}
+FROM {{ binary.os }}
 
 RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
 
-{{ #with manifest }}
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
@@ -19,7 +18,6 @@ CMD ["/.soma/start.sh"]
 
 # TODO: Container internal port settings may be implemented afterwards
 EXPOSE 1337
-{{ /with }}
 
 #RUN apt install -y tzdata
 #ENV TZ=Asia/Seoul

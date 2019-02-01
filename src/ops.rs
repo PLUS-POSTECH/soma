@@ -16,7 +16,7 @@ use crate::docker;
 use crate::prelude::*;
 use crate::problem::{Problem, SolidManifest};
 use crate::repository::Backend;
-use crate::template::{HandleBarsExt, RenderingContext, Templates};
+use crate::template::{HandleBarsExt, Templates};
 use crate::Environment;
 use crate::Printer;
 
@@ -182,8 +182,7 @@ fn build_image(
 
     env.printer().write_line("Rendering build files...");
     fs::create_dir(context_path.join(".soma"))?;
-    let rendering_context = RenderingContext::new(env.username(), problem.repo_name(), manifest);
-    Handlebars::new().render_templates(Templates::Binary, &rendering_context, context_path)?;
+    Handlebars::new().render_templates(Templates::Binary, &manifest, context_path)?;
 
     env.printer().write_line("Encoding build context...");
     let build_context = encode_context(context_path)?;

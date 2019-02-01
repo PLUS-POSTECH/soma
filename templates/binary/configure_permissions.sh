@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-{{ #each manifest.binary.file_entries }}
+{{ #each binary.file_entries }}
 chmod {{ permissions }} "{{ target_path }}"
 {{ /each }}
 
