@@ -286,6 +286,7 @@ pub fn list_images(
 
 pub fn build<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
+    labels: HashMap<&'a str, &'a str, hash_map::RandomState>,
     image_name: &'a str,
     build_context: Vec<u8>,
 ) -> impl Future<Item = (), Error = Error> + 'a {
@@ -293,6 +294,7 @@ pub fn build<'a>(
         t: image_name,
         pull: true,
         forcerm: true,
+        labels,
         ..Default::default()
     };
 

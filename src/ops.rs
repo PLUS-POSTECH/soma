@@ -190,7 +190,8 @@ fn build_image(
 
     context.close()?;
     env.printer().write_line("Building image...");
-    runtime.block_on(docker::build(&env, &image_name, build_context))?;
+    let labels = docker::docker_labels(&env, &problem);
+    runtime.block_on(docker::build(&env, labels, &image_name, build_context))?;
     Ok(())
 }
 
