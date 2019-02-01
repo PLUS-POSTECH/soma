@@ -17,7 +17,14 @@ impl Templates {
         match self {
             Templates::Binary => &[
                 ("Dockerfile", include_str!("../templates/binary/Dockerfile")),
-                ("start.sh", include_str!("../templates/binary/start.sh")),
+                (
+                    ".soma/start.sh",
+                    include_str!("../templates/binary/start.sh"),
+                ),
+                (
+                    ".soma/configure_permissions.sh",
+                    include_str!("../templates/binary/configure_permissions.sh"),
+                ),
             ],
         }
     }

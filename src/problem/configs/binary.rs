@@ -47,3 +47,9 @@ impl BinaryConfig {
         })
     }
 }
+
+impl SolidBinaryConfig {
+    pub fn file_entries(&self) -> &Vec<SolidFileEntry> {
+        &self.file_entries
+    }
+}

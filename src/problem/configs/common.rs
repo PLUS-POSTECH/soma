@@ -110,6 +110,12 @@ impl FileEntry {
     }
 }
 
+impl SolidFileEntry {
+    pub fn path_map(&self) -> (&Path, &str) {
+        (&self.path, &self.target_path)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

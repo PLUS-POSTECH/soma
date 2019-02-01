@@ -12,19 +12,16 @@ LABEL soma.problem="{{ manifest.name }}"
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
-{{ #each binary.file_entries }}
-COPY "{{ path }}" "{{ target_path }}"
-RUN chmod {{ permissions }} "{{ target_path }}"
-{{ /each }}
+COPY build/ /
+COPY .soma/ /.soma
 
-RUN chown -R root:$PROB /home/$PROB
-
-COPY ./start.sh /start.sh
-RUN chmod 555 /start.sh
+RUN chmod 555 /.soma/configure_permissions.sh \
+    && /.soma/configure_permissions.sh \
+    && rm /.soma/configure_permissions.sh
 
 USER $PROB
-WORKDIR /home/$PROB
-CMD ["/start.sh"]
+WORKDIR {{ work_dir }}
+CMD ["/.soma/start.sh"]
 
 # TODO: Container internal port settings may be implemented afterwards
 EXPOSE 1337
