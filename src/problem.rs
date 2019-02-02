@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 use path_slash::PathBufExt;
 use serde::{Deserialize, Serialize};
 
-use self::configs::{BinaryConfig, SolidBinaryConfig, SolidFileEntry};
+use self::configs::{BinaryConfig, SolidBinaryConfig};
 use crate::prelude::*;
 
-mod configs;
+pub mod configs;
 
 pub const MANIFEST_FILE_NAME: &str = "soma.toml";
 
@@ -107,9 +107,8 @@ impl Manifest {
 }
 
 impl SolidManifest {
-    pub fn path_maps(&self) -> Vec<(&Path, &str)> {
-        let file_entries = self.binary.file_entries();
-        file_entries.iter().map(SolidFileEntry::path_map).collect()
+    pub fn binary(&self) -> &SolidBinaryConfig {
+        &self.binary
     }
 }
 

@@ -49,7 +49,8 @@ impl BinaryConfig {
 }
 
 impl SolidBinaryConfig {
-    pub fn file_entries(&self) -> &Vec<SolidFileEntry> {
-        &self.file_entries
+    pub fn path_maps(&self) -> Vec<(&Path, &str)> {
+        let file_entries = &self.file_entries;
+        file_entries.iter().map(SolidFileEntry::path_map).collect()
     }
 }

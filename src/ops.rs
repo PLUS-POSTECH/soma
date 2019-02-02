@@ -14,7 +14,8 @@ use url::Url;
 
 use crate::docker;
 use crate::prelude::*;
-use crate::problem::{Problem, SolidManifest};
+use crate::problem::configs::SolidBinaryConfig;
+use crate::problem::Problem;
 use crate::repository::Backend;
 use crate::template::{HandleBarsExt, Templates};
 use crate::Environment;
@@ -122,7 +123,7 @@ pub fn build(
 fn construct_rootfs(
     build_dir: impl AsRef<Path>,
     problem_dir: impl AsRef<Path>,
-    manifest: &SolidManifest,
+    binary_config: &SolidBinaryConfig,
 ) -> SomaResult<()> {
     let mut dir_copy_options = dir::CopyOptions::new();
     dir_copy_options.copy_inside = true;
@@ -131,7 +132,7 @@ fn construct_rootfs(
     let mut file_copy_options = file::CopyOptions::new();
     file_copy_options.overwrite = true;
 
-    for path_map in manifest.path_maps() {
+    for path_map in binary_config.path_maps() {
         let (local_path, target_path) = path_map;
         let local_path = problem_dir.as_ref().join(local_path);
         let target_path = PathBuf::from_slash(target_path);
@@ -178,7 +179,8 @@ fn build_image(
     let build_dir = context_path.join("build");
     let problem_dir = problem.path();
     fs::create_dir(&build_dir)?;
-    construct_rootfs(build_dir, problem_dir, &manifest)?;
+    let binary_config = manifest.binary();
+    construct_rootfs(build_dir, problem_dir, &binary_config)?;
 
     env.printer().write_line("Rendering build files...");
     fs::create_dir(context_path.join(".soma"))?;

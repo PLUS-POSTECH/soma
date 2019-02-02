@@ -1,6 +1,6 @@
 steps:
 - powershell: |
-    mkdir .ci -ea 0
+    mkdir .ci
     $lcow = ".ci\lcow.zip"
     $dockerd = ".ci\dockerd.exe"
 
