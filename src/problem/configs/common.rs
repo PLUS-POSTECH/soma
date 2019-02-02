@@ -64,19 +64,32 @@ impl<'de> Visitor<'de> for PermissionsString {
     }
 }
 
+fn serialize_as_slash_path<S>(path_buf: &PathBuf, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match path_buf.to_slash() {
+        Some(s) => serializer.serialize_str(&s),
+        None => Err(serde::ser::Error::custom(
+            "path contains invalid UTF-8 characters",
+        )),
+    }
+}
+
 // target_path is defined as String instead of PathBuf to support Windows
 #[derive(Deserialize)]
 pub struct FileEntry {
     path: PathBuf,
     public: Option<bool>,
-    target_path: Option<String>,
+    target_path: Option<PathBuf>,
 }
 
 #[derive(Serialize)]
 pub struct SolidFileEntry {
     path: PathBuf,
     public: bool,
-    target_path: String,
+    #[serde(serialize_with = "serialize_as_slash_path")]
+    target_path: PathBuf,
     permissions: FilePermissions,
 }
 
@@ -95,23 +108,29 @@ impl FileEntry {
         permissions: FilePermissions,
     ) -> SomaResult<SolidFileEntry> {
         let target_path = match &self.target_path {
-            Some(path) => PathBuf::from_slash(path),
+            Some(path) => path.clone(),
             None => {
                 let file_name = self.path.file_name().ok_or(SomaError::FileNameNotFound)?;
                 work_dir.as_ref().join(file_name)
             }
         };
+
+        // TODO: More descriptive error
+        if !target_path.has_root() {
+            Err(SomaError::InvalidManifest)?;
+        }
+
         Ok(SolidFileEntry {
             path: self.path.clone(),
             public: self.public.unwrap_or(false),
-            target_path: target_path.to_slash().ok_or(SomaError::InvalidUnicode)?,
+            target_path,
             permissions,
         })
     }
 }
 
 impl SolidFileEntry {
-    pub fn path_map(&self) -> (&Path, &str) {
+    pub fn path_map(&self) -> (&PathBuf, &PathBuf) {
         (&self.path, &self.target_path)
     }
 }

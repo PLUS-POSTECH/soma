@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use flate2::write::GzEncoder;
 use flate2::Compression;
@@ -7,7 +7,6 @@ use fs_extra::{dir, file};
 use futures::Future;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
-use path_slash::PathBufExt;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
 use url::Url;
@@ -131,12 +130,9 @@ fn construct_rootfs(
     let mut file_copy_options = file::CopyOptions::new();
     file_copy_options.overwrite = true;
 
-    for path_map in manifest.path_maps() {
-        let (local_path, target_path) = path_map;
+    for (local_path, target_path) in manifest.path_maps() {
         let local_path = problem_dir.as_ref().join(local_path);
-        let target_path = PathBuf::from_slash(target_path);
-        let root = PathBuf::from_slash("/");
-        let destination = build_dir.as_ref().join(target_path.strip_prefix(root)?);
+        let destination = build_dir.as_ref().join(target_path.strip_prefix("/")?);
         // TODO: more descriptive error
         fs::create_dir_all(destination.parent().ok_or(SomaError::InvalidManifest)?)?;
         if local_path.is_dir() {
