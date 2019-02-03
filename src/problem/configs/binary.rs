@@ -50,7 +50,6 @@ impl BinaryConfig {
 
 impl SolidBinaryConfig {
     pub fn path_maps(&self) -> impl Iterator<Item = (&PathBuf, &PathBuf)> + '_ {
-        let file_entries = &self.file_entries;
-        file_entries.iter().map(SolidFileEntry::path_map)
+        self.file_entries.iter().map(SolidFileEntry::path_map)
     }
 }

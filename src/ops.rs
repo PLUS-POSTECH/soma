@@ -119,8 +119,8 @@ pub fn build(
     Ok(())
 }
 
-fn construct_rootfs(
-    build_dir: impl AsRef<Path>,
+fn construct_image_root(
+    image_root: impl AsRef<Path>,
     problem_dir: impl AsRef<Path>,
     binary_config: &SolidBinaryConfig,
 ) -> SomaResult<()> {
@@ -133,16 +133,18 @@ fn construct_rootfs(
 
     for (local_path, target_path) in binary_config.path_maps() {
         let local_path = problem_dir.as_ref().join(local_path);
-        let destination = build_dir.as_ref().join(target_path.strip_prefix("/")?);
+        let destination = image_root.as_ref().join(target_path.strip_prefix("/")?);
         // TODO: more descriptive error
         fs::create_dir_all(destination.parent().ok_or(SomaError::InvalidManifest)?)?;
         if local_path.is_dir() {
-            // TODO: duplicate directory copy may result in nested copy
+            if destination.exists() {
+                unimplemented!("Handling copy of nested or duplicate directory");
+            }
             dir::copy(local_path, destination, &dir_copy_options)?;
         } else if local_path.is_file() {
             file::copy(local_path, destination, &file_copy_options)?;
         } else {
-            Err(SomaError::DataDirectoryAccessDenied)?;
+            Err(SomaError::FileUnreachable)?;
         }
     }
     Ok(())
@@ -171,12 +173,12 @@ fn build_image(
     env.printer().write_line("Loading manifest...");
     let manifest = problem.load_manifest()?.solidify()?;
 
-    env.printer().write_line("Constructing rootfs...");
-    let build_dir = context_path.join("build");
+    env.printer().write_line("Constructing image root...");
+    let image_root = context_path.join("image-root");
     let problem_dir = problem.path();
-    fs::create_dir(&build_dir)?;
+    fs::create_dir(&image_root)?;
     let binary_config = manifest.binary();
-    construct_rootfs(build_dir, problem_dir, &binary_config)?;
+    construct_image_root(image_root, problem_dir, binary_config)?;
 
     env.printer().write_line("Rendering build files...");
     fs::create_dir(context_path.join(".soma"))?;

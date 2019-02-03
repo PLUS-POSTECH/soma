@@ -5,7 +5,7 @@ RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
-COPY build/ /
+COPY image-root/ /
 COPY .soma/ /.soma
 
 RUN chmod 555 /.soma/configure_permissions.sh \
