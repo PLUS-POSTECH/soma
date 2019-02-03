@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use self::configs::*;
+use self::configs::{BinaryConfig, SolidBinaryConfig};
 use crate::prelude::*;
 
-mod configs;
+pub mod configs;
 
 pub const MANIFEST_FILE_NAME: &str = "soma.toml";
 
@@ -90,6 +90,11 @@ impl Manifest {
             None => PathBuf::from(format!("/home/{}", self.name)),
         };
 
+        // TODO: More descriptive error
+        if !work_dir.has_root() {
+            Err(SomaError::InvalidManifest)?;
+        }
+
         let binary = self.binary.solidify(&work_dir)?;
 
         Ok(SolidManifest {
@@ -97,6 +102,12 @@ impl Manifest {
             work_dir,
             binary,
         })
+    }
+}
+
+impl SolidManifest {
+    pub fn binary(&self) -> &SolidBinaryConfig {
+        &self.binary
     }
 }
 

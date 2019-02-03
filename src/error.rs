@@ -12,6 +12,10 @@ pub enum Error {
     DuplicateRepository,
     #[fail(display = "Failed to detect filename from the path")]
     FileNameNotFound,
+    #[fail(
+        display = "The specified file does not exist, or you don't have enough permission to access it"
+    )]
+    FileUnreachable,
     #[fail(display = "Some entry in the manifest is invalid")]
     InvalidManifest,
     #[fail(display = "The provided repository does not contain 'soma.toml' or 'soma-list.toml'")]

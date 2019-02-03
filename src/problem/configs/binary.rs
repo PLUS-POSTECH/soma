@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -45,5 +45,11 @@ impl BinaryConfig {
             cmd: self.cmd.clone(),
             file_entries,
         })
+    }
+}
+
+impl SolidBinaryConfig {
+    pub fn path_maps(&self) -> impl Iterator<Item = (&PathBuf, &PathBuf)> + '_ {
+        self.file_entries.iter().map(SolidFileEntry::path_map)
     }
 }

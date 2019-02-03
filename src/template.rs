@@ -5,8 +5,6 @@ use handlebars::Handlebars;
 use serde::Serialize;
 
 use crate::prelude::*;
-use crate::problem::SolidManifest;
-use crate::VERSION;
 
 pub enum Templates {
     Binary,
@@ -17,31 +15,15 @@ impl Templates {
         match self {
             Templates::Binary => &[
                 ("Dockerfile", include_str!("../templates/binary/Dockerfile")),
-                ("start.sh", include_str!("../templates/binary/start.sh")),
+                (
+                    ".soma/start.sh",
+                    include_str!("../templates/binary/start.sh"),
+                ),
+                (
+                    ".soma/configure_permissions.sh",
+                    include_str!("../templates/binary/configure_permissions.sh"),
+                ),
             ],
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct RenderingContext<'a> {
-    username: &'a str,
-    version: &'a str,
-    repo_name: &'a str,
-    manifest: SolidManifest,
-}
-
-impl<'a> RenderingContext<'a> {
-    pub fn new(
-        username: &'a str,
-        repo_name: &'a str,
-        manifest: SolidManifest,
-    ) -> RenderingContext<'a> {
-        RenderingContext {
-            username,
-            version: VERSION,
-            repo_name,
-            manifest,
         }
     }
 }

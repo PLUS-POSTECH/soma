@@ -3,20 +3,20 @@ use std::path::Path;
 
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use fs_extra::dir::{copy, CopyOptions};
+use fs_extra::{dir, file};
 use futures::Future;
 use handlebars::Handlebars;
 use hyper::client::connect::Connect;
-use remove_dir_all::remove_dir_all;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
 use url::Url;
 
 use crate::docker;
 use crate::prelude::*;
+use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
 use crate::repository::Backend;
-use crate::template::{HandleBarsExt, RenderingContext, Templates};
+use crate::template::{HandleBarsExt, Templates};
 use crate::Environment;
 use crate::Printer;
 
@@ -119,6 +119,37 @@ pub fn build(
     Ok(())
 }
 
+fn construct_image_root(
+    image_root: impl AsRef<Path>,
+    problem_dir: impl AsRef<Path>,
+    binary_config: &SolidBinaryConfig,
+) -> SomaResult<()> {
+    let mut dir_copy_options = dir::CopyOptions::new();
+    dir_copy_options.copy_inside = true;
+    // Latter entry has higher priority
+    dir_copy_options.overwrite = true;
+    let mut file_copy_options = file::CopyOptions::new();
+    file_copy_options.overwrite = true;
+
+    for (local_path, target_path) in binary_config.path_maps() {
+        let local_path = problem_dir.as_ref().join(local_path);
+        let destination = image_root.as_ref().join(target_path.strip_prefix("/")?);
+        // TODO: more descriptive error
+        fs::create_dir_all(destination.parent().ok_or(SomaError::InvalidManifest)?)?;
+        if local_path.is_dir() {
+            if destination.exists() {
+                unimplemented!("Handling copy of nested or duplicate directory");
+            }
+            dir::copy(local_path, destination, &dir_copy_options)?;
+        } else if local_path.is_file() {
+            file::copy(local_path, destination, &file_copy_options)?;
+        } else {
+            Err(SomaError::FileUnreachable)?;
+        }
+    }
+    Ok(())
+}
+
 fn encode_context(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
     let compressor = GzEncoder::new(Vec::new(), Compression::default());
     let mut tar = tar::Builder::new(compressor);
@@ -136,28 +167,30 @@ fn build_image(
     let image_name = problem.docker_image_name(env.username());
 
     env.printer().write_line("Preparing build context...");
-    let work_dir = tempdir()?;
-    let work_dir_path = work_dir.path();
+    let context = tempdir()?;
+    let context_path = context.path();
 
-    // prevent nested directory structure while copying
-    remove_dir_all(&work_dir)?;
-
-    let mut copy_options = CopyOptions::new();
-    copy_options.copy_inside = true;
-    copy(problem.path(), &work_dir, &copy_options)?;
-
-    env.printer().write_line("Rendering build files...");
+    env.printer().write_line("Loading manifest...");
     let manifest = problem.load_manifest()?.solidify()?;
 
-    let context = RenderingContext::new(env.username(), problem.repo_name(), manifest);
-    Handlebars::new().render_templates(Templates::Binary, &context, work_dir_path)?;
+    env.printer().write_line("Constructing image root...");
+    let image_root = context_path.join("image-root");
+    let problem_dir = problem.path();
+    fs::create_dir(&image_root)?;
+    let binary_config = manifest.binary();
+    construct_image_root(image_root, problem_dir, binary_config)?;
+
+    env.printer().write_line("Rendering build files...");
+    fs::create_dir(context_path.join(".soma"))?;
+    Handlebars::new().render_templates(Templates::Binary, &manifest, context_path)?;
 
     env.printer().write_line("Encoding build context...");
-    let build_context = encode_context(work_dir_path)?;
+    let build_context = encode_context(context_path)?;
 
-    work_dir.close()?;
+    context.close()?;
     env.printer().write_line("Building image...");
-    runtime.block_on(docker::build(&env, &image_name, build_context))?;
+    let labels = docker::docker_labels(&env, &problem);
+    runtime.block_on(docker::build(&env, labels, &image_name, build_context))?;
     Ok(())
 }
 

@@ -1,0 +1,2 @@
+# Template files must have LF endings even in Windows
+templates/** text eol=lf

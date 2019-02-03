@@ -1,4 +1,3 @@
-use std::collections::hash_map;
 use std::collections::HashMap;
 
 use bollard::container::{
@@ -21,6 +20,9 @@ const LABEL_KEY_VERSION: &str = "soma.version";
 const LABEL_KEY_USERNAME: &str = "soma.username";
 const LABEL_KEY_REPOSITORY: &str = "soma.repository";
 const LABEL_KEY_PROBLEM: &str = "soma.problem";
+
+type DockerLabel<'a> = HashMap<&'a str, &'a str>;
+type SomaFilter = HashMap<String, Vec<String>>;
 
 #[cfg(windows)]
 pub fn connect_default() -> SomaResult<Docker<impl Connect>> {
@@ -78,8 +80,6 @@ impl SomaImage {
         self.status
     }
 }
-
-type SomaFilter = HashMap<String, Vec<String>>;
 
 struct SomaFilterBuilder {
     label_filter: Vec<String>,
@@ -286,6 +286,7 @@ pub fn list_images(
 
 pub fn build<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
+    labels: DockerLabel<'a>,
     image_name: &'a str,
     build_context: Vec<u8>,
 ) -> impl Future<Item = (), Error = Error> + 'a {
@@ -293,6 +294,7 @@ pub fn build<'a>(
         t: image_name,
         pull: true,
         forcerm: true,
+        labels,
         ..Default::default()
     };
 
@@ -320,7 +322,7 @@ pub fn build<'a>(
 pub fn docker_labels<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
     problem: &'a Problem,
-) -> HashMap<&'static str, &'a str> {
+) -> DockerLabel<'a> {
     vec![
         (LABEL_KEY_VERSION, VERSION),
         (LABEL_KEY_USERNAME, &env.username()),
@@ -333,7 +335,7 @@ pub fn docker_labels<'a>(
 
 pub fn create<'a>(
     env: &'a Environment<impl Connect, impl Printer>,
-    labels: HashMap<&'a str, &'a str, hash_map::RandomState>,
+    labels: DockerLabel<'a>,
     image_name: &'a str,
     port_str: &'a str,
 ) -> impl Future<Item = String, Error = Error> + 'a {
