@@ -38,7 +38,7 @@ jobs:
 - job: windows_build
   displayName: Windows Build
   pool:
-    vmImage: 'win1803'
+    vmImage: 'windows-2019'
   steps:
   - template: ci/install-prerequisites.yml
     parameters:
