@@ -8,10 +8,10 @@ steps:
       cargo test -- --test-threads=1
     displayName: 'Test'
     env:
-      - RUST_BACKTRACE: 1
+      RUST_BACKTRACE: 1
 
 - ${{ if ne(parameters.os, 'Windows') }}:
   - script: cargo test
     displayName: 'Test'
     env:
-      - RUST_BACKTRACE: 1
+      RUST_BACKTRACE: 1
