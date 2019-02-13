@@ -10,8 +10,6 @@ Soma helps to manage and distribute CTF problems after contests.
 
 ### For problem solvers
 
-*This section contains a few commands that are under development.*
-
 Downloading and running the problem is as easy as running three commands.
 
 ```
@@ -27,8 +25,6 @@ soma fetch simple-bof  # this will copy public files to the current working dire
 ```
 
 ### For problem setters
-
-*This section contains some features that are under development.*
 
 Add `soma.toml` to your project root directory that describes your problem.
 The config file below shows an example of it.
@@ -66,12 +62,9 @@ Soma team is hoping to ship it in the first quarter of 2019.
 
 ### Roadmap
 
-- [x] ~~Implement core commands. ([#4][issue #4] and [#66][issue #66]) (priority: high)~~
-- [x] ~~Write tests. (priority: high)~~
-- [ ] Better documentation of features. (priority: medium)
-- [ ] Support multiple problems in a single repository. ([#36][issue #36]) (priority: medium)
-- [ ] Support multiple containers for a single problem. (priority: medium)
-- [ ] Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
+- Better documentation of features. (priority: high)
+- Support multiple containers for a single problem. (priority: low)
+- Support cloud deployment such as AWS, GCP, Azure as well as local deployment. (priority: low)
 
 
 ## Development
@@ -112,6 +105,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 
 [issue #4]: https://github.com/PLUS-POSTECH/soma/issues/4
-[issue #36]: https://github.com/PLUS-POSTECH/soma/issues/36
 [issue #66]: https://github.com/PLUS-POSTECH/soma/issues/66
 [`0.1.0` milestone]: https://github.com/PLUS-POSTECH/soma/milestone/1
