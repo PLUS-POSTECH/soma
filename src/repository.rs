@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,23 @@ const LIST_FILE_NAME: &str = "soma-list.toml";
 #[derive(Deserialize)]
 struct ProblemList {
     problems: Vec<PathBuf>,
+}
+
+impl ProblemList {
+    fn sanity_check(&self, repo_path: impl AsRef<Path>) -> SomaResult<()> {
+        let hash_set = self
+            .problems
+            .iter()
+            .map(|prob_relative_path| repo_path.as_ref().join(prob_relative_path).canonicalize())
+            .collect::<Result<HashSet<_>, _>>()
+            .map_err(|_| SomaError::InvalidSomaList)?;
+
+        if hash_set.len() != self.problems.len() {
+            Err(SomaError::InvalidSomaList)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -143,6 +161,7 @@ fn read_prob_list(repo_path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> 
     let list_path = repo_path.as_ref().join(LIST_FILE_NAME);
     if list_path.exists() {
         let prob_list: ProblemList = toml::from_slice(&read_file_contents(list_path)?)?;
+        prob_list.sanity_check(&repo_path)?;
         prob_list
             .problems
             .iter()
