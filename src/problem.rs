@@ -1,11 +1,10 @@
-use std::fs::File;
-use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 use self::configs::{BinaryConfig, SolidBinaryConfig};
 use crate::prelude::*;
+use crate::read_file_contents;
 
 pub mod configs;
 
@@ -109,13 +108,6 @@ impl SolidManifest {
     pub fn binary(&self) -> &SolidBinaryConfig {
         &self.binary
     }
-}
-
-fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
-    let mut file = File::open(path)?;
-    let mut contents = Vec::new();
-    file.read_to_end(&mut contents)?;
-    Ok(contents)
 }
 
 pub fn read_manifest(path: impl AsRef<Path>) -> SomaResult<Manifest> {

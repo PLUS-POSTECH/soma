@@ -8,12 +8,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::problem::{read_manifest, MANIFEST_FILE_NAME};
+use crate::read_file_contents;
 
 pub use self::manager::RepositoryManager;
 
 mod manager;
 
 const LIST_FILE_NAME: &str = "soma-list.toml";
+
+#[derive(Deserialize)]
+struct ProblemList {
+    problems: Vec<PathBuf>,
+}
 
 #[derive(Clone, Deserialize, Serialize)]
 struct ProblemIndex {
@@ -116,19 +122,33 @@ impl<'a> Repository<'a> {
     }
 }
 
-fn read_prob_list(path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
-    if path.as_ref().join(LIST_FILE_NAME).exists() {
-        unimplemented!()
-    } else {
-        let manifest_path = path.as_ref().join(MANIFEST_FILE_NAME);
-        if !manifest_path.exists() {
-            Err(SomaError::InvalidRepository)?;
-        }
+fn read_prob_manifest(
+    repo_path: impl AsRef<Path>,
+    prob_relative_path: impl AsRef<Path>,
+) -> SomaResult<ProblemIndex> {
+    let prob_path = repo_path.as_ref().join(&prob_relative_path);
+    let manifest_path = prob_path.join(MANIFEST_FILE_NAME);
+    if !manifest_path.exists() {
+        Err(SomaError::InvalidRepository)?;
+    }
 
-        let manifest = read_manifest(manifest_path)?;
-        Ok(vec![ProblemIndex {
-            name: manifest.name().to_owned(),
-            path: PathBuf::from("./"),
-        }])
+    let manifest = read_manifest(manifest_path)?;
+    Ok(ProblemIndex {
+        name: manifest.name().to_owned(),
+        path: prob_relative_path.as_ref().to_owned(),
+    })
+}
+
+fn read_prob_list(repo_path: impl AsRef<Path>) -> SomaResult<Vec<ProblemIndex>> {
+    let list_path = repo_path.as_ref().join(LIST_FILE_NAME);
+    if list_path.exists() {
+        let prob_list: ProblemList = toml::from_slice(&read_file_contents(list_path)?)?;
+        prob_list
+            .problems
+            .iter()
+            .map(|prob_relative_path| read_prob_manifest(&repo_path, prob_relative_path))
+            .collect()
+    } else {
+        Ok(vec![read_prob_manifest(&repo_path, "./")?])
     }
 }
