@@ -40,7 +40,7 @@ fn test_fetch3() {
     assert!(add(&mut env, BATA_LIST_GIT, None).is_ok());
     assert!(fetch(
         &env,
-        &format!("{}/r0pbaby", BATA_LIST_REPO_NAME),
+        &format!("{}.r0pbaby", BATA_LIST_REPO_NAME),
         &temp_copy_dir
     )
     .is_ok());
