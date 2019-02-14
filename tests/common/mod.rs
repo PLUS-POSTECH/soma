@@ -18,6 +18,12 @@ mod test_printer;
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
+pub const SIMPLE_BOF_GIT: &str = "https://github.com/PLUS-POSTECH/simple-bof.git";
+pub const SIMPLE_BOF_REPO_NAME: &str = "simple-bof";
+
+pub const BATA_LIST_GIT: &str = "https://github.com/PLUS-POSTECH/soma-bata-list.git";
+pub const BATA_LIST_REPO_NAME: &str = "soma-bata-list";
+
 pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
         format!("soma-test-{}", COUNTER.fetch_add(1, Ordering::SeqCst)),

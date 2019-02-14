@@ -1,4 +1,7 @@
 use std::cell::{RefCell, RefMut};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 
 use bollard::Docker;
 use clap::crate_version;
@@ -70,4 +73,11 @@ where
     pub fn repo_manager_mut(&mut self) -> &mut RepositoryManager<'a> {
         &mut self.repo_manager
     }
+}
+
+fn read_file_contents(path: impl AsRef<Path>) -> SomaResult<Vec<u8>> {
+    let mut file = File::open(path)?;
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents)?;
+    Ok(contents)
 }

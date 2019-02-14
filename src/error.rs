@@ -20,6 +20,8 @@ pub enum Error {
     InvalidManifest,
     #[fail(display = "The provided repository does not contain 'soma.toml' or 'soma-list.toml'")]
     InvalidRepository,
+    #[fail(display = "soma-list.toml contains a duplicate or inaccessible entry")]
+    InvalidSomaList,
     #[fail(display = "The specified file's path contains unsupported characters")]
     InvalidUnicode,
     #[fail(display = "There is a container already running for the specified problem")]
