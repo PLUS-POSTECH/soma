@@ -22,6 +22,8 @@ pub enum Error {
     InvalidRepository,
     #[fail(display = "soma-list.toml contains a duplicate or inaccessible entry")]
     InvalidSomaList,
+    #[fail(display = "The name doesn't meet docker name component rules")]
+    InvalidName,
     #[fail(display = "The specified file's path contains unsupported characters")]
     InvalidUnicode,
     #[fail(display = "There is a container already running for the specified problem")]
