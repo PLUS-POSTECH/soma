@@ -9,55 +9,22 @@ use handlebars::Handlebars;
 use hyper::client::connect::Connect;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
-use url::Url;
 
 use crate::docker;
 use crate::prelude::*;
 use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
-use crate::repository::Backend;
+use crate::repository::backend;
 use crate::template::{HandleBarsExt, Templates};
 use crate::Environment;
 use crate::Printer;
-
-pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Backend)> {
-    let path = Path::new(repo_location);
-    if path.is_dir() {
-        // local backend
-        Ok((
-            path.file_name()
-                .ok_or(SomaError::FileNameNotFound)?
-                .to_str()
-                .ok_or(SomaError::InvalidUnicode)?
-                .to_owned(),
-            Backend::LocalBackend(path.canonicalize()?.to_owned()),
-        ))
-    } else {
-        // git backend
-        let parsed_url = Url::parse(repo_location).or(Err(SomaError::RepositoryNotFound))?;
-        let last_name = parsed_url
-            .path_segments()
-            .ok_or(SomaError::RepositoryNotFound)?
-            .last()
-            .ok_or(SomaError::FileNameNotFound)?;
-        let repo_name = if last_name.ends_with(".git") {
-            &last_name[..last_name.len() - 4]
-        } else {
-            &last_name
-        };
-        Ok((
-            repo_name.to_owned(),
-            Backend::GitBackend(repo_location.to_owned()),
-        ))
-    }
-}
 
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
     repo_location: &str,
     repo_name: Option<&str>,
 ) -> SomaResult<()> {
-    let (resolved_repo_name, backend) = location_to_backend(repo_location)?;
+    let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
         Some(repo_name) => repo_name.to_owned(),
         None => resolved_repo_name,

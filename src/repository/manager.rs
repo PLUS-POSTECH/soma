@@ -6,10 +6,11 @@ use std::path::{Path, PathBuf};
 use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 
-use super::{Backend, ProblemIndex, Repository};
 use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
 use crate::problem::Problem;
+use crate::repository::backend::{Backend, BackendExt};
+use crate::repository::{read_prob_list, ProblemIndex, Repository};
 
 const INDEX_FILE_NAME: &str = "index";
 
@@ -19,7 +20,7 @@ fn index_path<'a>(registration: &Registration<'a, RepositoryManager<'a>>) -> Pat
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Index {
-    backend: Backend,
+    backend: Box<dyn Backend>,
     prob_list: Vec<ProblemIndex>,
 }
 
@@ -62,21 +63,16 @@ impl<'a> RepositoryManager<'a> {
         self.root_path().join(repo_name)
     }
 
-    pub fn add_repo(&mut self, repo_name: String, backend: Backend) -> SomaResult<()> {
+    pub fn add_repo(&mut self, repo_name: String, backend: Box<dyn Backend>) -> SomaResult<()> {
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {
             let temp_dir = tempfile::tempdir()?;
             backend.update_at(temp_dir.path())?;
-            let prob_list = super::read_prob_list(temp_dir.path())?;
+            let prob_list = read_prob_list(temp_dir.path())?;
 
-            self.repo_index.insert(
-                repo_name.clone(),
-                Index {
-                    backend: backend.clone(),
-                    prob_list,
-                },
-            );
+            self.repo_index
+                .insert(repo_name.clone(), Index { backend, prob_list });
             self.dirty = true;
         }
 
