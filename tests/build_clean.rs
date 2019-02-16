@@ -26,13 +26,13 @@ fn test_build_clean() {
     assert!(result.is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
-    assert!(image_from_repo_exists(&images, repo_name));
+    assert!(image_from_repo_exists(&images, repo_name.as_ref()));
     assert!(image_from_prob_exists(&images, &problem));
 
     assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
-    assert!(!image_from_repo_exists(&images, repo_name));
+    assert!(!image_from_repo_exists(&images, repo_name.as_ref()));
     assert!(!image_from_prob_exists(&images, &problem));
 }
 
@@ -56,12 +56,12 @@ fn test_build_clean_list() {
     assert!(result.is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
-    assert!(image_from_repo_exists(&images, repo_name));
+    assert!(image_from_repo_exists(&images, repo_name.as_ref()));
     assert!(image_from_prob_exists(&images, &problem));
 
     assert!(clean(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(!image_exists(&images, &image_name));
-    assert!(!image_from_repo_exists(&images, repo_name));
+    assert!(!image_from_repo_exists(&images, repo_name.as_ref()));
     assert!(!image_from_prob_exists(&images, &problem));
 }

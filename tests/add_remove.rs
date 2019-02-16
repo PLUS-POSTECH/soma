@@ -1,7 +1,8 @@
 use matches::assert_matches;
-use soma::ops::{add, remove};
 
+use soma::ops::{add, remove};
 use soma::prelude::*;
+use soma::NameString;
 
 pub use self::common::*;
 
@@ -13,19 +14,19 @@ fn test_add_remove() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name = SIMPLE_BOF_REPO_NAME;
+    let repo_name = NameString::new(SIMPLE_BOF_REPO_NAME).unwrap();
     assert!(add(&mut env, SIMPLE_BOF_GIT, None).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
 
-    assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
-    assert!(!env.repo_manager().repo_exists(repo_name));
+    assert!(remove(&mut env, repo_name.as_ref(), &mut runtime).is_ok());
+    assert!(!env.repo_manager().repo_exists(&repo_name));
 }
 
 #[test]
@@ -33,13 +34,13 @@ fn test_add_with_name() {
     let (_, mut data_dir) = temp_data_dir();
     let mut env = test_env(&mut data_dir);
 
-    let repo_name = "complicated-bof";
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name)).is_ok());
+    let repo_name = NameString::new("complicated-bof").unwrap();
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name.as_ref())).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
@@ -83,13 +84,13 @@ fn test_soma_list() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name = BATA_LIST_REPO_NAME;
+    let repo_name = NameString::new(BATA_LIST_REPO_NAME).unwrap();
     assert!(add(&mut env, BATA_LIST_GIT, None).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
@@ -107,6 +108,6 @@ fn test_soma_list() {
         Err(Ok(SomaError::ProblemNotFound))
     );
 
-    assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
-    assert!(!env.repo_manager().repo_exists(repo_name));
+    assert!(remove(&mut env, repo_name.as_ref(), &mut runtime).is_ok());
+    assert!(!env.repo_manager().repo_exists(&repo_name));
 }

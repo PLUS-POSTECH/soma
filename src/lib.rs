@@ -219,6 +219,18 @@ mod tests {
     use serde_test::{assert_de_tokens_error, assert_tokens, Token};
 
     #[test]
+    fn test_name_eq() {
+        assert_eq!("asdf", &NameString::new("asdf").unwrap());
+        assert_eq!(&NameString::new("asdf").unwrap(), "asdf");
+        assert_eq!(String::from("asdf"), NameString::new("asdf").unwrap());
+        assert_eq!(NameString::new("asdf").unwrap(), String::from("asdf"));
+        assert_ne!("qwer", &NameString::new("asdf").unwrap());
+        assert_ne!(&NameString::new("qwer").unwrap(), "asdf");
+        assert_ne!(String::from("qwer"), NameString::new("asdf").unwrap());
+        assert_ne!(NameString::new("qwer").unwrap(), String::from("asdf"));
+    }
+
+    #[test]
     fn test_name_serde() {
         assert_tokens(&NameString::new("asdf0").unwrap(), &[Token::Str("asdf0")]);
         assert_tokens(
