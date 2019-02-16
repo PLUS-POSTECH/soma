@@ -83,7 +83,7 @@ where
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Name {
+pub struct NameString {
     inner: String,
 }
 
@@ -91,11 +91,11 @@ lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"^[a-z0-9]+((?:[._]|__|[-]*)[a-z0-9]+)*$").unwrap();
 }
 
-impl Name {
-    pub fn new(s: impl AsRef<str>) -> SomaResult<Name> {
+impl NameString {
+    pub fn new(s: impl AsRef<str>) -> SomaResult<NameString> {
         let s = s.as_ref();
         if NAME_REGEX.is_match(s) {
-            Ok(Name {
+            Ok(NameString {
                 inner: s.to_owned(),
             })
         } else {
@@ -104,40 +104,70 @@ impl Name {
     }
 
     // TODO: Use TryFrom trait when Rust stabilizes it.
-    pub fn try_from(s: String) -> SomaResult<Name> {
+    pub fn try_from(s: String) -> SomaResult<NameString> {
         if NAME_REGEX.is_match(&s) {
-            Ok(Name { inner: s })
+            Ok(NameString { inner: s })
         } else {
             Err(SomaError::InvalidName)?
         }
     }
 }
 
-impl fmt::Display for Name {
+impl PartialEq<String> for NameString {
+    fn eq(&self, other: &String) -> bool {
+        &self.inner == other
+    }
+}
+
+impl PartialEq<str> for NameString {
+    fn eq(&self, other: &str) -> bool {
+        self.inner == other
+    }
+}
+
+impl PartialEq<NameString> for String {
+    fn eq(&self, other: &NameString) -> bool {
+        self == &other.inner
+    }
+}
+
+impl PartialEq<NameString> for str {
+    fn eq(&self, other: &NameString) -> bool {
+        self == other.inner
+    }
+}
+
+impl fmt::Display for NameString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.inner)
     }
 }
 
-impl AsRef<str> for Name {
+impl AsRef<str> for NameString {
     fn as_ref(&self) -> &str {
         &self.inner
     }
 }
 
-impl From<Name> for Box<str> {
-    fn from(s: Name) -> Box<str> {
+impl AsRef<Path> for NameString {
+    fn as_ref(&self) -> &Path {
+        Path::new(&self.inner)
+    }
+}
+
+impl From<NameString> for Box<str> {
+    fn from(s: NameString) -> Box<str> {
         s.inner.into()
     }
 }
 
-impl From<Name> for String {
-    fn from(s: Name) -> String {
+impl From<NameString> for String {
+    fn from(s: NameString) -> String {
         s.inner
     }
 }
 
-impl Serialize for Name {
+impl Serialize for NameString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -146,19 +176,19 @@ impl Serialize for Name {
     }
 }
 
-impl<'de> Deserialize<'de> for Name {
+impl<'de> Deserialize<'de> for NameString {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(NameVisitor)
+        deserializer.deserialize_str(NameStringVisitor)
     }
 }
 
-struct NameVisitor;
+struct NameStringVisitor;
 
-impl<'de> Visitor<'de> for NameVisitor {
-    type Value = Name;
+impl<'de> Visitor<'de> for NameStringVisitor {
+    type Value = NameString;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "a string satisfying docker name component rules")
@@ -168,7 +198,7 @@ impl<'de> Visitor<'de> for NameVisitor {
     where
         E: de::Error,
     {
-        let name = Name::new(s);
+        let name = NameString::new(s);
         match name {
             Ok(name) => Ok(name),
             Err(_) => Err(de::Error::invalid_value(Unexpected::Str(s), &self)),
@@ -190,76 +220,76 @@ mod tests {
 
     #[test]
     fn test_name_serde() {
-        assert_tokens(&Name::new("asdf0").unwrap(), &[Token::Str("asdf0")]);
+        assert_tokens(&NameString::new("asdf0").unwrap(), &[Token::Str("asdf0")]);
         assert_tokens(
-            &Name::new("asdf0.qwer").unwrap(),
+            &NameString::new("asdf0.qwer").unwrap(),
             &[Token::Str("asdf0.qwer")],
         );
         assert_tokens(
-            &Name::new("asdf0_qwer").unwrap(),
+            &NameString::new("asdf0_qwer").unwrap(),
             &[Token::Str("asdf0_qwer")],
         );
         assert_tokens(
-            &Name::new("asdf0__qwer").unwrap(),
+            &NameString::new("asdf0__qwer").unwrap(),
             &[Token::Str("asdf0__qwer")],
         );
         assert_tokens(
-            &Name::new("asdf0-qwer").unwrap(),
+            &NameString::new("asdf0-qwer").unwrap(),
             &[Token::Str("asdf0-qwer")],
         );
         assert_tokens(
-            &Name::new("asdf0--qwer").unwrap(),
+            &NameString::new("asdf0--qwer").unwrap(),
             &[Token::Str("asdf0--qwer")],
         );
         assert_tokens(
-            &Name::new("asdf0---qwer").unwrap(),
+            &NameString::new("asdf0---qwer").unwrap(),
             &[Token::Str("asdf0---qwer")],
         );
     }
 
     #[test]
     fn test_name_de_error() {
-        assert_de_tokens_error::<Name>(
+        assert_de_tokens_error::<NameString>(
             &[Token::Str("")],
             "invalid value: string \"\", expected a string satisfying docker name component rules",
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("ASDF")
             ], "invalid value: string \"ASDF\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("AS@DF")
             ], "invalid value: string \"AS@DF\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf..qwer")
             ], "invalid value: string \"asdf..qwer\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf___qwer")
             ], "invalid value: string \"asdf___qwer\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf.")
             ], "invalid value: string \"asdf.\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf_")
             ], "invalid value: string \"asdf_\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf-")
             ], "invalid value: string \"asdf-\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str(".asdf")
             ], "invalid value: string \".asdf\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("_asdf")
             ], "invalid value: string \"_asdf\", expected a string satisfying docker name component rules"
         );
-        assert_de_tokens_error::<Name>(&[
+        assert_de_tokens_error::<NameString>(&[
                 Token::Str("-asdf")
             ], "invalid value: string \"-asdf\", expected a string satisfying docker name component rules"
         );

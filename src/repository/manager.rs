@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::problem::Problem;
 use crate::repository::backend::{Backend, BackendExt};
 use crate::repository::{read_prob_list, ProblemIndex, Repository};
+use crate::NameString;
 
 const INDEX_FILE_NAME: &str = "index";
 
@@ -26,7 +27,7 @@ struct Index {
 
 pub struct RepositoryManager<'a> {
     registration: Registration<'a, RepositoryManager<'a>>,
-    repo_index: BTreeMap<String, Index>,
+    repo_index: BTreeMap<NameString, Index>,
     dirty: bool,
 }
 
@@ -79,7 +80,7 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn remove_repo(&mut self, repo_name: &str) -> SomaResult<()> {
+    pub fn remove_repo(&mut self, repo_name: &NameString) -> SomaResult<()> {
         let local_path = self.repo_path(repo_name);
         if local_path.is_dir() {
             remove_dir_all(local_path)?;
@@ -93,10 +94,10 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn get_repo(&self, repo_name: &str) -> SomaResult<Repository> {
+    pub fn get_repo(&self, repo_name: &NameString) -> SomaResult<Repository> {
         let repository = match self.repo_index.get(repo_name) {
             Some(index) => Repository::new(
-                repo_name.to_owned(),
+                repo_name.clone(),
                 index.backend.clone(),
                 index.prob_list.clone(),
                 self,
@@ -145,7 +146,7 @@ impl<'a> RepositoryManager<'a> {
         })
     }
 
-    pub fn repo_exists(&self, repo_name: &str) -> bool {
+    pub fn repo_exists(&self, repo_name: &NameString) -> bool {
         self.repo_index.contains_key(repo_name)
     }
 }
