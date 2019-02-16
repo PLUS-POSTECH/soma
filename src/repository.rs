@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::prelude::*;
 use crate::problem::{read_manifest, MANIFEST_FILE_NAME};
 use crate::read_file_contents;
-use crate::repository::backend::Backend;
+use crate::repository::backend::{Backend, BackendExt};
 
 pub use self::manager::RepositoryManager;
 
@@ -82,7 +82,7 @@ impl<'a> Repository<'a> {
     }
 
     pub fn update(&self) -> SomaResult<()> {
-        self.backend.update_at(&self.path())
+        self.backend.update_at(self.path())
     }
 
     pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a String> {

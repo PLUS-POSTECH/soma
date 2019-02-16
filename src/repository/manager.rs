@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::data_dir::{DirectoryManager, Registration};
 use crate::prelude::*;
 use crate::problem::Problem;
-use crate::repository::backend::Backend;
+use crate::repository::backend::{Backend, BackendExt};
 use crate::repository::{read_prob_list, ProblemIndex, Repository};
 
 const INDEX_FILE_NAME: &str = "index";

@@ -11,7 +11,7 @@ use crate::prelude::*;
 
 #[typetag::serde(tag = "type")]
 pub trait Backend: BackendClone + Display {
-    fn update_at(&self, local_path: &Path) -> SomaResult<()>;
+    fn update_at_path(&self, local_path: &Path) -> SomaResult<()>;
 }
 
 pub trait BackendClone {
@@ -32,6 +32,14 @@ impl Clone for Box<dyn Backend> {
         self.clone_box()
     }
 }
+
+pub trait BackendExt: Backend {
+    fn update_at(&self, local_path: impl AsRef<Path>) -> SomaResult<()> {
+        self.update_at_path(local_path.as_ref())
+    }
+}
+
+impl<T> BackendExt for T where T: ?Sized + Backend {}
 
 pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Box<dyn Backend>)> {
     let path = Path::new(repo_location);
@@ -78,7 +86,7 @@ impl GitBackend {
 
 #[typetag::serde]
 impl Backend for GitBackend {
-    fn update_at(&self, local_path: &Path) -> SomaResult<()> {
+    fn update_at_path(&self, local_path: &Path) -> SomaResult<()> {
         let git_repo = GitRepository::open(local_path)
             .or_else(|_| GitRepository::clone(&self.url, local_path))?;
         git_repo
@@ -114,7 +122,7 @@ impl LocalBackend {
 
 #[typetag::serde]
 impl Backend for LocalBackend {
-    fn update_at(&self, local_path: &Path) -> SomaResult<()> {
+    fn update_at_path(&self, local_path: &Path) -> SomaResult<()> {
         if local_path.exists() {
             remove_dir_all(local_path)?;
         }
