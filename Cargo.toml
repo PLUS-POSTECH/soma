@@ -28,7 +28,7 @@ lazy_static = "1.2.0"
 path-slash = "0.1.1"
 regex = "1.1.0"
 remove_dir_all = "0.5.1"
-serde = { version = "1.0.87", features = ["derive"] }
+serde = { version = "1.0.88", features = ["derive"] }
 serde_cbor = "0.9.0"
 tar = "0.4.20"
 tempfile = "3.0.6"
@@ -40,7 +40,7 @@ whoami = "0.4.1"
 
 [dev-dependencies]
 matches = "0.1.8"
-serde_test = "1.0.87"
+serde_test = "1.0.88"
 
 [lib]
 name = "soma"

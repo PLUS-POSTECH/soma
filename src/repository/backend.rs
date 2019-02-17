@@ -50,7 +50,7 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Box<dyn B
                 .ok_or(SomaError::FileNameNotFound)?
                 .to_str()
                 .ok_or(SomaError::InvalidUnicode)?
-                .to_owned(),
+                .to_lowercase(),
             Box::new(LocalBackend::new(path.canonicalize()?.to_owned())),
         ))
     } else {
@@ -67,7 +67,7 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Box<dyn B
             &last_name
         };
         Ok((
-            repo_name.to_owned(),
+            repo_name.to_lowercase(),
             Box::new(GitBackend::new(repo_location.to_owned())),
         ))
     }

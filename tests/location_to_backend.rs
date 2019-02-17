@@ -22,8 +22,8 @@ fn test_parse_fail(location: &str) {
 
 #[test]
 fn location_to_backend_success() {
-    test_parse_git(SIMPLE_BOF_GIT, &SIMPLE_BOF_REPO_NAME);
-    test_parse_git(BATA_LIST_GIT, &BATA_LIST_REPO_NAME);
+    test_parse_git(SIMPLE_BOF_GIT, SIMPLE_BOF_REPO_NAME);
+    test_parse_git(BATA_LIST_GIT, BATA_LIST_REPO_NAME);
     // TODO: git through other protocols
     // test_parse_git("git@github.com:PLUS-POSTECH/simple-bof.git", SIMPLE_BOF_REPO_NAME);
 

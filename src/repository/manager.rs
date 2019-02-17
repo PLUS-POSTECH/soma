@@ -64,7 +64,12 @@ impl<'a> RepositoryManager<'a> {
         self.root_path().join(repo_name)
     }
 
-    pub fn add_repo(&mut self, repo_name: NameString, backend: Box<dyn Backend>) -> SomaResult<()> {
+    pub fn add_repo(
+        &mut self,
+        repo_name: impl AsRef<str>,
+        backend: Box<dyn Backend>,
+    ) -> SomaResult<()> {
+        let repo_name = NameString::try_from(repo_name)?;
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {
@@ -80,22 +85,24 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn remove_repo(&mut self, repo_name: &NameString) -> SomaResult<()> {
-        let local_path = self.repo_path(repo_name);
+    pub fn remove_repo(&mut self, repo_name: impl AsRef<str>) -> SomaResult<()> {
+        let repo_name = NameString::try_from(repo_name)?;
+        let local_path = self.repo_path(&repo_name);
         if local_path.is_dir() {
             remove_dir_all(local_path)?;
         }
 
         self.repo_index
-            .remove(repo_name)
+            .remove(&repo_name)
             .ok_or(SomaError::RepositoryNotFound)?;
         self.dirty = true;
 
         Ok(())
     }
 
-    pub fn get_repo(&self, repo_name: &NameString) -> SomaResult<Repository> {
-        let repository = match self.repo_index.get(repo_name) {
+    pub fn get_repo(&self, repo_name: impl AsRef<str>) -> SomaResult<Repository> {
+        let repo_name = NameString::try_from(repo_name)?;
+        let repository = match self.repo_index.get(&repo_name) {
             Some(index) => Repository::new(
                 repo_name.clone(),
                 index.backend.clone(),
@@ -146,8 +153,12 @@ impl<'a> RepositoryManager<'a> {
         })
     }
 
-    pub fn repo_exists(&self, repo_name: &NameString) -> bool {
-        self.repo_index.contains_key(repo_name)
+    pub fn repo_exists(&self, repo_name: impl AsRef<str>) -> bool {
+        let repo_name = NameString::try_from(repo_name);
+        match repo_name {
+            Ok(repo_name) => self.repo_index.contains_key(&repo_name),
+            Err(_) => false,
+        }
     }
 }
 

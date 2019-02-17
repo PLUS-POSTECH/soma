@@ -16,7 +16,7 @@ use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
 use crate::repository::backend;
 use crate::template::{HandleBarsExt, Templates};
-use crate::{Environment, NameString, Printer};
+use crate::{Environment, Printer};
 
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
@@ -25,18 +25,17 @@ pub fn add(
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
-        Some(repo_name) => NameString::try_from(repo_name)?,
-        None => NameString::try_from(resolved_repo_name)?,
+        Some(repo_name) => repo_name,
+        None => &resolved_repo_name,
     };
 
-    env.repo_manager_mut()
-        .add_repo(repo_name.clone(), backend)?;
+    env.repo_manager_mut().add_repo(repo_name, backend)?;
 
-    let repository = env.repo_manager().get_repo(&repo_name)?;
+    let repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
 
     env.printer()
-        .write_line(&format!("Repository added: '{}'", &repo_name));
+        .write_line(&format!("Repository added: '{}'", repo_name));
 
     Ok(())
 }
@@ -200,7 +199,6 @@ pub fn remove(
     repo_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    let repo_name = NameString::try_from(repo_name)?;
     let image_list = runtime.block_on(docker::list_images(env))?;
     if docker::image_from_repo_exists(&image_list, &repo_name) {
         Err(SomaError::RepositoryInUse)?;

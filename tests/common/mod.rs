@@ -5,13 +5,12 @@ use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use hyper::client::connect::Connect;
-use lazy_static::lazy_static;
 use tempfile::TempDir;
 use tokio::runtime::current_thread::Runtime;
 
 use soma::data_dir::DataDirectory;
 use soma::docker::connect_default;
-use soma::{Environment, NameString};
+use soma::Environment;
 
 pub use self::test_printer::TestPrinter;
 
@@ -20,13 +19,10 @@ mod test_printer;
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub const SIMPLE_BOF_GIT: &str = "https://github.com/PLUS-POSTECH/simple-bof.git";
-pub const BATA_LIST_GIT: &str = "https://github.com/PLUS-POSTECH/soma-bata-list.git";
+pub const SIMPLE_BOF_REPO_NAME: &str = "simple-bof";
 
-lazy_static! {
-    pub static ref SIMPLE_BOF_REPO_NAME: NameString = NameString::try_from("simple-bof").unwrap();
-    pub static ref BATA_LIST_REPO_NAME: NameString =
-        NameString::try_from("soma-bata-list").unwrap();
-}
+pub const BATA_LIST_GIT: &str = "https://github.com/PLUS-POSTECH/soma-bata-list.git";
+pub const BATA_LIST_REPO_NAME: &str = "soma-bata-list";
 
 pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
