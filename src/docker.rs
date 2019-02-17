@@ -328,9 +328,9 @@ pub fn docker_labels<'a>(
 ) -> DockerLabel<'a> {
     vec![
         (LABEL_KEY_VERSION, VERSION),
-        (LABEL_KEY_USERNAME, &env.username()),
-        (LABEL_KEY_REPOSITORY, &problem.repo_name()),
-        (LABEL_KEY_PROBLEM, &problem.prob_name()),
+        (LABEL_KEY_USERNAME, env.username()),
+        (LABEL_KEY_REPOSITORY, problem.repo_name()),
+        (LABEL_KEY_PROBLEM, problem.prob_name()),
     ]
     .into_iter()
     .collect()

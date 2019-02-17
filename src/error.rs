@@ -23,7 +23,7 @@ pub enum Error {
     #[fail(display = "soma-list.toml contains a duplicate or inaccessible entry")]
     InvalidSomaList,
     #[fail(
-        display = "The name doesn't meet docker name component rules, which allows lower case alphanumerics with non-boundary '_', '__', or (multiple) '-'(s)"
+        display = "The name doesn't satisfy docker name component rules, which allows lower case alphanumerics with non-boundary '_', '__', or (multiple) '-'(s)"
     )]
     InvalidName,
     #[fail(display = "The specified file's path contains unsupported characters")]

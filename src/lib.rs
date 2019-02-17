@@ -1,5 +1,4 @@
 use std::cell::{RefCell, RefMut};
-use std::convert::From;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -154,18 +153,6 @@ impl AsRef<str> for NameString {
 impl AsRef<Path> for NameString {
     fn as_ref(&self) -> &Path {
         Path::new(&self.inner)
-    }
-}
-
-impl From<NameString> for Box<str> {
-    fn from(s: NameString) -> Box<str> {
-        s.inner.into()
-    }
-}
-
-impl From<NameString> for String {
-    fn from(s: NameString) -> String {
-        s.inner
     }
 }
 
