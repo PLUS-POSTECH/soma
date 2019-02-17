@@ -239,10 +239,6 @@ mod tests {
             &[Token::Str("asdf0")],
         );
         assert_tokens(
-            &NameString::try_from("asdf0.qwer").unwrap(),
-            &[Token::Str("asdf0.qwer")],
-        );
-        assert_tokens(
             &NameString::try_from("asdf0_qwer").unwrap(),
             &[Token::Str("asdf0_qwer")],
         );
@@ -277,6 +273,10 @@ mod tests {
         assert_de_tokens_error::<NameString>(&[
                 Token::Str("AS@DF")
             ], "invalid value: string \"AS@DF\", expected a string satisfying docker name component rules"
+        );
+        assert_de_tokens_error::<NameString>(&[
+                Token::Str("asdf0.qwer")
+            ], "invalid value: string \"asdf0.qwer\", expected a string satisfying docker name component rules"
         );
         assert_de_tokens_error::<NameString>(&[
                 Token::Str("asdf..qwer")
