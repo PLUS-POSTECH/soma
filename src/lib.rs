@@ -3,6 +3,7 @@ use std::convert::From;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
+use std::ops::Deref;
 use std::path::Path;
 
 use bollard::Docker;
@@ -38,7 +39,7 @@ pub trait Printer {
 }
 
 pub struct Environment<'a, C: 'static, P: Printer + 'static> {
-    username: String,
+    username: NameString,
     repo_manager: RepositoryManager<'a>,
     docker: Docker<C>,
     printer: RefCell<P>,
@@ -56,6 +57,7 @@ where
         printer: P,
     ) -> SomaResult<Environment<'a, C, P>> {
         let repo_manager = data_dir.register::<RepositoryManager>()?;
+        let username = NameString::try_from(username)?;
 
         Ok(Environment {
             username,
@@ -65,7 +67,7 @@ where
         })
     }
 
-    pub fn username(&self) -> &String {
+    pub fn username(&self) -> &NameString {
         &self.username
     }
 
@@ -88,25 +90,17 @@ pub struct NameString {
 }
 
 lazy_static! {
-    static ref NAME_REGEX: Regex = Regex::new(r"^[a-z0-9]+((?:[._]|__|[-]*)[a-z0-9]+)*$").unwrap();
+    static ref NAME_REGEX: Regex = Regex::new(r"^[a-z0-9]+((?:_|__|[-]*)[a-z0-9]+)*$").unwrap();
 }
 
 impl NameString {
-    pub fn new(s: impl AsRef<str>) -> SomaResult<NameString> {
+    // TODO: Use TryFrom trait when Rust stabilizes it.
+    pub fn try_from(s: impl AsRef<str>) -> SomaResult<NameString> {
         let s = s.as_ref();
         if NAME_REGEX.is_match(s) {
             Ok(NameString {
                 inner: s.to_owned(),
             })
-        } else {
-            Err(SomaError::InvalidName)?
-        }
-    }
-
-    // TODO: Use TryFrom trait when Rust stabilizes it.
-    pub fn try_from(s: String) -> SomaResult<NameString> {
-        if NAME_REGEX.is_match(&s) {
-            Ok(NameString { inner: s })
         } else {
             Err(SomaError::InvalidName)?
         }
@@ -140,6 +134,14 @@ impl PartialEq<NameString> for str {
 impl fmt::Display for NameString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.inner)
+    }
+}
+
+impl Deref for NameString {
+    type Target = String;
+
+    fn deref(&self) -> &String {
+        &self.inner
     }
 }
 
@@ -198,7 +200,7 @@ impl<'de> Visitor<'de> for NameStringVisitor {
     where
         E: de::Error,
     {
-        let name = NameString::new(s);
+        let name = NameString::try_from(s);
         match name {
             Ok(name) => Ok(name),
             Err(_) => Err(de::Error::invalid_value(Unexpected::Str(s), &self)),
@@ -220,41 +222,44 @@ mod tests {
 
     #[test]
     fn test_name_eq() {
-        assert_eq!("asdf", &NameString::new("asdf").unwrap());
-        assert_eq!(&NameString::new("asdf").unwrap(), "asdf");
-        assert_eq!(String::from("asdf"), NameString::new("asdf").unwrap());
-        assert_eq!(NameString::new("asdf").unwrap(), String::from("asdf"));
-        assert_ne!("qwer", &NameString::new("asdf").unwrap());
-        assert_ne!(&NameString::new("qwer").unwrap(), "asdf");
-        assert_ne!(String::from("qwer"), NameString::new("asdf").unwrap());
-        assert_ne!(NameString::new("qwer").unwrap(), String::from("asdf"));
+        assert_eq!("asdf", &NameString::try_from("asdf").unwrap());
+        assert_eq!(&NameString::try_from("asdf").unwrap(), "asdf");
+        assert_eq!(String::from("asdf"), NameString::try_from("asdf").unwrap());
+        assert_eq!(NameString::try_from("asdf").unwrap(), String::from("asdf"));
+        assert_ne!("qwer", &NameString::try_from("asdf").unwrap());
+        assert_ne!(&NameString::try_from("qwer").unwrap(), "asdf");
+        assert_ne!(String::from("qwer"), NameString::try_from("asdf").unwrap());
+        assert_ne!(NameString::try_from("qwer").unwrap(), String::from("asdf"));
     }
 
     #[test]
     fn test_name_serde() {
-        assert_tokens(&NameString::new("asdf0").unwrap(), &[Token::Str("asdf0")]);
         assert_tokens(
-            &NameString::new("asdf0.qwer").unwrap(),
+            &NameString::try_from("asdf0").unwrap(),
+            &[Token::Str("asdf0")],
+        );
+        assert_tokens(
+            &NameString::try_from("asdf0.qwer").unwrap(),
             &[Token::Str("asdf0.qwer")],
         );
         assert_tokens(
-            &NameString::new("asdf0_qwer").unwrap(),
+            &NameString::try_from("asdf0_qwer").unwrap(),
             &[Token::Str("asdf0_qwer")],
         );
         assert_tokens(
-            &NameString::new("asdf0__qwer").unwrap(),
+            &NameString::try_from("asdf0__qwer").unwrap(),
             &[Token::Str("asdf0__qwer")],
         );
         assert_tokens(
-            &NameString::new("asdf0-qwer").unwrap(),
+            &NameString::try_from("asdf0-qwer").unwrap(),
             &[Token::Str("asdf0-qwer")],
         );
         assert_tokens(
-            &NameString::new("asdf0--qwer").unwrap(),
+            &NameString::try_from("asdf0--qwer").unwrap(),
             &[Token::Str("asdf0--qwer")],
         );
         assert_tokens(
-            &NameString::new("asdf0---qwer").unwrap(),
+            &NameString::try_from("asdf0---qwer").unwrap(),
             &[Token::Str("asdf0---qwer")],
         );
     }

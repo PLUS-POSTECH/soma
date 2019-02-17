@@ -25,7 +25,7 @@ pub fn add(
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
-        Some(repo_name) => NameString::new(repo_name)?,
+        Some(repo_name) => NameString::try_from(repo_name)?,
         None => NameString::try_from(resolved_repo_name)?,
     };
 
@@ -200,9 +200,9 @@ pub fn remove(
     repo_name: &str,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
-    let repo_name = NameString::new(repo_name)?;
+    let repo_name = NameString::try_from(repo_name)?;
     let image_list = runtime.block_on(docker::list_images(env))?;
-    if docker::image_from_repo_exists(&image_list, repo_name.as_ref()) {
+    if docker::image_from_repo_exists(&image_list, &repo_name) {
         Err(SomaError::RepositoryInUse)?;
     }
 

@@ -104,11 +104,11 @@ impl SomaFilterBuilder {
     pub fn append_prob(self, problem: &Problem) -> SomaFilterBuilder {
         self.append_filter(
             LABEL_KEY_REPOSITORY.to_owned(),
-            problem.repo_name().clone().into(),
+            problem.repo_name().to_string(),
         )
         .append_filter(
             LABEL_KEY_PROBLEM.to_owned(),
-            problem.prob_name().clone().into(),
+            problem.prob_name().to_string(),
         )
     }
 
