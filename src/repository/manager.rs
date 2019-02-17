@@ -64,7 +64,7 @@ impl<'a> RepositoryManager<'a> {
         self.root_path().join(repo_name)
     }
 
-    pub fn add_repo(&mut self, repo_name: String, backend: Box<dyn Backend>) -> SomaResult<()> {
+    pub fn add_repo(&mut self, repo_name: NameString, backend: Box<dyn Backend>) -> SomaResult<()> {
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {

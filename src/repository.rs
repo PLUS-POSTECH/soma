@@ -44,16 +44,16 @@ struct ProblemIndex {
 }
 
 pub struct Repository<'a> {
-    name: String,
-    backend: Backend,
+    name: NameString,
+    backend: Box<dyn Backend>,
     prob_list: Vec<ProblemIndex>,
     manager: &'a RepositoryManager<'a>,
 }
 
 impl<'a> Repository<'a> {
     fn new(
-        name: String,
-        backend: Backend,
+        name: NameString,
+        backend: Box<dyn Backend>,
         prob_list: Vec<ProblemIndex>,
         manager: &'a RepositoryManager<'a>,
     ) -> Repository<'a> {
