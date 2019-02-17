@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use self::configs::{BinaryConfig, SolidBinaryConfig};
 use crate::prelude::*;
-use crate::read_file_contents;
+use crate::{read_file_contents, NameString};
 
 pub mod configs;
 
@@ -12,13 +12,13 @@ pub const MANIFEST_FILE_NAME: &str = "soma.toml";
 
 #[derive(Debug)]
 pub struct Problem {
-    repo_name: String,
-    prob_name: String,
+    repo_name: NameString,
+    prob_name: NameString,
     path: PathBuf,
 }
 
 impl Problem {
-    pub fn new(repo_name: String, prob_name: String, path: PathBuf) -> Self {
+    pub fn new(repo_name: NameString, prob_name: NameString, path: PathBuf) -> Self {
         Problem {
             repo_name,
             prob_name,
@@ -34,11 +34,11 @@ impl Problem {
         format!("soma.{}/{}", user_name, self.fully_qualified_name())
     }
 
-    pub fn repo_name(&self) -> &String {
+    pub fn repo_name(&self) -> &NameString {
         &self.repo_name
     }
 
-    pub fn prob_name(&self) -> &String {
+    pub fn prob_name(&self) -> &NameString {
         &self.prob_name
     }
 
@@ -54,20 +54,20 @@ impl Problem {
 
 #[derive(Deserialize)]
 pub struct Manifest {
-    name: String,
+    name: NameString,
     work_dir: Option<PathBuf>,
     binary: BinaryConfig,
 }
 
 #[derive(Serialize)]
 pub struct SolidManifest {
-    name: String,
+    name: NameString,
     work_dir: PathBuf,
     binary: SolidBinaryConfig,
 }
 
 impl Manifest {
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &NameString {
         &self.name
     }
 

@@ -16,8 +16,7 @@ use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
 use crate::repository::backend;
 use crate::template::{HandleBarsExt, Templates};
-use crate::Environment;
-use crate::Printer;
+use crate::{Environment, Printer};
 
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
@@ -26,18 +25,17 @@ pub fn add(
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
-        Some(repo_name) => repo_name.to_owned(),
-        None => resolved_repo_name,
+        Some(repo_name) => repo_name,
+        None => &resolved_repo_name,
     };
 
-    env.repo_manager_mut()
-        .add_repo(repo_name.clone(), backend)?;
+    env.repo_manager_mut().add_repo(repo_name, backend)?;
 
-    let repository = env.repo_manager().get_repo(&repo_name)?;
+    let repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
 
     env.printer()
-        .write_line(&format!("Repository added: '{}'", &repo_name));
+        .write_line(&format!("Repository added: '{}'", repo_name));
 
     Ok(())
 }

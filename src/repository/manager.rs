@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::problem::Problem;
 use crate::repository::backend::{Backend, BackendExt};
 use crate::repository::{read_prob_list, ProblemIndex, Repository};
+use crate::NameString;
 
 const INDEX_FILE_NAME: &str = "index";
 
@@ -26,7 +27,7 @@ struct Index {
 
 pub struct RepositoryManager<'a> {
     registration: Registration<'a, RepositoryManager<'a>>,
-    repo_index: BTreeMap<String, Index>,
+    repo_index: BTreeMap<NameString, Index>,
     dirty: bool,
 }
 
@@ -63,7 +64,12 @@ impl<'a> RepositoryManager<'a> {
         self.root_path().join(repo_name)
     }
 
-    pub fn add_repo(&mut self, repo_name: String, backend: Box<dyn Backend>) -> SomaResult<()> {
+    pub fn add_repo(
+        &mut self,
+        repo_name: impl AsRef<str>,
+        backend: Box<dyn Backend>,
+    ) -> SomaResult<()> {
+        let repo_name = NameString::try_from(repo_name)?;
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {
@@ -79,24 +85,26 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn remove_repo(&mut self, repo_name: &str) -> SomaResult<()> {
-        let local_path = self.repo_path(repo_name);
+    pub fn remove_repo(&mut self, repo_name: impl AsRef<str>) -> SomaResult<()> {
+        let repo_name = NameString::try_from(repo_name)?;
+        let local_path = self.repo_path(&repo_name);
         if local_path.is_dir() {
             remove_dir_all(local_path)?;
         }
 
         self.repo_index
-            .remove(repo_name)
+            .remove(&repo_name)
             .ok_or(SomaError::RepositoryNotFound)?;
         self.dirty = true;
 
         Ok(())
     }
 
-    pub fn get_repo(&self, repo_name: &str) -> SomaResult<Repository> {
-        let repository = match self.repo_index.get(repo_name) {
+    pub fn get_repo(&self, repo_name: impl AsRef<str>) -> SomaResult<Repository> {
+        let repo_name = NameString::try_from(repo_name)?;
+        let repository = match self.repo_index.get(&repo_name) {
             Some(index) => Repository::new(
-                repo_name.to_owned(),
+                repo_name.clone(),
                 index.backend.clone(),
                 index.prob_list.clone(),
                 self,
@@ -145,8 +153,12 @@ impl<'a> RepositoryManager<'a> {
         })
     }
 
-    pub fn repo_exists(&self, repo_name: &str) -> bool {
-        self.repo_index.contains_key(repo_name)
+    pub fn repo_exists(&self, repo_name: impl AsRef<str>) -> bool {
+        let repo_name = NameString::try_from(repo_name);
+        match repo_name {
+            Ok(repo_name) => self.repo_index.contains_key(&repo_name),
+            Err(_) => false,
+        }
     }
 }
 

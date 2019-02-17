@@ -35,13 +35,13 @@ impl<'de> Deserialize<'de> for FilePermissions {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(PermissionsString)
+        deserializer.deserialize_str(FilePermissionsVisitor)
     }
 }
 
-struct PermissionsString;
+struct FilePermissionsVisitor;
 
-impl<'de> Visitor<'de> for PermissionsString {
+impl<'de> Visitor<'de> for FilePermissionsVisitor {
     type Value = FilePermissions;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

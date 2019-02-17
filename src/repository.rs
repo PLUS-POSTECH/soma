@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::problem::{read_manifest, MANIFEST_FILE_NAME};
-use crate::read_file_contents;
 use crate::repository::backend::{Backend, BackendExt};
+use crate::{read_file_contents, NameString};
 
 pub use self::manager::RepositoryManager;
 
@@ -39,12 +39,12 @@ impl ProblemList {
 
 #[derive(Clone, Deserialize, Serialize)]
 struct ProblemIndex {
-    name: String,
+    name: NameString,
     path: PathBuf,
 }
 
 pub struct Repository<'a> {
-    name: String,
+    name: NameString,
     backend: Box<dyn Backend>,
     prob_list: Vec<ProblemIndex>,
     manager: &'a RepositoryManager<'a>,
@@ -52,7 +52,7 @@ pub struct Repository<'a> {
 
 impl<'a> Repository<'a> {
     fn new(
-        name: String,
+        name: NameString,
         backend: Box<dyn Backend>,
         prob_list: Vec<ProblemIndex>,
         manager: &'a RepositoryManager<'a>,
@@ -65,7 +65,7 @@ impl<'a> Repository<'a> {
         }
     }
 
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &NameString {
         &self.name
     }
 
@@ -85,7 +85,7 @@ impl<'a> Repository<'a> {
         self.backend.update_at(self.path())
     }
 
-    pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a String> {
+    pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a NameString> {
         self.prob_list.iter().map(|prob_index| &prob_index.name)
     }
 }
@@ -102,7 +102,7 @@ fn read_prob_manifest(
 
     let manifest = read_manifest(manifest_path)?;
     Ok(ProblemIndex {
-        name: manifest.name().to_owned(),
+        name: manifest.name().clone(),
         path: prob_relative_path.as_ref().to_owned(),
     })
 }

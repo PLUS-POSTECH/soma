@@ -1,6 +1,6 @@
 use matches::assert_matches;
-use soma::ops::{add, remove};
 
+use soma::ops::{add, remove};
 use soma::prelude::*;
 
 pub use self::common::*;

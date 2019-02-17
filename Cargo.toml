@@ -12,7 +12,7 @@ readme = "README.md"
 
 
 [dependencies]
-bollard = "0.2.0"
+bollard = "0.2.1"
 clap = "~2.32.0"
 crossterm = "0.6.0"
 dirs = "1.0.4"
@@ -23,13 +23,15 @@ fs_extra = "1.1.0"
 futures = "0.1.25"
 git2 = "0.8.0"
 handlebars = "1.1.0"
-hyper = "0.12.23"
+hyper = "0.12.24"
+lazy_static = "1.2.0"
 path-slash = "0.1.1"
+regex = "1.1.0"
 remove_dir_all = "0.5.1"
-serde = { version = "1.0.85", features = ["derive"] }
+serde = { version = "1.0.88", features = ["derive"] }
 serde_cbor = "0.9.0"
 tar = "0.4.20"
-tempfile = "3.0.5"
+tempfile = "3.0.6"
 tokio = "0.1.15"
 toml = "0.4.10"
 typetag = "0.1.1"
@@ -38,7 +40,7 @@ whoami = "0.4.1"
 
 [dev-dependencies]
 matches = "0.1.8"
-serde_test = "1.0.85"
+serde_test = "1.0.88"
 
 [lib]
 name = "soma"

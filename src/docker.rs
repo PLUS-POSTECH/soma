@@ -104,9 +104,12 @@ impl SomaFilterBuilder {
     pub fn append_prob(self, problem: &Problem) -> SomaFilterBuilder {
         self.append_filter(
             LABEL_KEY_REPOSITORY.to_owned(),
-            problem.repo_name().to_owned(),
+            problem.repo_name().to_string(),
         )
-        .append_filter(LABEL_KEY_PROBLEM.to_owned(), problem.prob_name().to_owned())
+        .append_filter(
+            LABEL_KEY_PROBLEM.to_owned(),
+            problem.prob_name().to_string(),
+        )
     }
 
     pub fn build(self) -> SomaFilter {
@@ -325,7 +328,7 @@ pub fn docker_labels<'a>(
 ) -> DockerLabel<'a> {
     vec![
         (LABEL_KEY_VERSION, VERSION),
-        (LABEL_KEY_USERNAME, &env.username()),
+        (LABEL_KEY_USERNAME, env.username()),
         (LABEL_KEY_REPOSITORY, problem.repo_name()),
         (LABEL_KEY_PROBLEM, problem.prob_name()),
     ]
