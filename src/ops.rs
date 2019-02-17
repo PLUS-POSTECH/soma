@@ -200,11 +200,11 @@ pub fn remove(
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let image_list = runtime.block_on(docker::list_images(env))?;
-    if docker::image_from_repo_exists(&image_list, &repo_name) {
+    if docker::image_from_repo_exists(&image_list, repo_name) {
         Err(SomaError::RepositoryInUse)?;
     }
 
-    env.repo_manager_mut().remove_repo(&repo_name)?;
+    env.repo_manager_mut().remove_repo(repo_name)?;
     env.printer()
         .write_line(&format!("Repository removed: '{}'", &repo_name));
 
