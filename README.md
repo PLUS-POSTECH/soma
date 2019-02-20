@@ -54,16 +54,17 @@ Soma helps to manage and distribute CTF problems after contests.
 
 Downloading and running a problem is as easy as running three commands.
 
-```
-soma add https://github.com/PLUS-POSTECH/simple-bof.git
-soma build simple-bof
-soma run simple-bof 31337
+```bash
+$ soma add https://github.com/PLUS-POSTECH/simple-bof.git
+$ soma build simple-bof
+$ soma run simple-bof 31337
 ```
 
 CTF problems often contain public files. You can also fetch them easily with soma.
 
-```
-soma fetch simple-bof  # this will copy public files to the current working directory
+```bash
+# this will copy public files to the current working directory
+$ soma fetch simple-bof
 ```
 
 
@@ -142,9 +143,9 @@ We are expecting to release `0.1.0-alpha` soon to [crates.io].
 
 |          | Add / Create | Remove |
 | -------- | ------------ | ------ |
-| Repository | [add](#Adding-repositories) | [remove](#Removing-repositories) |
-| Image | [build](#Building-problem-images) | [clean](#Removing-problem-images) |
-| Container | [run](#Running-problems) | [stop](#Stopping-problems) |
+| Repository | [add](#adding-repositories) | [remove](#removing-repositories) |
+| Image | [build](#building-problem-images) | [clean](#removing-problem-images) |
+| Container | [run](#running-problems) | [stop](#stopping-problems) |
 
 
 ### Adding repositories
@@ -259,7 +260,7 @@ If the problem name is unique (i.e., the problem name is used only in a single r
 
 #### Name rules
 
-All repository and problem names should follow the docker name component rules with no `.` (i.e., `^[a-z0-9]+((?:_|__|[-]*)[a-z0-9]+)*$`, see [Docker regexp definitions][docker-regexp] for more details). This measure is to prevent Soma from behaving bad when malicious input is provided. We chose docker name component rules as repository and problem names are substrings of Docker image name. And 'no `.`' rule is added as Soma utilizes `.` as a name separator.
+All repository and problem names should follow the docker name component rules with no `.` (i.e., `^[a-z0-9]+((?:_|__|[-]*)[a-z0-9]+)*$`, see [Docker regexp definitions][docker-regexp] for more details). This measure is to prevent Soma from behaving bad when malicious input is provided. We chose docker name component rules as repository and problem names are substrings of Docker image name. And 'no `.`' rule is added because Soma utilizes `.` as a name separator.
 
 
 ## How to Add Soma Support to Your Repository
@@ -337,7 +338,7 @@ The `cmd` field defines how to run the problem binary. The specified binary will
 
 `[[binary.executable]]`, `[[binary.readonly]]` sections contain file entries of the subconfiguration.
 
-`[[binary.readwrite]]`, `[[binary.with-permissions]]`, and `[[binary.fetch-only]]` are reserved for a future implementation (see [#50][issue #50] and [#84][issue #84]).
+`[[binary.readwrite]]`, `[[binary.with-permissions]]`, and `[[binary.fetchonly]]` are reserved for a future implementation (see [#50][issue #50] and [#84][issue #84]).
 
 ###### The `path` field
 
