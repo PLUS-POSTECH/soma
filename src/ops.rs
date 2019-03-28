@@ -32,7 +32,7 @@ pub fn add(
     env.repo_manager_mut().add_repo(repo_name, backend)?;
 
     let mut repository = env.repo_manager().get_repo(repo_name)?;
-    repository.update()?;
+    repository.update(&[])?;
 
     env.printer()
         .write_line(&format!("Repository added: '{}'", repo_name));
@@ -264,9 +264,13 @@ pub fn stop(
     Ok(())
 }
 
-pub fn update(env: &Environment<impl Connect, impl Printer>, repo_name: &str) -> SomaResult<()> {
+pub fn update(
+    env: &Environment<impl Connect, impl Printer>,
+    repo_name: &str,
+    runtime: &mut Runtime,
+) -> SomaResult<()> {
     let mut repository = env.repo_manager().get_repo(repo_name)?;
-    repository.update()?;
+    repository.update(&runtime.block_on(docker::list_containers(env))?)?;
     env.printer()
         .write_line(&format!("Repository updated: '{}'", repo_name));
 

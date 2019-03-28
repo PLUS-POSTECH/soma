@@ -5,7 +5,7 @@ use soma::ops::update;
 use soma::prelude::*;
 use soma::{Environment, Printer};
 
-use crate::commands::{App, SomaCommand};
+use crate::commands::{default_runtime, App, SomaCommand};
 
 pub struct UpdateCommand;
 
@@ -34,6 +34,10 @@ impl SomaCommand for UpdateCommand {
         env: Environment<impl Connect, impl Printer>,
         matches: &ArgMatches,
     ) -> SomaResult<()> {
-        update(&env, matches.value_of("repository").unwrap())
+        update(
+            &env,
+            matches.value_of("repository").unwrap(),
+            &mut default_runtime(),
+        )
     }
 }
