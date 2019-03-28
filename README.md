@@ -18,6 +18,7 @@
   * [Stopping problems](#stopping-problems)
   * [Removing problem images](#removing-problem-images)
   * [Removing repositories](#removing-repositories)
+  * [Updating repositories](#updating-repositories)
   * [Notes on repository and problem names](#notes-on-repository-and-problem-names)
     + [Problem query](#problem-query)
     + [Name rules](#name-rules)
@@ -140,12 +141,13 @@ We are expecting to release `0.1.0-alpha` soon to [crates.io].
 
 ### Command overview
 
-
 |          | Add / Create | Remove |
 | -------- | ------------ | ------ |
 | Repository | [add](#adding-repositories) | [remove](#removing-repositories) |
 | Image | [build](#building-problem-images) | [clean](#removing-problem-images) |
 | Container | [run](#running-problems) | [stop](#stopping-problems) |
+
+Additionally, [update](#updating-repositories)
 
 
 ### Adding repositories
@@ -247,6 +249,17 @@ $ soma remove soma-bata-list
 ```
 
 There should be no problem image or container associated to the repository when you use this command. Use `clean` and `stop` command to remove them if necessary. Auto pruning for your convenience will be implemented in the future (see [#115][issue #115]).
+
+
+### Updating repositories
+
+You can update and sync repositories with `update` command:
+
+```bash
+$ soma update soma-bata-list
+```
+
+Note that problem containers that are already running are untouched by this command. You might want to stop, build, and run the problem again after updating a repository.
 
 
 ### Notes on repository and problem names
