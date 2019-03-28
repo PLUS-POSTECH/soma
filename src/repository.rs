@@ -37,7 +37,7 @@ impl ProblemList {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 struct ProblemIndex {
     name: NameString,
     path: PathBuf,
@@ -81,8 +81,24 @@ impl<'a> Repository<'a> {
         self.manager.repo_path(&self.name)
     }
 
-    pub fn update(&self) -> SomaResult<()> {
-        self.backend.update_at(self.path())
+    pub fn update(&mut self) -> SomaResult<()> {
+        let current_prob_set: HashSet<_> = self.prob_list.clone().into_iter().collect();
+        let new_prob_list = {
+            let temp_dir = tempfile::tempdir()?;
+            self.backend().update_at(temp_dir.path())?;
+            read_prob_list(temp_dir.path())?
+        };
+        let new_prob_set: HashSet<_> = new_prob_list.clone().into_iter().collect();
+
+        if current_prob_set.difference(&new_prob_set).count() > 0 {
+            Err(SomaError::UnsupportedUpdate)?;
+        }
+
+        self.backend.update_at(self.path())?;
+
+        self.prob_list = new_prob_list;
+
+        Ok(())
     }
 
     pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a NameString> {

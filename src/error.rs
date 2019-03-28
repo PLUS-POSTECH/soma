@@ -40,6 +40,10 @@ pub enum Error {
     RepositoryInUse,
     #[fail(display = "The specified repository is not found")]
     RepositoryNotFound,
+    #[fail(
+        display = "The repository contains changes that cannot be handled by update command; Please remove and add the repository manually"
+    )]
+    UnsupportedUpdate,
 }
 
 pub type Result<T> = std::result::Result<T, failure::Error>;

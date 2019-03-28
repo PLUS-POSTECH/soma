@@ -31,7 +31,7 @@ pub fn add(
 
     env.repo_manager_mut().add_repo(repo_name, backend)?;
 
-    let repository = env.repo_manager().get_repo(repo_name)?;
+    let mut repository = env.repo_manager().get_repo(repo_name)?;
     repository.update()?;
 
     env.printer()
@@ -68,12 +68,6 @@ pub fn build(
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let problem = env.repo_manager().search_prob(prob_query)?;
-    let repo_name = problem.repo_name();
-
-    let repository = env.repo_manager().get_repo(repo_name).unwrap();
-    repository.update()?;
-    env.printer()
-        .write_line(&format!("Repository updated: '{}'", repo_name));
 
     runtime.block_on(docker::prune_images_from_prob(&env, &problem))?;
     build_image(&env, &problem, runtime)?;
@@ -266,6 +260,15 @@ pub fn stop(
         "Problem stopped: '{}'",
         problem.fully_qualified_name()
     ));
+
+    Ok(())
+}
+
+pub fn update(env: &Environment<impl Connect, impl Printer>, repo_name: &str) -> SomaResult<()> {
+    let mut repository = env.repo_manager().get_repo(repo_name)?;
+    repository.update()?;
+    env.printer()
+        .write_line(&format!("Repository updated: '{}'", repo_name));
 
     Ok(())
 }
