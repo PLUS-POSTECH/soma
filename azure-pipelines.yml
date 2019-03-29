@@ -40,6 +40,8 @@ jobs:
   pool:
     vmImage: 'windows-2019'
   steps:
+  - powershell: |
+      Set-MpPreference -DisableRealtimeMonitoring $true
   - template: ci/install-prerequisites.yml
     parameters:
       os: Windows
