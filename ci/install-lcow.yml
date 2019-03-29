@@ -1,8 +1,5 @@
 steps:
 - powershell: |
-    choco install wget -y --no-progress
-    displayName: 'Install Utilities'
-- powershell: |
     mkdir .ci
     $lcow = ".ci\lcow.zip"
     $dockerd = ".ci\dockerd.exe"

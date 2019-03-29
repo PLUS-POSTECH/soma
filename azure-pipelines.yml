@@ -42,6 +42,7 @@ jobs:
   steps:
   - powershell: |
       Set-MpPreference -DisableRealtimeMonitoring $true
+    displayName: 'Disable Antivirus'
   - template: ci/install-prerequisites.yml
     parameters:
       os: Windows
