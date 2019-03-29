@@ -270,7 +270,7 @@ pub fn update(
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let mut repository = env.repo_manager().get_repo(repo_name)?;
-    repository.update(&runtime.block_on(docker::list_containers(env))?)?;
+    repository.update(&runtime.block_on(docker::list_images(env))?)?;
     env.printer()
         .write_line(&format!("Repository updated: '{}'", repo_name));
 

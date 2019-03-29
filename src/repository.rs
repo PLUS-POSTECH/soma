@@ -3,9 +3,9 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::docker::{self, SomaContainer};
+use crate::docker::{self, SomaImage};
 use crate::prelude::*;
-use crate::problem::{read_manifest, Problem, MANIFEST_FILE_NAME};
+use crate::problem::{read_manifest, MANIFEST_FILE_NAME};
 use crate::repository::backend::{Backend, BackendExt};
 use crate::{read_file_contents, NameString};
 
@@ -82,24 +82,28 @@ impl<'a> Repository<'a> {
         self.manager.repo_path(&self.name)
     }
 
-    pub fn update(&mut self, containers: &[SomaContainer]) -> SomaResult<()> {
-        let current_prob_set: HashSet<_> = self.prob_list.clone().into_iter().collect();
+    pub fn update(&mut self, images: &[SomaImage]) -> SomaResult<()> {
+        let current_prob_set: HashSet<_> = self
+            .prob_list
+            .clone()
+            .into_iter()
+            .map(|prob_index| prob_index.name)
+            .collect();
         let new_prob_list = {
             let temp_dir = tempfile::tempdir()?;
             self.backend().update_at(temp_dir.path())?;
             read_prob_list(temp_dir.path())?
         };
-        let new_prob_set: HashSet<_> = new_prob_list.clone().into_iter().collect();
+        let new_prob_set: HashSet<_> = new_prob_list
+            .clone()
+            .into_iter()
+            .map(|prob_index| prob_index.name)
+            .collect();
 
         let existing_problem_removed = current_prob_set
             .difference(&new_prob_set)
-            .filter_map(|prob_index| {
-                let problem = self.index_to_problem(prob_index);
-                if docker::container_from_prob_exists(containers, &problem) {
-                    Some(problem)
-                } else {
-                    None
-                }
+            .filter(|prob_name| {
+                docker::image_from_repo_and_prob_exists(images, &self.name, prob_name)
             })
             .count()
             > 0;
@@ -115,14 +119,6 @@ impl<'a> Repository<'a> {
 
     pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a NameString> {
         self.prob_list.iter().map(|prob_index| &prob_index.name)
-    }
-
-    fn index_to_problem(&self, prob_index: &ProblemIndex) -> Problem {
-        Problem::new(
-            self.name.to_owned(),
-            prob_index.name.to_owned(),
-            self.path().join(&prob_index.path),
-        )
     }
 }
 

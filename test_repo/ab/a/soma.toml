@@ -1,0 +1,8 @@
+name = "a"
+
+[binary]
+os = "ubuntu:16.04"
+cmd = "cat flag"
+
+executable = []
+readonly = []
