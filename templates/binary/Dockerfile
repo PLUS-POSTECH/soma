@@ -2,10 +2,11 @@ FROM {{ binary.os }}
 
 RUN apt-get -qq update && apt-get -yqq upgrade && apt-get install -yqq socat
 
+COPY image-root/ /
+
 ENV PROB "{{ name }}"
 RUN useradd -m $PROB
 
-COPY image-root/ /
 COPY .soma/ /.soma
 
 RUN chmod 555 /.soma/configure_permissions.sh \
