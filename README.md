@@ -46,10 +46,10 @@
 
 ## What is Soma?
 
-Soma is a cross-platform CTF problem management tool.
+Soma is a cross-platform CTF problem container manager.
 
-Soma helps to manage and distribute CTF problems after contests.
-
+* Soma helps *problem authors* to easily create and distribute reproducible CTF problem environment.
+* Soma hepls *CTF players* to easily download and run CTF problems on their local machine after contests.
 
 ### For problem solvers
 
@@ -110,12 +110,11 @@ Soma requires [Docker][docker] to be installed on the system.
 
 ## Current Status
 
-Soma is in **pre-alpha** stage. Currently, Soma does not have any stable release, and everything is subject to change.
+Soma is in its *alpha* stage. Currently, it supports running a binary file under a `socat` fork server.
 
-The initial 0.1.0 release will contain the features listed in the [issue #4] and [issue #66].
+We hope to add more scenarios to it, notably a web problem setup which uses PHP with MySQL and a Python-based setup.
+
 Issues related to 0.1.0 release are marked with [`0.1.0` milestone].
-
-Soma team is hoping to ship the alpha version in the first quarter of 2019.
 
 
 ### Roadmap
@@ -129,15 +128,22 @@ Soma team is hoping to ship the alpha version in the first quarter of 2019.
 
 ### Installation
 
-As we don't provide a pre-compiled binary yet, you should install [Rust][rust-lang] toolchain and build your own binary from the source. In detail, clone this git repository and run `cargo install`.
+Use `cargo install soma-ctf` if you have [Rust][rust-lang] toolchain on your system.
+This command will download the latest released version from [crates.io][crates.io] and build the executable file.
+
+```bash
+$ cargo install soma-ctf
+```
+
+Or, download the precompiled binary from [the release page][releases].
+
+If you want to try the cutting-edge master branch, you can also build your own binary from the source. In detail, clone this git repository and run `cargo install`.
 
 ```bash
 $ git clone https://github.com/PLUS-POSTECH/soma.git
 $ cd soma
 $ cargo install
 ```
-
-We are expecting to release `0.1.0-alpha` soon to [crates.io].
 
 ### Command overview
 
@@ -152,7 +158,7 @@ Additionally, [update](#updating-repositories)
 
 ### Adding repositories
 
-Soma repository has `soma.toml` or `soma-list.toml` in its top level directory and can contain one or more problems. To use Soma, start by adding problem repositories. We will use [`soma-bata-list`][soma-bata-list] as an example through out this document.
+Soma repository has `soma.toml` or `soma-list.toml` in its top level directory and can contain one or more problems. To use Soma, start by adding problem repositories. We will use [`soma-bata-list`][soma-bata-list] as an example throughout this document.
 
 You can add a repository with `add` subcommand:
 
@@ -422,10 +428,8 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 
-[issue #4]: https://github.com/PLUS-POSTECH/soma/issues/4
 [issue #50]: https://github.com/PLUS-POSTECH/soma/issues/50
 [issue #64]: https://github.com/PLUS-POSTECH/soma/issues/64
-[issue #66]: https://github.com/PLUS-POSTECH/soma/issues/66
 [issue #84]: https://github.com/PLUS-POSTECH/soma/issues/84
 [issue #114]: https://github.com/PLUS-POSTECH/soma/issues/114
 [issue #115]: https://github.com/PLUS-POSTECH/soma/issues/115
@@ -435,5 +439,6 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [docker]: https://www.docker.com/
 [docker-compose]: https://docs.docker.com/compose/
 [docker-regexp]: https://github.com/docker/distribution/blob/master/reference/regexp.go
+[releases]: https://github.com/PLUS-POSTECH/soma/releases
 [rust-lang]: https://www.rust-lang.org/
 [soma-bata-list]: https://github.com/PLUS-POSTECH/soma-bata-list
