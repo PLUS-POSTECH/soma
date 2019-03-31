@@ -49,7 +49,7 @@
 Soma is a cross-platform CTF problem container manager.
 
 * Soma helps *problem authors* to easily create and distribute reproducible CTF problem environment.
-* Soma hepls *CTF players* to easily download and run CTF problems on their local machine after contests.
+* Soma helps *CTF players* to easily download and run CTF problems on their local machine after contests.
 
 ### For problem solvers
 
