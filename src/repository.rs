@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::docker::{self, SomaImage};
 use crate::prelude::*;
 use crate::problem::{read_manifest, MANIFEST_FILE_NAME};
 use crate::repository::backend::{Backend, BackendExt};
@@ -37,7 +38,7 @@ impl ProblemList {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 struct ProblemIndex {
     name: NameString,
     path: PathBuf,
@@ -81,8 +82,39 @@ impl<'a> Repository<'a> {
         self.manager.repo_path(&self.name)
     }
 
-    pub fn update(&self) -> SomaResult<()> {
-        self.backend.update_at(self.path())
+    pub fn update(&mut self, images: &[SomaImage]) -> SomaResult<()> {
+        let current_prob_set: HashSet<_> = self
+            .prob_list
+            .clone()
+            .into_iter()
+            .map(|prob_index| prob_index.name)
+            .collect();
+        let new_prob_list = {
+            let temp_dir = tempfile::tempdir()?;
+            self.backend().update_at(temp_dir.path())?;
+            read_prob_list(temp_dir.path())?
+        };
+        let new_prob_set: HashSet<_> = new_prob_list
+            .clone()
+            .into_iter()
+            .map(|prob_index| prob_index.name)
+            .collect();
+
+        let existing_problem_removed = current_prob_set
+            .difference(&new_prob_set)
+            .filter(|prob_name| {
+                docker::image_from_repo_and_prob_exists(images, &self.name, prob_name)
+            })
+            .count()
+            > 0;
+
+        if existing_problem_removed {
+            Err(SomaError::UnsupportedUpdate)?;
+        }
+
+        self.backend.update_at(self.path())?;
+        self.prob_list = new_prob_list;
+        Ok(())
     }
 
     pub fn prob_name_iter(&'a self) -> impl Iterator<Item = &'a NameString> {

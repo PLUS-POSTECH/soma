@@ -138,6 +138,16 @@ pub fn image_from_prob_exists(images: &[SomaImage], problem: &Problem) -> bool {
     })
 }
 
+pub fn image_from_repo_and_prob_exists(
+    images: &[SomaImage],
+    repo_name: &str,
+    prob_name: &str,
+) -> bool {
+    images
+        .iter()
+        .any(|image| image.repo_name() == repo_name && image.prob_name() == prob_name)
+}
+
 #[derive(Debug)]
 pub struct SomaContainer {
     repo_name: String,

@@ -1,9 +1,9 @@
 use std::fmt::{self, Display};
-use std::fs::remove_dir_all;
 use std::path::{Path, PathBuf};
 
 use fs_extra::dir;
 use git2::{BranchType, ObjectType, Repository as GitRepository, ResetType};
+use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

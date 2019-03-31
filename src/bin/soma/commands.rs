@@ -8,6 +8,7 @@ use soma::{Environment, Printer};
 pub use self::{
     add::AddCommand, build::BuildCommand, clean::CleanCommand, fetch::FetchCommand,
     list::ListCommand, remove::RemoveCommand, run::RunCommand, stop::StopCommand,
+    update::UpdateCommand,
 };
 
 pub mod add;
@@ -18,6 +19,7 @@ pub mod list;
 pub mod remove;
 pub mod run;
 pub mod stop;
+pub mod update;
 
 type App = clap::App<'static, 'static>;
 

@@ -22,8 +22,7 @@ fn test_build_clean() {
     let repo_name = problem.repo_name();
     let image_name = problem.docker_image_name(env.username());
 
-    let result = build(&env, prob_query, &mut runtime);
-    assert!(result.is_ok());
+    assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
     assert!(image_from_repo_exists(&images, repo_name));
@@ -52,8 +51,7 @@ fn test_build_clean_list() {
     let repo_name = problem.repo_name();
     let image_name = problem.docker_image_name(env.username());
 
-    let result = build(&env, prob_query, &mut runtime);
-    assert!(result.is_ok());
+    assert!(build(&env, prob_query, &mut runtime).is_ok());
     let images = runtime.block_on(docker::list_images(&env)).unwrap();
     assert!(image_exists(&images, &image_name));
     assert!(image_from_repo_exists(&images, repo_name));
