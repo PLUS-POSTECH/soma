@@ -37,7 +37,7 @@ fn main_result() -> SomaResult<()> {
 
     let matches = App::new("soma")
         .version(VERSION)
-        .about("Your one-stop CTF problem management tool")
+        .about("Cross-platform CTF problem container manager")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(add_command.app())
         .subcommand(build_command.app())

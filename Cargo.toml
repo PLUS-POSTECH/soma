@@ -1,12 +1,12 @@
 [package]
-name = "soma"
-version = "0.1.0"
+name = "soma-ctf"
+version = "0.1.0-alpha"
 edition = "2018"
 authors = ["Yechan Bae <qwazpia@gmail.com>", "Kangsu Kim <pica744@gmail.com>"]
 license = "MIT OR Apache-2.0"
-description = "Your one-stop CTF problem management tool"
+description = "Cross-platform CTF problem container manager"
 repository = "https://github.com/PLUS-POSTECH/soma"
-keywords = ["ctf", "hacking"]
+keywords = ["ctf", "hacking", "security", "container", "docker"]
 categories = ["command-line-utilities", "config"]
 readme = "README.md"
 
@@ -50,3 +50,6 @@ path = "src/lib.rs"
 name = "soma"
 test = false
 doc = false
+
+[profile.release]
+lto = true
