@@ -1,11 +1,13 @@
 steps:
 - powershell: |
+    $web = New-Object System.Net.WebClient
+
     mkdir .ci
     $lcow = ".ci\lcow.zip"
     $dockerd = ".ci\dockerd.exe"
 
-    wget.exe -nv https://master.dockerproject.org/windows/x86_64/dockerd.exe -O "$dockerd"
-    wget.exe -nv https://github.com/linuxkit/lcow/releases/download/v4.14.35-v0.3.9/release.zip -O "$lcow"
+    $web.DownloadFile("https://master.dockerproject.org/windows/x86_64/dockerd.exe", $dockerd)
+    $web.DownloadFile("https://github.com/linuxkit/lcow/releases/download/v4.14.35-v0.3.9/release.zip", $lcow)
 
     Stop-Service "Docker"
     Expand-Archive "$lcow" -DestinationPath "$Env:ProgramFiles\Linux Containers\."
