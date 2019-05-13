@@ -1,4 +1,5 @@
 use std::cell::{RefCell, RefMut};
+use std::convert::TryFrom;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -92,13 +93,25 @@ lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"^[a-z0-9]+((?:_|__|[-]*)[a-z0-9]+)*$").unwrap();
 }
 
-impl NameString {
-    // TODO: Use TryFrom trait when Rust stabilizes it.
-    pub fn try_from(s: impl AsRef<str>) -> SomaResult<NameString> {
-        let s = s.as_ref();
-        if NAME_REGEX.is_match(s) {
+impl TryFrom<&str> for NameString {
+    type Error = SomaError;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if NAME_REGEX.is_match(value) {
             Ok(NameString {
-                inner: s.to_owned(),
+                inner: value.to_owned(),
+            })
+        } else {
+            Err(SomaError::InvalidName)?
+        }
+    }
+}
+
+impl TryFrom<String> for NameString {
+    type Error = SomaError;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if NAME_REGEX.is_match(&value) {
+            Ok(NameString {
+                inner: value.to_owned(),
             })
         } else {
             Err(SomaError::InvalidName)?
