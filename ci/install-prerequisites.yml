@@ -1,7 +1,7 @@
 steps:
 - ${{ if eq(parameters.os, 'Windows') }}:
   - script: |
-      choco install wget visualstudio2017-workload-vctools -y --no-progress
+      choco install visualstudio2017-workload-vctools -y --no-progress
     displayName: Install VC 2017 Build Tools
   - script: |
       curl -sSf -o rustup-init.exe https://win.rustup.rs
