@@ -40,7 +40,7 @@ whoami = "0.5.2"
 
 [dev-dependencies]
 matches = "0.1.8"
-serde_test = "1.0.88"
+serde_test = "1.0.91"
 
 [lib]
 name = "soma"
