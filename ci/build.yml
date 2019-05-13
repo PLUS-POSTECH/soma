@@ -4,7 +4,7 @@ steps:
 
 - ${{ if eq(parameters.os, 'Windows') }}:
   - script: |
-      START /B .ci\dockerd.exe --experimental
+      START /B dockerd.exe --experimental
       cargo test -- --test-threads=1
     displayName: 'Test'
     env:
