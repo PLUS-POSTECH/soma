@@ -6,6 +6,7 @@ steps:
     $lcow = ".ci\lcow.zip"
     $dockerd = ".ci\dockerd.exe"
 
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
     $web.DownloadFile("https://master.dockerproject.org/windows/x86_64/dockerd.exe", $dockerd)
     $web.DownloadFile("https://github.com/linuxkit/lcow/releases/download/v4.14.35-v0.3.9/release.zip", $lcow)
 
