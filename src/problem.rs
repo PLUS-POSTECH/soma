@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use self::configs::{BinaryConfig, SolidBinaryConfig};
+use self::configs::{BinaryConfig, FileEntry, SolidBinaryConfig};
 use crate::prelude::*;
 use crate::{read_file_contents, NameString};
 
@@ -79,7 +79,7 @@ impl Manifest {
         executables
             .chain(readonly)
             .filter(|file_entry| file_entry.public())
-            .map(|file_entry| file_entry.path())
+            .map(FileEntry::path)
             .collect()
     }
 
