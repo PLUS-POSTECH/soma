@@ -1,10 +1,7 @@
-use std::str::FromStr;
-
 use matches::assert_matches;
 
 use soma::ops::{add, remove};
 use soma::prelude::*;
-use soma::NameString;
 
 pub use self::common::*;
 
@@ -17,7 +14,7 @@ fn test_add_remove() {
     let mut runtime = default_runtime();
 
     // Repository names should follow NameString rules
-    let repo_name = NameString::from_str(SIMPLE_BOF_REPO_NAME).unwrap();
+    let repo_name = SIMPLE_BOF_REPO_NAME.to_sanitized();
     assert!(add(&mut env, SIMPLE_BOF_GIT, None).is_ok());
 
     assert!(env.repo_manager().repo_exists(&repo_name));
@@ -37,7 +34,7 @@ fn test_add_with_name() {
     let (_, mut data_dir) = temp_data_dir();
     let mut env = test_env(&mut data_dir);
 
-    let repo_name = NameString::from_str("complicated-bof").unwrap();
+    let repo_name = "complicated-bof".to_sanitized();
     assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name.clone())).is_ok());
 
     assert!(env.repo_manager().repo_exists(&repo_name));
@@ -55,8 +52,8 @@ fn test_prob_search() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name_1 = NameString::from_str("bof1").unwrap();
-    let repo_name_2 = NameString::from_str("bof2").unwrap();
+    let repo_name_1 = "bof1".to_sanitized();
+    let repo_name_2 = "bof2".to_sanitized();
 
     assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_1.clone())).is_ok());
 
@@ -87,7 +84,7 @@ fn test_soma_list() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name = NameString::from_str(BATA_LIST_REPO_NAME).unwrap();
+    let repo_name = BATA_LIST_REPO_NAME.to_sanitized();
     assert!(add(&mut env, BATA_LIST_GIT, None).is_ok());
 
     assert!(env.repo_manager().repo_exists(&repo_name));
