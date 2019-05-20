@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use clap::{Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
 use soma::ops::add;
 use soma::prelude::*;
-use soma::{Environment, Printer};
+use soma::{Environment, NameString, Printer};
 
 use crate::commands::{App, SomaCommand};
 
@@ -43,7 +45,7 @@ impl SomaCommand for AddCommand {
         add(
             &mut env,
             matches.value_of("repository").unwrap(),
-            matches.value_of("name"),
+            &matches.value_of("name").map(NameString::from_str).transpose()?,
         )
     }
 }

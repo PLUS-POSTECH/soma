@@ -10,6 +10,7 @@ use hyper::client::connect::Connect;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
 
+use crate::NameString;
 use crate::docker;
 use crate::prelude::*;
 use crate::problem::configs::SolidBinaryConfig;
@@ -21,7 +22,7 @@ use crate::{Environment, Printer};
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
     repo_location: &str,
-    repo_name: Option<&str>,
+    repo_name: &Option<NameString>,
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
@@ -190,7 +191,7 @@ pub fn run(
 
 pub fn remove(
     env: &mut Environment<impl Connect, impl Printer>,
-    repo_name: &str,
+    repo_name: &NameString,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let image_list = runtime.block_on(docker::list_images(env))?;
@@ -266,7 +267,7 @@ pub fn stop(
 
 pub fn update(
     env: &Environment<impl Connect, impl Printer>,
-    repo_name: &str,
+    repo_name: &NameString,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let mut repository = env.repo_manager().get_repo(repo_name)?;

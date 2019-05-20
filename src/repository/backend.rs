@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fmt::{self, Display};
 use std::path::{Path, PathBuf};
 
@@ -7,6 +8,7 @@ use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::NameString;
 use crate::prelude::*;
 
 #[typetag::serde(tag = "type")]
@@ -41,16 +43,17 @@ pub trait BackendExt: Backend {
 
 impl<T> BackendExt for T where T: ?Sized + Backend {}
 
-pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Box<dyn Backend>)> {
+pub fn location_to_backend(repo_location: &str) -> SomaResult<(NameString, Box<dyn Backend>)> {
     let path = Path::new(repo_location);
     if path.is_dir() {
         // local backend
         Ok((
-            path.file_name()
-                .ok_or(SomaError::FileNameNotFound)?
-                .to_str()
-                .ok_or(SomaError::InvalidUnicode)?
-                .to_lowercase(),
+            NameString::try_from(
+                path.file_name()
+                    .ok_or(SomaError::FileNameNotFound)?
+                    .to_str()
+                    .ok_or(SomaError::InvalidUnicode)?
+                    .to_lowercase())?,
             Box::new(LocalBackend::new(path.canonicalize()?.to_owned())),
         ))
     } else {
@@ -67,7 +70,7 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(String, Box<dyn B
             &last_name
         };
         Ok((
-            repo_name.to_lowercase(),
+            NameString::try_from(repo_name.to_lowercase())?,
             Box::new(GitBackend::new(repo_location.to_owned())),
         ))
     }

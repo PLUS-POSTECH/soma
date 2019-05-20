@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
-use std::convert::TryFrom;
 use std::fs::File;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
@@ -67,10 +67,9 @@ impl<'a> RepositoryManager<'a> {
 
     pub fn add_repo(
         &mut self,
-        repo_name: impl AsRef<str>,
+        repo_name: &NameString,
         backend: Box<dyn Backend>,
     ) -> SomaResult<()> {
-        let repo_name = NameString::try_from(repo_name.as_ref())?;
         if self.repo_exists(&repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {
@@ -86,8 +85,7 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn remove_repo(&mut self, repo_name: impl AsRef<str>) -> SomaResult<()> {
-        let repo_name = NameString::try_from(repo_name.as_ref())?;
+    pub fn remove_repo(&mut self, repo_name: &NameString) -> SomaResult<()> {
         let local_path = self.repo_path(&repo_name);
         if local_path.is_dir() {
             remove_dir_all(local_path)?;
@@ -101,8 +99,7 @@ impl<'a> RepositoryManager<'a> {
         Ok(())
     }
 
-    pub fn get_repo(&self, repo_name: impl AsRef<str>) -> SomaResult<Repository> {
-        let repo_name = NameString::try_from(repo_name.as_ref())?;
+    pub fn get_repo(&self, repo_name: &NameString) -> SomaResult<Repository> {
         let repository = match self.repo_index.get(&repo_name) {
             Some(index) => Repository::new(
                 repo_name.clone(),
@@ -155,7 +152,7 @@ impl<'a> RepositoryManager<'a> {
     }
 
     pub fn repo_exists(&self, repo_name: impl AsRef<str>) -> bool {
-        let repo_name = NameString::try_from(repo_name.as_ref());
+        let repo_name = NameString::from_str(repo_name.as_ref());
         match repo_name {
             Ok(repo_name) => self.repo_index.contains_key(&repo_name),
             Err(_) => false,

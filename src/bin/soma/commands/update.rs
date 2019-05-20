@@ -1,9 +1,9 @@
-use clap::{Arg, ArgMatches, SubCommand};
+use clap::{value_t, Arg, ArgMatches, SubCommand};
 use hyper::client::connect::Connect;
 
 use soma::ops::update;
 use soma::prelude::*;
-use soma::{Environment, Printer};
+use soma::{Environment, NameString, Printer};
 
 use crate::commands::{default_runtime, App, SomaCommand};
 
@@ -36,7 +36,7 @@ impl SomaCommand for UpdateCommand {
     ) -> SomaResult<()> {
         update(
             &env,
-            matches.value_of("repository").unwrap(),
+            &value_t!(matches, "repository", NameString)?,
             &mut default_runtime(),
         )
     }

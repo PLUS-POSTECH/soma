@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::Read;
 use std::ops::Deref;
 use std::path::Path;
+use std::str::FromStr;
 
 use bollard::Docker;
 use clap::crate_version;
@@ -51,13 +52,12 @@ where
     P: Printer,
 {
     pub fn new(
-        username: String,
+        username: NameString,
         data_dir: &'a mut DataDirectory,
         docker: Docker<C>,
         printer: P,
     ) -> SomaResult<Environment<'a, C, P>> {
         let repo_manager = data_dir.register::<RepositoryManager>()?;
-        let username = NameString::try_from(username)?;
 
         Ok(Environment {
             username,
@@ -111,11 +111,19 @@ impl TryFrom<String> for NameString {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if NAME_REGEX.is_match(&value) {
             Ok(NameString {
-                inner: value.to_owned(),
+                inner: value,
             })
         } else {
             Err(SomaError::InvalidName)?
         }
+    }
+}
+
+impl FromStr for NameString {
+    type Err = SomaError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        NameString::try_from(s)
     }
 }
 
