@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
 
@@ -16,26 +17,28 @@ use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
 use crate::repository::backend;
 use crate::template::{HandleBarsExt, Templates};
-use crate::{Environment, Printer};
+use crate::{Environment, NameString, Printer};
 
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
     repo_location: &str,
-    repo_name: Option<&str>,
+    repo_name: Option<&NameString>,
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
+    let resolved_repo_name = NameString::try_from(resolved_repo_name);
     let repo_name = match repo_name {
-        Some(repo_name) => repo_name,
-        None => &resolved_repo_name,
-    };
+        Some(repo_name) => Ok(repo_name),
+        None if resolved_repo_name.is_ok() => Ok(resolved_repo_name.as_ref().unwrap()),
+        _ => Err(resolved_repo_name.err().unwrap()),
+    }?;
 
-    env.repo_manager_mut().add_repo(repo_name, backend)?;
+    env.repo_manager_mut().add_repo(&repo_name, backend)?;
 
-    let mut repository = env.repo_manager().get_repo(repo_name)?;
+    let mut repository = env.repo_manager().get_repo(&repo_name)?;
     repository.update(&[])?;
 
     env.printer()
-        .write_line(&format!("Repository added: '{}'", repo_name));
+        .write_line(&format!("Repository added: '{}'", &repo_name));
 
     Ok(())
 }
@@ -190,7 +193,7 @@ pub fn run(
 
 pub fn remove(
     env: &mut Environment<impl Connect, impl Printer>,
-    repo_name: &str,
+    repo_name: &NameString,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let image_list = runtime.block_on(docker::list_images(env))?;
@@ -266,7 +269,7 @@ pub fn stop(
 
 pub fn update(
     env: &Environment<impl Connect, impl Printer>,
-    repo_name: &str,
+    repo_name: &NameString,
     runtime: &mut Runtime,
 ) -> SomaResult<()> {
     let mut repository = env.repo_manager().get_repo(repo_name)?;

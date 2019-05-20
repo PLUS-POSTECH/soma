@@ -1,7 +1,9 @@
 use std::collections::HashSet;
+use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use hyper::client::connect::Connect;
@@ -10,7 +12,7 @@ use tokio::runtime::current_thread::Runtime;
 
 use soma::data_dir::DataDirectory;
 use soma::docker::connect_default;
-use soma::Environment;
+use soma::{Environment, NameString};
 
 pub use self::test_printer::TestPrinter;
 
@@ -24,9 +26,26 @@ pub const SIMPLE_BOF_REPO_NAME: &str = "simple-bof";
 pub const BATA_LIST_GIT: &str = "https://github.com/PLUS-POSTECH/soma-bata-list.git";
 pub const BATA_LIST_REPO_NAME: &str = "soma-bata-list";
 
+pub trait GuaranteedSanitization {
+    fn to_sanitized(self) -> NameString;
+}
+
+impl GuaranteedSanitization for &str {
+    fn to_sanitized(self) -> NameString {
+        NameString::from_str(self).unwrap()
+    }
+}
+
+impl GuaranteedSanitization for String {
+    fn to_sanitized(self) -> NameString {
+        NameString::try_from(self).unwrap()
+    }
+}
+
 pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
-        format!("soma-test-{}", COUNTER.fetch_add(1, Ordering::SeqCst)),
+        // This format should follow NameString rules
+        format!("soma-test-{}", COUNTER.fetch_add(1, Ordering::SeqCst)).to_sanitized(),
         data_dir,
         connect_default().expect("Failed to connect to docker"),
         TestPrinter::new(),

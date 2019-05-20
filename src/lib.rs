@@ -1,9 +1,11 @@
 use std::cell::{RefCell, RefMut};
+use std::convert::TryFrom;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::ops::Deref;
 use std::path::Path;
+use std::str::FromStr;
 
 use bollard::Docker;
 use clap::crate_version;
@@ -50,13 +52,12 @@ where
     P: Printer,
 {
     pub fn new(
-        username: String,
+        username: NameString,
         data_dir: &'a mut DataDirectory,
         docker: Docker<C>,
         printer: P,
     ) -> SomaResult<Environment<'a, C, P>> {
         let repo_manager = data_dir.register::<RepositoryManager>()?;
-        let username = NameString::try_from(username)?;
 
         Ok(Environment {
             username,
@@ -92,13 +93,12 @@ lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"^[a-z0-9]+((?:_|__|[-]*)[a-z0-9]+)*$").unwrap();
 }
 
-impl NameString {
-    // TODO: Use TryFrom trait when Rust stabilizes it.
-    pub fn try_from(s: impl AsRef<str>) -> SomaResult<NameString> {
-        let s = s.as_ref();
-        if NAME_REGEX.is_match(s) {
+impl TryFrom<&str> for NameString {
+    type Error = SomaError;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if NAME_REGEX.is_match(value) {
             Ok(NameString {
-                inner: s.to_owned(),
+                inner: value.to_owned(),
             })
         } else {
             Err(SomaError::InvalidName)?
@@ -106,29 +106,46 @@ impl NameString {
     }
 }
 
-impl PartialEq<String> for NameString {
-    fn eq(&self, other: &String) -> bool {
-        &self.inner == other
+impl TryFrom<String> for NameString {
+    type Error = SomaError;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if NAME_REGEX.is_match(&value) {
+            Ok(NameString { inner: value })
+        } else {
+            Err(SomaError::InvalidName)?
+        }
     }
 }
 
-impl PartialEq<str> for NameString {
-    fn eq(&self, other: &str) -> bool {
-        self.inner == other
+impl FromStr for NameString {
+    type Err = SomaError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        NameString::try_from(s)
     }
 }
 
-impl PartialEq<NameString> for String {
-    fn eq(&self, other: &NameString) -> bool {
-        self == &other.inner
-    }
+macro_rules! impl_eq {
+    ($lhs:ty, $rhs: ty) => {
+        impl<'a, 'b> PartialEq<$rhs> for $lhs {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                PartialEq::eq(&self[..], &other[..])
+            }
+        }
+
+        impl<'a, 'b> PartialEq<$lhs> for $rhs {
+            #[inline]
+            fn eq(&self, other: &$lhs) -> bool {
+                PartialEq::eq(&self[..], &other[..])
+            }
+        }
+    };
 }
 
-impl PartialEq<NameString> for str {
-    fn eq(&self, other: &NameString) -> bool {
-        self == other.inner
-    }
-}
+impl_eq! { NameString, str }
+impl_eq! { NameString, &str }
+impl_eq! { NameString, String }
 
 impl fmt::Display for NameString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

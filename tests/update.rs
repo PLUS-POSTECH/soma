@@ -32,10 +32,11 @@ fn test_update() {
 
     dir_copy("test_repo/ab", project_dir.path());
 
+    let test_repo_name = "test".to_sanitized();
     assert!(add(
         &mut env,
         &project_dir.path().as_os_str().to_string_lossy(),
-        Some("test")
+        Some(&test_repo_name),
     )
     .is_ok());
 
@@ -46,16 +47,16 @@ fn test_update() {
     dir_copy("test_repo/a", project_dir.path());
 
     assert_matches!(
-        update(&env, "test", &mut runtime).map_err(error_downcast),
+        update(&env, &test_repo_name, &mut runtime).map_err(error_downcast),
         Err(Ok(SomaError::UnsupportedUpdate))
     );
 
     assert!(clean(&env, "test.b", &mut runtime).is_ok());
-    assert!(update(&env, "test", &mut runtime).is_ok());
+    assert!(update(&env, &test_repo_name, &mut runtime).is_ok());
 
     // update should not fail when there is no removed problem
     dir_copy("test_repo/abc", project_dir.path());
-    assert!(update(&env, "test", &mut runtime).is_ok());
+    assert!(update(&env, &test_repo_name, &mut runtime).is_ok());
 
     assert!(clean(&env, "test.a", &mut runtime).is_ok());
 

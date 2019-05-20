@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::string::ToString;
 
 use clap::{App, AppSettings};
@@ -7,7 +8,7 @@ use whoami::username;
 use soma::data_dir::DataDirectory;
 use soma::docker::connect_default;
 use soma::prelude::*;
-use soma::{Environment, VERSION};
+use soma::{Environment, NameString, VERSION};
 
 use crate::commands::*;
 use crate::terminal_printer::TerminalPrinter;
@@ -17,7 +18,7 @@ mod terminal_printer;
 
 fn cli_env(data_dir: &mut DataDirectory) -> SomaResult<Environment<impl Connect, TerminalPrinter>> {
     Environment::new(
-        username().to_lowercase(),
+        NameString::try_from(username().to_lowercase())?,
         data_dir,
         connect_default()?,
         TerminalPrinter::new(),
