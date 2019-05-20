@@ -8,8 +8,8 @@ use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::NameString;
 use crate::prelude::*;
+use crate::NameString;
 
 #[typetag::serde(tag = "type")]
 pub trait Backend: BackendClone + Display {
@@ -53,7 +53,8 @@ pub fn location_to_backend(repo_location: &str) -> SomaResult<(NameString, Box<d
                     .ok_or(SomaError::FileNameNotFound)?
                     .to_str()
                     .ok_or(SomaError::InvalidUnicode)?
-                    .to_lowercase())?,
+                    .to_lowercase(),
+            )?,
             Box::new(LocalBackend::new(path.canonicalize()?.to_owned())),
         ))
     } else {

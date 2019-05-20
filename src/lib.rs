@@ -110,9 +110,7 @@ impl TryFrom<String> for NameString {
     type Error = SomaError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
         if NAME_REGEX.is_match(&value) {
-            Ok(NameString {
-                inner: value,
-            })
+            Ok(NameString { inner: value })
         } else {
             Err(SomaError::InvalidName)?
         }
@@ -133,6 +131,12 @@ impl PartialEq<String> for NameString {
     }
 }
 
+impl PartialEq<&str> for NameString {
+    fn eq(&self, other: &&str) -> bool {
+        &self.inner == other
+    }
+}
+
 impl PartialEq<str> for NameString {
     fn eq(&self, other: &str) -> bool {
         self.inner == other
@@ -140,6 +144,12 @@ impl PartialEq<str> for NameString {
 }
 
 impl PartialEq<NameString> for String {
+    fn eq(&self, other: &NameString) -> bool {
+        self == &other.inner
+    }
+}
+
+impl PartialEq<NameString> for &str {
     fn eq(&self, other: &NameString) -> bool {
         self == &other.inner
     }

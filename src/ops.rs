@@ -10,14 +10,13 @@ use hyper::client::connect::Connect;
 use tempfile::tempdir;
 use tokio::runtime::current_thread::Runtime;
 
-use crate::NameString;
 use crate::docker;
 use crate::prelude::*;
 use crate::problem::configs::SolidBinaryConfig;
 use crate::problem::Problem;
 use crate::repository::backend;
 use crate::template::{HandleBarsExt, Templates};
-use crate::{Environment, Printer};
+use crate::{Environment, NameString, Printer};
 
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
