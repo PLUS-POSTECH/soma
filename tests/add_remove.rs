@@ -26,7 +26,7 @@ fn test_add_remove() {
     assert!(dir_contents_exists(local_path, &[".git"]));
 
     assert!(remove(&mut env, &repo_name, &mut runtime).is_ok());
-    assert!(!env.repo_manager().repo_exists(repo_name));
+    assert!(!env.repo_manager().repo_exists(&repo_name));
 }
 
 #[test]
@@ -109,5 +109,5 @@ fn test_soma_list() {
     );
 
     assert!(remove(&mut env, &repo_name, &mut runtime).is_ok());
-    assert!(!env.repo_manager().repo_exists(repo_name));
+    assert!(!env.repo_manager().repo_exists(&repo_name));
 }

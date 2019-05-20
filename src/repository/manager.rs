@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 
 use remove_dir_all::remove_dir_all;
 use serde::{Deserialize, Serialize};
@@ -70,7 +69,7 @@ impl<'a> RepositoryManager<'a> {
         repo_name: &NameString,
         backend: Box<dyn Backend>,
     ) -> SomaResult<()> {
-        if self.repo_exists(&repo_name) {
+        if self.repo_exists(repo_name) {
             Err(SomaError::DuplicateRepository)?;
         } else {
             let temp_dir = tempfile::tempdir()?;
@@ -151,12 +150,8 @@ impl<'a> RepositoryManager<'a> {
         })
     }
 
-    pub fn repo_exists(&self, repo_name: impl AsRef<str>) -> bool {
-        let repo_name = NameString::from_str(repo_name.as_ref());
-        match repo_name {
-            Ok(repo_name) => self.repo_index.contains_key(&repo_name),
-            Err(_) => false,
-        }
+    pub fn repo_exists(&self, repo_name: &NameString) -> bool {
+        self.repo_index.contains_key(&repo_name)
     }
 }
 
