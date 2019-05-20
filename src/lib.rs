@@ -125,41 +125,27 @@ impl FromStr for NameString {
     }
 }
 
-impl PartialEq<String> for NameString {
-    fn eq(&self, other: &String) -> bool {
-        &self.inner == other
-    }
+macro_rules! impl_eq {
+    ($lhs:ty, $rhs: ty) => {
+        impl<'a, 'b> PartialEq<$rhs> for $lhs {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool {
+                PartialEq::eq(&self[..], &other[..])
+            }
+        }
+
+        impl<'a, 'b> PartialEq<$lhs> for $rhs {
+            #[inline]
+            fn eq(&self, other: &$lhs) -> bool {
+                PartialEq::eq(&self[..], &other[..])
+            }
+        }
+    };
 }
 
-impl PartialEq<&str> for NameString {
-    fn eq(&self, other: &&str) -> bool {
-        &self.inner == other
-    }
-}
-
-impl PartialEq<str> for NameString {
-    fn eq(&self, other: &str) -> bool {
-        self.inner == other
-    }
-}
-
-impl PartialEq<NameString> for String {
-    fn eq(&self, other: &NameString) -> bool {
-        self == &other.inner
-    }
-}
-
-impl PartialEq<NameString> for &str {
-    fn eq(&self, other: &NameString) -> bool {
-        self == &other.inner
-    }
-}
-
-impl PartialEq<NameString> for str {
-    fn eq(&self, other: &NameString) -> bool {
-        self == other.inner
-    }
-}
+impl_eq! { NameString, str }
+impl_eq! { NameString, &str }
+impl_eq! { NameString, String }
 
 impl fmt::Display for NameString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
