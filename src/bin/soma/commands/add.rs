@@ -48,7 +48,8 @@ impl SomaCommand for AddCommand {
             matches
                 .value_of("name")
                 .map(NameString::from_str)
-                .transpose()?,
+                .transpose()?
+                .as_ref(),
         )
     }
 }

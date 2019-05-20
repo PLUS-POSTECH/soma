@@ -35,7 +35,7 @@ fn test_add_with_name() {
     let mut env = test_env(&mut data_dir);
 
     let repo_name = "complicated-bof".to_sanitized();
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name.clone())).is_ok());
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(&repo_name)).is_ok());
 
     assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
@@ -55,9 +55,9 @@ fn test_prob_search() {
     let repo_name_1 = "bof1".to_sanitized();
     let repo_name_2 = "bof2".to_sanitized();
 
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_1.clone())).is_ok());
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(&repo_name_1)).is_ok());
 
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_2.clone())).is_ok());
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(&repo_name_2)).is_ok());
 
     assert_matches!(
         env.repo_manager()

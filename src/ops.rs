@@ -22,13 +22,15 @@ use crate::{Environment, NameString, Printer};
 pub fn add(
     env: &mut Environment<impl Connect, impl Printer>,
     repo_location: &str,
-    repo_name: Option<NameString>,
+    repo_name: Option<&NameString>,
 ) -> SomaResult<()> {
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
+    let resolved_repo_name = NameString::try_from(resolved_repo_name);
     let repo_name = match repo_name {
-        Some(repo_name) => repo_name,
-        None => NameString::try_from(resolved_repo_name)?,
-    };
+        Some(repo_name) => Ok(repo_name),
+        None if resolved_repo_name.is_ok() => Ok(resolved_repo_name.as_ref().unwrap()),
+        _ => Err(resolved_repo_name.err().unwrap()),
+    }?;
 
     env.repo_manager_mut().add_repo(&repo_name, backend)?;
 

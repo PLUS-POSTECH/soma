@@ -36,7 +36,7 @@ fn test_update() {
     assert!(add(
         &mut env,
         &project_dir.path().as_os_str().to_string_lossy(),
-        Some(test_repo_name.clone()),
+        Some(&test_repo_name),
     )
     .is_ok());
 
