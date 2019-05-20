@@ -1,7 +1,10 @@
+use std::str::FromStr;
+
 use matches::assert_matches;
 
 use soma::ops::{add, remove};
 use soma::prelude::*;
+use soma::NameString;
 
 pub use self::common::*;
 
@@ -13,18 +16,19 @@ fn test_add_remove() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name = SIMPLE_BOF_REPO_NAME;
+    // Repository names should follow NameString rules
+    let repo_name = NameString::from_str(SIMPLE_BOF_REPO_NAME).unwrap();
     assert!(add(&mut env, SIMPLE_BOF_GIT, None).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
 
-    assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
+    assert!(remove(&mut env, &repo_name, &mut runtime).is_ok());
     assert!(!env.repo_manager().repo_exists(repo_name));
 }
 
@@ -33,13 +37,13 @@ fn test_add_with_name() {
     let (_, mut data_dir) = temp_data_dir();
     let mut env = test_env(&mut data_dir);
 
-    let repo_name = "complicated-bof";
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name)).is_ok());
+    let repo_name = NameString::from_str("complicated-bof").unwrap();
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name.clone())).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
@@ -51,12 +55,12 @@ fn test_prob_search() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name_1 = "bof1";
-    let repo_name_2 = "bof2";
+    let repo_name_1 = NameString::from_str("bof1").unwrap();
+    let repo_name_2 = NameString::from_str("bof2").unwrap();
 
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_1)).is_ok());
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_1.clone())).is_ok());
 
-    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_2)).is_ok());
+    assert!(add(&mut env, SIMPLE_BOF_GIT, Some(repo_name_2.clone())).is_ok());
 
     assert_matches!(
         env.repo_manager()
@@ -64,10 +68,10 @@ fn test_prob_search() {
             .map_err(error_downcast),
         Err(Ok(SomaError::ProblemQueryAmbiguous))
     );
-    assert!(remove(&mut env, repo_name_1, &mut runtime).is_ok());
+    assert!(remove(&mut env, &repo_name_1, &mut runtime).is_ok());
 
     assert!(env.repo_manager().search_prob("simple-bof").is_ok());
-    assert!(remove(&mut env, repo_name_2, &mut runtime).is_ok());
+    assert!(remove(&mut env, &repo_name_2, &mut runtime).is_ok());
 
     assert_matches!(
         env.repo_manager()
@@ -83,13 +87,13 @@ fn test_soma_list() {
     let mut env = test_env(&mut data_dir);
     let mut runtime = default_runtime();
 
-    let repo_name = BATA_LIST_REPO_NAME;
+    let repo_name = NameString::from_str(BATA_LIST_REPO_NAME).unwrap();
     assert!(add(&mut env, BATA_LIST_GIT, None).is_ok());
 
-    assert!(env.repo_manager().repo_exists(repo_name));
+    assert!(env.repo_manager().repo_exists(&repo_name));
     let local_path = env
         .repo_manager()
-        .get_repo(repo_name)
+        .get_repo(&repo_name)
         .expect("Added repository does not exist")
         .path();
     assert!(dir_contents_exists(local_path, &[".git"]));
@@ -107,6 +111,6 @@ fn test_soma_list() {
         Err(Ok(SomaError::ProblemNotFound))
     );
 
-    assert!(remove(&mut env, repo_name, &mut runtime).is_ok());
+    assert!(remove(&mut env, &repo_name, &mut runtime).is_ok());
     assert!(!env.repo_manager().repo_exists(repo_name));
 }

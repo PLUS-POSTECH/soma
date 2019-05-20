@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::Path;
@@ -10,7 +11,7 @@ use tokio::runtime::current_thread::Runtime;
 
 use soma::data_dir::DataDirectory;
 use soma::docker::connect_default;
-use soma::Environment;
+use soma::{Environment, NameString};
 
 pub use self::test_printer::TestPrinter;
 
@@ -26,7 +27,12 @@ pub const BATA_LIST_REPO_NAME: &str = "soma-bata-list";
 
 pub fn test_env(data_dir: &mut DataDirectory) -> Environment<impl Connect, TestPrinter> {
     Environment::new(
-        format!("soma-test-{}", COUNTER.fetch_add(1, Ordering::SeqCst)),
+        // This format should follow NameString rules
+        NameString::try_from(format!(
+            "soma-test-{}",
+            COUNTER.fetch_add(1, Ordering::SeqCst)
+        ))
+        .unwrap(),
         data_dir,
         connect_default().expect("Failed to connect to docker"),
         TestPrinter::new(),

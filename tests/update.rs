@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::str::FromStr;
 
 use fs_extra::dir;
 use matches::assert_matches;
@@ -7,6 +8,7 @@ use remove_dir_all::remove_dir_all;
 use soma::docker::{self, image_from_repo_exists};
 use soma::ops::{add, build, clean, update};
 use soma::prelude::*;
+use soma::NameString;
 
 pub use self::common::*;
 
@@ -32,10 +34,11 @@ fn test_update() {
 
     dir_copy("test_repo/ab", project_dir.path());
 
+    let test_repo_name = NameString::from_str("test").unwrap();
     assert!(add(
         &mut env,
         &project_dir.path().as_os_str().to_string_lossy(),
-        Some("test")
+        Some(test_repo_name.clone()),
     )
     .is_ok());
 
@@ -46,16 +49,16 @@ fn test_update() {
     dir_copy("test_repo/a", project_dir.path());
 
     assert_matches!(
-        update(&env, "test", &mut runtime).map_err(error_downcast),
+        update(&env, &test_repo_name, &mut runtime).map_err(error_downcast),
         Err(Ok(SomaError::UnsupportedUpdate))
     );
 
     assert!(clean(&env, "test.b", &mut runtime).is_ok());
-    assert!(update(&env, "test", &mut runtime).is_ok());
+    assert!(update(&env, &test_repo_name, &mut runtime).is_ok());
 
     // update should not fail when there is no removed problem
     dir_copy("test_repo/abc", project_dir.path());
-    assert!(update(&env, "test", &mut runtime).is_ok());
+    assert!(update(&env, &test_repo_name, &mut runtime).is_ok());
 
     assert!(clean(&env, "test.a", &mut runtime).is_ok());
 

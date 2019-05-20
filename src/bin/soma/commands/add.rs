@@ -45,7 +45,7 @@ impl SomaCommand for AddCommand {
         add(
             &mut env,
             matches.value_of("repository").unwrap(),
-            &matches
+            matches
                 .value_of("name")
                 .map(NameString::from_str)
                 .transpose()?,
