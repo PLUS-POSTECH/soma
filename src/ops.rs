@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
 
@@ -26,7 +27,7 @@ pub fn add(
     let (resolved_repo_name, backend) = backend::location_to_backend(repo_location)?;
     let repo_name = match repo_name {
         Some(repo_name) => repo_name,
-        None => resolved_repo_name,
+        None => NameString::try_from(resolved_repo_name)?,
     };
 
     env.repo_manager_mut().add_repo(&repo_name, backend)?;
